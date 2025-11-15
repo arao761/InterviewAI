@@ -1,0 +1,13 @@
+"""
+API package initialization.
+"""
+from fastapi import APIRouter
+from app.api.routes import ai_router
+
+# Create main API router
+api_router = APIRouter()
+
+# Include sub-routers
+api_router.include_router(ai_router)
+
+__all__ = ["api_router"]

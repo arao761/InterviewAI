@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+venv/
+env/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Next.js
+.next/
+out/
+*.next
+
+# Logs
+*.log
+logs/
+backend.log
+frontend.log
+
+# OS
+.DS_Store
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Temp
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Process IDs
+*.pid

@@ -7,6 +7,7 @@ from app.core.config import settings
 from app.core.logging import logger
 from app.utils.exceptions import PrepWiseException
 from app.utils.error_handlers import prepwise_exception_handler, general_exception_handler
+from app.api import api_router
 from contextlib import asynccontextmanager
 
 
@@ -53,10 +54,7 @@ app.add_exception_handler(PrepWiseException, prepwise_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 
 # Include API routes
-from app.api.routes import resume, sessions, responses
-app.include_router(resume.router, prefix="/api/v1")
-app.include_router(sessions.router, prefix="/api/v1")
-app.include_router(responses.router, prefix="/api/v1")
+app.include_router(api_router, prefix=f"/api/{settings.API_VERSION}")
 
 
 # Health check endpoint

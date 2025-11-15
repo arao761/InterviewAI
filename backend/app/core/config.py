@@ -41,6 +41,12 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:8080"
 
+    # AI/NLP Configuration
+    OPENAI_API_KEY: str = ""
+    ANTHROPIC_API_KEY: str = ""  # Optional
+    AI_MODEL: str = "gpt-4"
+    AI_TEMPERATURE: float = 0.7
+
     @property
     def cors_origins_list(self) -> List[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
