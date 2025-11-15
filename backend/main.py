@@ -52,6 +52,12 @@ app.add_middleware(
 app.add_exception_handler(PrepWiseException, prepwise_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 
+# Include API routes
+from app.api.routes import resume, sessions, responses
+app.include_router(resume.router, prefix="/api/v1")
+app.include_router(sessions.router, prefix="/api/v1")
+app.include_router(responses.router, prefix="/api/v1")
+
 
 # Health check endpoint
 @app.get("/health", tags=["Health"])
