@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vapi Web Interviewer - Simple</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 { color: #333; margin-bottom: 10px; }
+    .status {
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      font-weight: 500;
+    }
+    .status.connected { background: #d4edda; color: #155724; }
+    .status.disconnected { background: #f8d7da; color: #721c24; }
+    .status.connecting { background: #fff3cd; color: #856404; }
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 5px;
+    }
+    .btn-start { background: #28a745; color: white; }
+    .btn-stop { background: #dc3545; color: white; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .transcript-box {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      min-height: 200px;
+      max-height: 400px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+    .message {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 6px;
+    }
+    .message.user { background: #e3f2fd; border-left: 4px solid #2196f3; }
+    .message.assistant { background: #f3e5f5; border-left: 4px solid #9c27b0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎤 Vapi Web-Based AI Interviewer</h1>
+    <p style="color: #666; margin-bottom: 20px;">Real-time web interviews using Vapi Web SDK</p>
+
+    <div id="status" class="status disconnected">⚫ Ready to start</div>
+
+    <div>
+      <button id="startBtn" class="btn-start" onclick="startInterview()">Start Interview</button>
+      <button id="stopBtn" class="btn-stop" onclick="stopInterview()" disabled>End Interview</button>
+    </div>
+
+    <div style="margin-top: 30px;">
+      <h3>📝 Live Transcript</h3>
+      <div id="transcriptBox" class="transcript-box">
+        <p style="color: #999; font-style: italic;">Your responses will appear here as you speak...</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Import Vapi through a loader module
+    import Vapi from './src/vapi-loader.ts';
+    
+    let vapi = null;
+    const assistantId = '143899d5-4754-4cec-bf65-0743d3962ce1';
+
+    window.startInterview = async function() {
+      try {
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const status = document.getElementById('status');
+        const transcriptBox = document.getElementById('transcriptBox');
+
+        startBtn.disabled = true;
+        status.className = 'status connecting';
+        status.textContent = '🔄 Connecting...';
+
+        console.log('Starting interview...');
+
+        // Get PUBLIC API key from backend or localStorage
+        let vapiPublicKey = null;
+        
+        // Try to get from backend config
+        try {
+          const configResponse = await fetch('http://localhost:8000/config');
+          if (configResponse.ok) {
+            const config = await configResponse.json();
+            vapiPublicKey = config.config?.vapi_public_key;
+          }
+        } catch (error) {
+          console.log('Could not get key from backend, trying localStorage...');
+        }
+        
+        // If not from backend, try localStorage
+        if (!vapiPublicKey) {
+          vapiPublicKey = localStorage.getItem('vapi_public_key');
+        }
+        
+        // If still not found, prompt user (only once, then save to localStorage)
+        if (!vapiPublicKey) {
+          vapiPublicKey = prompt('Enter your Vapi PUBLIC API key:\n(Get it from dashboard.vapi.ai → API Keys → Public Key)\n\nThis will be saved for future use.') || '';
+          
+          if (!vapiPublicKey) {
+            throw new Error('Public API key is required');
+          }
+          
+          // Save to localStorage for next time
+          localStorage.setItem('vapi_public_key', vapiPublicKey);
+        }
+
+        // Initialize Vapi
+        console.log('Initializing Vapi with key:', vapiPublicKey.substring(0, 20) + '...');
+        
+        if (!Vapi) {
+          throw new Error('Vapi SDK not loaded. Check browser console for errors.');
+        }
+        
+        vapi = new Vapi(vapiPublicKey);
+        console.log('Vapi initialized:', vapi);
+
+        // Event listeners
+        vapi.on('call-start', () => {
+          status.className = 'status connected';
+          status.textContent = '✅ Interview started - Speak now!';
+          startBtn.disabled = true;
+          stopBtn.disabled = false;
+          transcriptBox.innerHTML = '<p style="color: #999;">Listening...</p>';
+        });
+
+        vapi.on('call-end', () => {
+          status.className = 'status disconnected';
+          status.textContent = '⚫ Interview ended';
+          startBtn.disabled = false;
+          stopBtn.disabled = true;
+        });
+
+        vapi.on('user-speech-end', (event) => {
+          if (event.transcript) {
+            displayMessage(event.transcript, 'user');
+          }
+        });
+
+        vapi.on('message', (message) => {
+          if (message.role === 'assistant' && message.content) {
+            displayMessage(message.content, 'assistant');
+          }
+        });
+
+        vapi.on('error', (error) => {
+          console.error('Vapi error:', error);
+          status.className = 'status disconnected';
+          status.textContent = `❌ Error: ${error.message || 'Unknown error'}`;
+          startBtn.disabled = false;
+          stopBtn.disabled = true;
+        });
+
+        // Start call
+        await vapi.start(assistantId);
+
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('status').className = 'status disconnected';
+        document.getElementById('status').textContent = `❌ Error: ${error.message}`;
+        document.getElementById('startBtn').disabled = false;
+      }
+    };
+
+    window.stopInterview = async function() {
+      if (vapi) {
+        await vapi.stop();
+        vapi = null;
+      }
+      document.getElementById('status').className = 'status disconnected';
+      document.getElementById('status').textContent = '⚫ Disconnected';
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('stopBtn').disabled = true;
+    };
+
+    function displayMessage(text, role) {
+      const transcriptBox = document.getElementById('transcriptBox');
+      if (text && text.trim()) {
+        if (transcriptBox.querySelector('p[style*="italic"], p[style*="Listening"]')) {
+          transcriptBox.innerHTML = '';
+        }
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${role}`;
+        messageDiv.innerHTML = `
+          <strong>${role === 'user' ? 'You' : 'Assistant'}:</strong> ${text}
+        `;
+        transcriptBox.appendChild(messageDiv);
+        transcriptBox.scrollTop = transcriptBox.scrollHeight;
+      }
+    }
+  </script>
+</body>
+</html>
+
