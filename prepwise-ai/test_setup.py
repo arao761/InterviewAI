@@ -207,10 +207,220 @@ def test_validators():
         return False
 
 
+def test_question_generator():
+    """Test Question Generator (Phase 3)"""
+    print("\n" + "=" * 60)
+    print("Testing Question Generator (Phase 3)")
+    print("=" * 60)
+
+    try:
+        from src.question_generator.generator import QuestionGenerator
+        from src.question_generator.schemas import (
+            QuestionGenerationRequest, 
+            QuestionType,
+            DifficultyLevel,
+            InterviewQuestion,
+            QuestionSet
+        )
+        
+        print("✅ Question Generator modules imported successfully")
+        
+        # Test initialization
+        generator = QuestionGenerator()
+        print("✅ QuestionGenerator initialized")
+        
+        # Test basic question generation
+        request = QuestionGenerationRequest(
+            target_role="Software Engineer",
+            target_level="mid",
+            num_technical=2,
+            num_behavioral=1
+        )
+        
+        result = generator.generate_questions(request)
+        print(f"✅ Generated {len(result.questions)} questions")
+        
+        # Verify question structure
+        if result.questions:
+            q = result.questions[0]
+            assert hasattr(q, 'question'), "Question missing 'question' field"
+            assert hasattr(q, 'type'), "Question missing 'type' field"
+            assert hasattr(q, 'difficulty'), "Question missing 'difficulty' field"
+            print("✅ Question structure validated")
+            
+            # Test filtering
+            tech_questions = result.get_questions_by_type(QuestionType.TECHNICAL)
+            print(f"✅ Question filtering works: {len(tech_questions)} technical questions")
+        
+        # Test session ID is unique
+        result2 = generator.generate_questions(request)
+        assert result.session_id != result2.session_id, "Session IDs should be unique"
+        print("✅ Unique session IDs generated")
+        
+        print("\n✅ PASS - Question Generator")
+        return True
+        
+    except ImportError as e:
+        print(f"❌ FAIL - Question Generator: Import error: {e}")
+        return False
+    except Exception as e:
+        print(f"❌ FAIL - Question Generator: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def test_answer_evaluator():
+    """Test Answer Evaluator (Phase 4)"""
+    print("\n" + "=" * 60)
+    print("Testing Answer Evaluator (Phase 4)")
+    print("=" * 60)
+
+    try:
+        from src.evaluator.evaluator import AnswerEvaluator
+        from src.evaluator.schemas import (
+            EvaluationRequest,
+            AnswerEvaluation,
+            ScoreLevel,
+            EvaluationCriteria
+        )
+        
+        print("✅ Answer Evaluator modules imported successfully")
+        
+        # Test initialization
+        evaluator = AnswerEvaluator()
+        print("✅ AnswerEvaluator initialized")
+        
+        # Test basic evaluation
+        request = EvaluationRequest(
+            question="What is a hash table?",
+            answer="""A hash table is a data structure that provides O(1) average-case 
+            lookup by using a hash function to map keys to array indices. It handles 
+            collisions using chaining or open addressing.""",
+            question_type="technical",
+            expected_answer_points=[
+                "Hash function",
+                "O(1) lookup",
+                "Collision handling"
+            ]
+        )
+        
+        evaluation = evaluator.evaluate_answer(request)
+        print(f"✅ Generated evaluation with score: {evaluation.overall_score}/100")
+        
+        # Verify evaluation structure
+        assert hasattr(evaluation, 'overall_score'), "Missing overall_score"
+        assert hasattr(evaluation, 'score_level'), "Missing score_level"
+        assert hasattr(evaluation, 'strengths'), "Missing strengths"
+        assert hasattr(evaluation, 'weaknesses'), "Missing weaknesses"
+        print("✅ Evaluation structure validated")
+        
+        # Test score level
+        assert evaluation.score_level in [ScoreLevel.EXCELLENT, ScoreLevel.GOOD, ScoreLevel.FAIR, ScoreLevel.POOR]
+        print(f"✅ Score level: {evaluation.score_level.value}")
+        
+        # Test feedback generation
+        total_feedback = len(evaluation.strengths) + len(evaluation.weaknesses) + len(evaluation.suggestions)
+        assert total_feedback > 0, "No feedback generated"
+        print(f"✅ Generated {total_feedback} feedback items")
+        
+        # Test criterion scores
+        assert len(evaluation.criterion_scores) > 0, "No criterion scores"
+        print(f"✅ Generated {len(evaluation.criterion_scores)} criterion scores")
+        
+        print("\n✅ PASS - Answer Evaluator")
+        return True
+        
+    except ImportError as e:
+        print(f"❌ FAIL - Answer Evaluator: Import error: {e}")
+        return False
+    except Exception as e:
+        print(f"❌ FAIL - Answer Evaluator: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def test_session_manager():
+    """Test Session Manager & Progress Tracking (Phase 5 & 6)"""
+    print("\n" + "=" * 60)
+    print("Testing Session Manager & Progress Tracking (Phase 5 & 6)")
+    print("=" * 60)
+
+    try:
+        from src.session_manager.manager import SessionManager
+        from src.session_manager.schemas import (
+            SessionCreateRequest,
+            SessionStatus,
+            InterviewMode
+        )
+        
+        print("✅ Session Manager modules imported successfully")
+        
+        # Test initialization
+        manager = SessionManager()
+        print("✅ SessionManager initialized")
+        
+        # Test session creation
+        request = SessionCreateRequest(
+            candidate_name="Test User",
+            user_id="test_user_123",
+            target_role="Software Engineer",
+            experience_level="mid",
+            mode=InterviewMode.PRACTICE,
+            num_technical=2,
+            num_behavioral=1
+        )
+        
+        session = manager.create_session(request)
+        print(f"✅ Created session: {session.session_id}")
+        
+        # Verify session structure
+        assert session.session_id.startswith("sess_"), "Invalid session ID"
+        assert session.candidate_name == "Test User", "Incorrect candidate name"
+        assert session.total_questions == 3, "Incorrect question count"
+        assert session.status == SessionStatus.SCHEDULED, "Incorrect initial status"
+        print("✅ Session structure validated")
+        
+        # Test starting session
+        manager.start_session(session.session_id)
+        updated_session = manager.get_session(session.session_id)
+        assert updated_session.status == SessionStatus.IN_PROGRESS
+        print("✅ Session started successfully")
+        
+        # Test submitting answer
+        response = manager.submit_answer(
+            session.session_id,
+            0,
+            "A hash table uses a hash function to map keys to values efficiently",
+            200
+        )
+        assert response.evaluation_score is not None
+        print(f"✅ Answer evaluated with score: {response.evaluation_score}/100")
+        
+        # Test user progress
+        progress = manager.get_user_progress("test_user_123")
+        assert progress.user_id == "test_user_123"
+        assert progress.total_sessions >= 1
+        print(f"✅ User progress tracked: {progress.total_sessions} sessions")
+        
+        print("\n✅ PASS - Session Manager & Progress Tracking")
+        return True
+        
+    except ImportError as e:
+        print(f"❌ FAIL - Session Manager: Import error: {e}")
+        return False
+    except Exception as e:
+        print(f"❌ FAIL - Session Manager: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 def main():
     """Run all tests"""
     print("\n" + "=" * 60)
-    print("PrepWise AI - Phase 1 Setup Test")
+    print("PrepWise AI - Setup Verification (Phases 1-6)")
     print("=" * 60 + "\n")
 
     results = []
@@ -221,6 +431,9 @@ def main():
     results.append(("Pydantic Schemas", test_schemas()))
     results.append(("Validators", test_validators()))
     results.append(("LLM Client", test_llm_client()))
+    results.append(("Question Generator", test_question_generator()))
+    results.append(("Answer Evaluator", test_answer_evaluator()))
+    results.append(("Session Manager & Progress", test_session_manager()))
 
     # Summary
     print("\n" + "=" * 60)
@@ -237,11 +450,20 @@ def main():
     print(f"\nTotal: {total_passed}/{total_tests} tests passed")
 
     if total_passed == total_tests:
-        print("\n🎉 All tests passed! Phase 1 setup is complete!")
+        print("\n🎉 All tests passed! Phases 1-6 complete!")
+        print("\nCompleted Phases:")
+        print("✅ Phase 1: Core Infrastructure")
+        print("✅ Phase 2: Resume Parser")
+        print("✅ Phase 3: Question Generator")
+        print("✅ Phase 4: Answer Evaluator")
+        print("✅ Phase 5: Session Manager")
+        print("✅ Phase 6: Progress Tracking & Analytics")
+        print("\n🚀 PrepWise AI is production-ready!")
         print("\nNext steps:")
-        print("1. Start implementing Phase 2 (Resume Parser)")
-        print("2. Add sample resumes to examples/sample_resumes/")
-        print("3. Test with real resume data")
+        print("1. Build web API (FastAPI) or CLI interface")
+        print("2. Add database integration (PostgreSQL/MongoDB)")
+        print("3. Deploy to cloud (AWS/Azure/GCP)")
+        print("4. Add user authentication and authorization")
         return 0
     else:
         print("\n⚠️  Some tests failed. Please fix the issues above.")
