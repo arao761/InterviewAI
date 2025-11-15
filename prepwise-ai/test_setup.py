@@ -417,10 +417,56 @@ def test_session_manager():
         return False
 
 
+def test_api():
+    """Test PrepWise API (Phase 7 & 8)"""
+    print("\n" + "=" * 60)
+    print("Testing PrepWise API (Phase 7 & 8)")
+    print("=" * 60)
+
+    try:
+        from src.api.prepwise_api import PrepWiseAPI, create_api
+        
+        print("✅ API modules imported successfully")
+        
+        # Test API creation
+        api = PrepWiseAPI()
+        print("✅ PrepWise API initialized")
+        
+        # Verify all components
+        assert api.resume_parser is not None, "Resume parser not initialized"
+        assert api.question_generator is not None, "Question generator not initialized"
+        assert api.answer_evaluator is not None, "Answer evaluator not initialized"
+        assert api.session_manager is not None, "Session manager not initialized"
+        print("✅ All API components initialized")
+        
+        # Test convenience function
+        api2 = create_api()
+        assert api2 is not None
+        print("✅ Convenience function works")
+        
+        # Test statistics
+        stats = api.get_statistics()
+        assert stats["status"] == "operational"
+        assert stats["phases_implemented"] == 8
+        print(f"✅ System statistics: {stats['phases_implemented']} phases operational")
+        
+        print("\n✅ PASS - PrepWise API")
+        return True
+        
+    except ImportError as e:
+        print(f"❌ FAIL - PrepWise API: Import error: {e}")
+        return False
+    except Exception as e:
+        print(f"❌ FAIL - PrepWise API: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 def main():
     """Run all tests"""
     print("\n" + "=" * 60)
-    print("PrepWise AI - Setup Verification (Phases 1-6)")
+    print("PrepWise AI - Setup Verification (Phases 1-8)")
     print("=" * 60 + "\n")
 
     results = []
@@ -434,6 +480,7 @@ def main():
     results.append(("Question Generator", test_question_generator()))
     results.append(("Answer Evaluator", test_answer_evaluator()))
     results.append(("Session Manager & Progress", test_session_manager()))
+    results.append(("PrepWise API", test_api()))
 
     # Summary
     print("\n" + "=" * 60)
@@ -450,7 +497,7 @@ def main():
     print(f"\nTotal: {total_passed}/{total_tests} tests passed")
 
     if total_passed == total_tests:
-        print("\n🎉 All tests passed! Phases 1-6 complete!")
+        print("\n🎉 All tests passed! Phases 1-8 complete!")
         print("\nCompleted Phases:")
         print("✅ Phase 1: Core Infrastructure")
         print("✅ Phase 2: Resume Parser")
@@ -458,12 +505,14 @@ def main():
         print("✅ Phase 4: Answer Evaluator")
         print("✅ Phase 5: Session Manager")
         print("✅ Phase 6: Progress Tracking & Analytics")
+        print("✅ Phase 7: Scoring & Feedback Engine (Integrated)")
+        print("✅ Phase 8: Integration Layer & API")
         print("\n🚀 PrepWise AI is production-ready!")
         print("\nNext steps:")
-        print("1. Build web API (FastAPI) or CLI interface")
-        print("2. Add database integration (PostgreSQL/MongoDB)")
-        print("3. Deploy to cloud (AWS/Azure/GCP)")
-        print("4. Add user authentication and authorization")
+        print("1. Run: python examples/complete_workflow_example.py")
+        print("2. Build web API with FastAPI")
+        print("3. Add database integration")
+        print("4. Deploy to cloud platform")
         return 0
     else:
         print("\n⚠️  Some tests failed. Please fix the issues above.")
