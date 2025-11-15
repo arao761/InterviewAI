@@ -74,15 +74,16 @@ class PrepWiseAPI:
     ) -> ParsedResume:
         """
         Parse a resume from PDF or DOCX file
-        
+
         Args:
             file_path: Path to resume file
-            calculate_stats: Whether to calculate parsing statistics
-            
+            calculate_stats: Whether to calculate parsing statistics (ignored for now)
+
         Returns:
             ParsedResume object with structured data
         """
-        return self.resume_parser.parse_resume(file_path, calculate_stats)
+        # ResumeParser.parse_resume() doesn't accept calculate_stats parameter
+        return self.resume_parser.parse_resume(file_path)
     
     def parse_resume_from_text(self, text: str) -> ParsedResume:
         """

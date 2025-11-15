@@ -7,12 +7,14 @@ export default function RecordingControls({
   onNextQuestion,
   onSkip,
   isLastQuestion,
+  disabled = false,
 }: {
   isRecording: boolean;
   onToggleRecording: () => void;
   onNextQuestion: () => void;
   onSkip: () => void;
   isLastQuestion: boolean;
+  disabled?: boolean;
 }) {
   return (
     <div className="space-y-6">
@@ -21,6 +23,7 @@ export default function RecordingControls({
         <Button
           onClick={onToggleRecording}
           size="lg"
+          disabled={disabled}
           className={`rounded-full w-32 h-32 flex items-center justify-center text-lg font-semibold transition-all ${
             isRecording
               ? 'bg-red-600 text-white hover:bg-red-700 animate-pulse'
@@ -61,12 +64,14 @@ export default function RecordingControls({
           variant="outline"
           className="flex-1 border-border hover:bg-card"
           onClick={onSkip}
+          disabled={disabled}
         >
           <SkipForward className="w-4 h-4 mr-2" />
           Skip
         </Button>
         <Button
           onClick={onNextQuestion}
+          disabled={disabled}
           className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
         >
           <Check className="w-4 h-4 mr-2" />
