@@ -1,0 +1,228 @@
+{
+  "session_id": "sess_973d64053fac",
+  "user_id": "user_jane_smith",
+  "candidate_name": "JANE SMITH",
+  "candidate_email": null,
+  "target_role": "Senior Software Engineer",
+  "target_company": "FAANG",
+  "experience_level": "senior",
+  "status": "completed",
+  "mode": "mock",
+  "session_type": "mixed",
+  "created_at": "2025-11-15T15:22:14.126819",
+  "started_at": "2025-11-15T15:22:14.128899",
+  "completed_at": "2025-11-15T15:22:35.967088",
+  "updated_at": "2025-11-15T15:22:35.967167",
+  "total_questions": 5,
+  "questions_answered": 5,
+  "questions_skipped": 0,
+  "current_question_index": 5,
+  "responses": [
+    {
+      "question_id": "q_0",
+      "question_text": "How would you design a system for handling millions of real-time transactions per second using microservices?",
+      "question_type": "technical",
+      "question_difficulty": "hard",
+      "answer_text": "In our migration to microservices at Tech Corp, we used a strangler fig pattern. \n        We started by identifying bounded contexts and breaking down the monolith gradually. \n        Each service had its own database following the database-per-service pattern. We used \n        Kubernetes for orchestration and implemented API gateway for routing. The key challenges \n        were maintaining data consistency across services - we used event sourcing and CQRS for \n        that. We also implemented circuit breakers and retry logic for resilience. The result \n        was 300% improvement in scalability and much better deployment velocity.",
+      "time_spent_seconds": 300,
+      "started_at": null,
+      "answered_at": "2025-11-15T15:22:14.130127",
+      "evaluation_score": 55.0,
+      "evaluation_id": "eval_f1129ae7f928",
+      "feedback_summary": "Answer demonstrates fair understanding. Score based on length, coverage of key points, and structure.",
+      "is_skipped": false,
+      "is_flagged": false,
+      "notes": null
+    },
+    {
+      "question_id": "q_1",
+      "question_text": "Can you discuss a situation where you had to make a tough decision that affected your team, but was necessary for the overall project success?",
+      "question_type": "technical",
+      "question_difficulty": "medium",
+      "answer_text": "For API optimization, I start with profiling to identify bottlenecks. At StartupXYZ, \n        we had slow database queries. I added proper indexing on frequently queried columns, \n        implemented Redis caching for hot data with a TTL strategy, and used connection pooling. \n        We also implemented pagination for large datasets and added database query optimization \n        like SELECT only needed columns. Result was 60% reduction in response time.",
+      "time_spent_seconds": 330,
+      "started_at": null,
+      "answered_at": "2025-11-15T15:22:18.514401",
+      "evaluation_score": 60.0,
+      "evaluation_id": "eval_7f74ac804db3",
+      "feedback_summary": "Answer demonstrates fair understanding. Score based on length, coverage of key points, and structure.",
+      "is_skipped": false,
+      "is_flagged": false,
+      "notes": null
+    },
+    {
+      "question_id": "q_2",
+      "question_text": "What are the advantages and disadvantages of microservices, and when would you choose to use them?",
+      "question_type": "technical",
+      "question_difficulty": "medium",
+      "answer_text": "System design for a URL shortener: I'd use a hash function to generate short codes, \n        store mappings in a distributed database like DynamoDB for scalability. For high \n        availability, deploy across multiple regions. Use a load balancer and implement caching \n        with Redis for popular URLs. Add analytics tracking with a separate service. Consider \n        rate limiting to prevent abuse. For scale, use consistent hashing for data distribution.",
+      "time_spent_seconds": 360,
+      "started_at": null,
+      "answered_at": "2025-11-15T15:22:22.860875",
+      "evaluation_score": 60.0,
+      "evaluation_id": "eval_174975778382",
+      "feedback_summary": "Answer demonstrates fair understanding. Score based on length, coverage of key points, and structure.",
+      "is_skipped": false,
+      "is_flagged": false,
+      "notes": null
+    },
+    {
+      "question_id": "q_3",
+      "question_text": "Tell me about a time when you had to lead a project that did not go as planned. How did you adapt and manage the situation?",
+      "question_type": "behavioral",
+      "question_difficulty": "hard",
+      "answer_text": "When I was leading the team at Tech Corp, we had a junior engineer who was struggling \n        with code quality. I scheduled one-on-one meetings to understand their challenges. They \n        lacked experience with testing. I paired with them on writing tests, shared resources, \n        and set up a mentorship schedule. Within two months, their code quality improved \n        significantly, and they became one of our strongest contributors. I learned that investing \n        time in people pays off tremendously.",
+      "time_spent_seconds": 390,
+      "started_at": null,
+      "answered_at": "2025-11-15T15:22:27.269133",
+      "evaluation_score": 55.0,
+      "evaluation_id": "eval_7d212730b195",
+      "feedback_summary": "Answer demonstrates fair understanding. Score based on length, coverage of key points, and structure.",
+      "is_skipped": false,
+      "is_flagged": false,
+      "notes": null
+    },
+    {
+      "question_id": "q_4",
+      "question_text": "Describe a complex technical problem you had to solve in a previous role. What was your process for resolving it and how did you communicate your solution to your team?",
+      "question_type": "behavioral",
+      "question_difficulty": "medium",
+      "answer_text": "During the microservices migration, our VP wanted to do a big-bang rewrite, but I knew \n        that was risky. I prepared data showing the risks of big rewrites - downtime, bugs, and \n        opportunity cost. I proposed the strangler pattern with a detailed plan showing incremental \n        value delivery. I created a prototype demonstrating how we could migrate one service at a \n        time. After presenting the data and prototype, the VP agreed. The incremental approach was \n        successful and we had zero downtime.",
+      "time_spent_seconds": 420,
+      "started_at": null,
+      "answered_at": "2025-11-15T15:22:31.613172",
+      "evaluation_score": 55.0,
+      "evaluation_id": "eval_4fe66aa222e2",
+      "feedback_summary": "Answer demonstrates fair understanding. Score based on length, coverage of key points, and structure.",
+      "is_skipped": false,
+      "is_flagged": false,
+      "notes": null
+    }
+  ],
+  "average_score": 57.0,
+  "total_duration_seconds": 1800,
+  "technical_score": 58.333333333333336,
+  "behavioral_score": 55.0,
+  "session_summary": "Fair performance with room for improvement. Technical: 58/100, Behavioral: 55/100.",
+  "strengths": [],
+  "weaknesses": [],
+  "recommendations": [],
+  "resume_id": null,
+  "resume_summary": {
+    "contact": {
+      "name": "JANE SMITH",
+      "email": "jane.smith@example.com",
+      "phone": "(555) 123-4567",
+      "linkedin": "linkedin.com/in/janesmith",
+      "github": "github.com/janesmith",
+      "portfolio": "",
+      "location": "San Francisco, CA"
+    },
+    "education": [
+      {
+        "institution": "University of Texas",
+        "degree": "B.S.",
+        "field": "Computer Science",
+        "graduation_date": "2017",
+        "gpa": "3.8/4.0",
+        "honors": [],
+        "relevant_coursework": []
+      }
+    ],
+    "experience": [
+      {
+        "company": "Tech Corp",
+        "title": "Senior Software Engineer",
+        "start_date": "Jan 2020",
+        "end_date": "Present",
+        "location": "San Francisco, CA",
+        "responsibilities": [
+          "Led migration of monolithic application to microservices architecture",
+          "Implemented CI/CD pipeline",
+          "Mentored team of 5 junior engineers on best practices and code reviews"
+        ],
+        "achievements": [
+          "Improved scalability by 300%",
+          "Reduced deployment time from 4 hours to 15 minutes"
+        ],
+        "technologies": [
+          "Python",
+          "Django",
+          "React",
+          "Kubernetes",
+          "AWS",
+          "PostgreSQL"
+        ]
+      },
+      {
+        "company": "StartupXYZ",
+        "title": "Software Engineer",
+        "start_date": "Mar 2017",
+        "end_date": "Dec 2019",
+        "location": "Austin, TX",
+        "responsibilities": [
+          "Developed RESTful APIs",
+          "Optimized database queries",
+          "Built real-time notification system using WebSockets"
+        ],
+        "achievements": [
+          "Served 1M+ requests per day",
+          "Reduced response time by 60%"
+        ],
+        "technologies": [
+          "Node.js",
+          "Express",
+          "MongoDB",
+          "Redis",
+          "Docker"
+        ]
+      }
+    ],
+    "skills": {
+      "technical": [],
+      "soft": [],
+      "tools": [
+        "Git",
+        "Jenkins",
+        "GitHub Actions",
+        "Terraform"
+      ],
+      "languages": [
+        "Python",
+        "JavaScript",
+        "TypeScript",
+        "Java",
+        "Go"
+      ],
+      "frameworks": [
+        "Django",
+        "React",
+        "Node.js",
+        "Express",
+        "FastAPI"
+      ],
+      "databases": [
+        "PostgreSQL",
+        "MongoDB",
+        "Redis",
+        "DynamoDB"
+      ],
+      "cloud": [
+        "AWS",
+        "GCP",
+        "Azure",
+        "Kubernetes",
+        "Docker"
+      ]
+    },
+    "projects": [],
+    "certifications": [],
+    "leadership": [],
+    "awards": [],
+    "publications": [],
+    "volunteer": [],
+    "experience_level": null,
+    "total_years_experience": 6.8,
+    "primary_domain": null
+  }
+}
