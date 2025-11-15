@@ -1,0 +1,147 @@
+You are an expert resume parser. Extract structured information from this resume text.
+
+Resume Text:
+{resume_text}
+
+Return a JSON object with this EXACT schema:
+{{
+  "contact": {{
+    "name": "",
+    "email": "",
+    "phone": "",
+    "linkedin": "",
+    "github": "",
+    "portfolio": "",
+    "location": ""
+  }},
+  "education": [
+    {{
+      "institution": "",
+      "degree": "",
+      "field": "",
+      "graduation_date": "",
+      "gpa": "",
+      "honors": [],
+      "relevant_coursework": []
+    }}
+  ],
+  "experience": [
+    {{
+      "company": "",
+      "title": "",
+      "start_date": "",
+      "end_date": "",
+      "location": "",
+      "responsibilities": [],
+      "achievements": [],
+      "technologies": []
+    }}
+  ],
+  "skills": {{
+    "technical": [],
+    "soft": [],
+    "tools": [],
+    "languages": [],
+    "frameworks": [],
+    "databases": [],
+    "cloud": []
+  }},
+  "projects": [
+    {{
+      "name": "",
+      "description": "",
+      "technologies": [],
+      "url": "",
+      "highlights": [],
+      "duration": ""
+    }}
+  ],
+  "certifications": [],
+  "leadership": [],
+  "awards": [],
+  "publications": [],
+  "volunteer": [],
+  "total_years_experience": 0.0
+}}
+
+IMPORTANT EXTRACTION RULES:
+
+1. **Contact Information**:
+   - Extract name from header or first occurrence
+   - Find email addresses (format: xxx@xxx.xxx)
+   - Extract phone numbers (any format)
+   - LinkedIn URL or username
+   - GitHub URL or username
+   - Portfolio/personal website
+   - Location/address
+
+2. **Education**:
+   - List all educational institutions
+   - Extract degree type (BS, MS, PhD, etc.)
+   - Field of study (Computer Science, etc.)
+   - Graduation date or expected graduation
+   - GPA if mentioned
+   - Honors (Dean's List, Cum Laude, etc.)
+   - Relevant coursework if listed
+
+3. **Work Experience**:
+   - List in reverse chronological order (most recent first)
+   - Company name
+   - Job title
+   - Start and end dates (use "Present" for current roles)
+   - Location
+   - SEPARATE responsibilities from achievements:
+     - **Responsibilities**: What they were supposed to do (duties, tasks)
+     - **Achievements**: Measurable results, impact, improvements
+   - Extract technologies/tools mentioned in each role
+
+4. **Skills**:
+   - **Technical**: Programming languages (Python, Java, etc.)
+   - **Languages**: Same as technical (programming languages)
+   - **Frameworks**: React, Django, TensorFlow, etc.
+   - **Tools**: Git, Docker, Jenkins, etc.
+   - **Databases**: PostgreSQL, MongoDB, etc.
+   - **Cloud**: AWS, GCP, Azure, etc.
+   - **Soft**: Leadership, Communication, Problem-solving, etc.
+
+5. **Projects**:
+   - Project name
+   - Brief description
+   - Technologies used
+   - URL if provided (GitHub, demo link)
+   - Key highlights or achievements
+   - Duration if mentioned
+
+6. **Other Sections**:
+   - **Certifications**: AWS Certified, etc.
+   - **Leadership**: Club president, team lead, etc.
+   - **Awards**: Hackathon winner, scholarships, etc.
+   - **Publications**: Research papers, blog posts, etc.
+   - **Volunteer**: Non-profit work, community service, etc.
+
+7. **Experience Calculation**:
+   - Calculate total_years_experience by summing all work experience durations
+   - For current roles (end_date = "Present"), calculate from start_date to now
+   - Include internships and co-ops
+   - Round to 1 decimal place
+
+EXTRACTION GUIDELINES:
+
+ **DO**:
+- Extract ALL available information accurately
+- Use null or empty arrays for missing fields
+- Create separate bullet points for responsibilities/achievements
+- Extract action verbs and quantifiable results
+- Identify all technical skills, tools, and technologies mentioned
+- Be precise with dates, names, and technical terms
+- Look for metrics, percentages, and numbers (e.g., "improved performance by 40%")
+- Separate what they did (responsibilities) from impact (achievements)
+
+L **DON'T**:
+- Make up or infer information not in the resume
+- Combine different sections
+- Lose important details
+- Guess at missing information
+
+RESPONSE FORMAT:
+Return ONLY valid JSON, no additional text, no markdown code blocks, no explanations.
