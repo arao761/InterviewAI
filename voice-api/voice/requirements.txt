@@ -1,0 +1,26 @@
+# PrepWise Voice API - Python Dependencies
+# This file contains all packages and dependencies used in the codebase
+
+# Web Framework & Server
+fastapi>=0.104.0              # FastAPI web framework for building the API
+uvicorn[standard]>=0.24.0     # ASGI server with standard extras (websockets, http/2, etc.)
+
+# Transcription API Integration
+openai>=1.0.0                 # OpenAI Python client for Whisper and TTS APIs (optional if using Vapi)
+requests>=2.31.0              # HTTP library for Vapi API integration
+
+# Audio Processing
+pydub>=0.25.1                 # Audio manipulation library (format conversion, compression, normalization)
+librosa>=0.10.0               # Audio analysis library (duration, sample rate, etc.)
+numpy>=1.24.0                 # Numerical computing library (required by librosa)
+
+# File Handling
+python-multipart>=0.0.6       # Required by FastAPI for handling file uploads (UploadFile)
+aiofiles>=23.0.0              # Async file operations (for async file handling)
+
+# Configuration & Environment
+python-dotenv>=1.0.0          # Load environment variables from .env file
+
+# Note: Additional system dependencies (not Python packages):
+# - ffmpeg: Required by pydub for audio format conversion
+#   Install via: brew install ffmpeg (macOS) or apt-get install ffmpeg (Linux)

@@ -1,0 +1,29 @@
+{
+  "name": "prepwise-voice-recorder",
+  "version": "1.0.0",
+  "description": "Core audio recording and transcription module for PrepWise interview preparation platform",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc && vite build",
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "audio",
+    "recording",
+    "mediarecorder",
+    "prepwise",
+    "voice"
+  ],
+  "author": "PrepWise Team",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "@vapi-ai/web": "^2.5.0"
+  }
+}

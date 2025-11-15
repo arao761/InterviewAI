@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase 2 Testing - PrepWise Voice Recorder</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .test-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+
+    .test-section h2 {
+      color: #333;
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    .test-section h3 {
+      color: #555;
+      font-size: 16px;
+      margin: 15px 0 10px 0;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-danger {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: #c0392b;
+    }
+
+    .btn-success {
+      background: #27ae60;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #95a5a6;
+      color: white;
+    }
+
+    .status {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .status.idle {
+      background: #ecf0f1;
+      color: #7f8c8d;
+    }
+
+    .status.requesting {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .status.recording {
+      background: #f8d7da;
+      color: #721c24;
+      animation: pulse 2s infinite;
+    }
+
+    .status.paused {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+
+    .status.stopped {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .info-card {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .info-card label {
+      display: block;
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-card value {
+      display: block;
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .config-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .config-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .config-item label {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+
+    .config-item select, .config-item input {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .audio-preview {
+      margin-top: 20px;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      border: 2px dashed #ddd;
+    }
+
+    .audio-preview audio {
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .waveform-container {
+      margin: 20px 0;
+      padding: 20px;
+      background: #1a1a1a;
+      border-radius: 8px;
+    }
+
+    #waveformCanvas {
+      width: 100%;
+      height: 150px;
+      display: block;
+    }
+
+    .log {
+      background: #1a1a1a;
+      color: #0f0;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 20px;
+    }
+
+    .log-entry {
+      margin-bottom: 5px;
+    }
+
+    .log-entry.error {
+      color: #f00;
+    }
+
+    .log-entry.success {
+      color: #0f0;
+    }
+
+    .log-entry.warning {
+      color: #ff0;
+    }
+
+    .test-checklist {
+      list-style: none;
+      margin-top: 15px;
+    }
+
+    .test-checklist li {
+      padding: 8px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .test-checklist li:before {
+      content: '☐ ';
+      margin-right: 8px;
+      font-size: 18px;
+    }
+
+    .test-checklist li.completed:before {
+      content: '✅ ';
+    }
+
+    .test-checklist li.failed:before {
+      content: '❌ ';
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 Phase 2 Testing Suite</h1>
+    <p class="subtitle">Comprehensive testing for Frontend Audio Recording Component</p>
+
+    <!-- Test 1: Browser Compatibility -->
+    <div class="test-section">
+      <h2>Test 1: Browser Compatibility</h2>
+      <div id="browserSupport"></div>
+    </div>
+
+    <!-- Test 2: Recording Controls -->
+    <div class="test-section">
+      <h2>Test 2: Recording Controls</h2>
+      
+      <div class="config-section">
+        <div class="config-item">
+          <label>Format</label>
+          <select id="formatSelect">
+            <option value="webm">WebM</option>
+            <option value="wav">WAV</option>
+            <option value="mp3">MP3</option>
+          </select>
+        </div>
+        <div class="config-item">
+          <label>Bitrate</label>
+          <select id="bitrateSelect">
+            <option value="64k">64k</option>
+            <option value="128k" selected>128k</option>
+            <option value="192k">192k</option>
+            <option value="256k">256k</option>
+          </select>
+        </div>
+        <div class="config-item">
+          <label>Sample Rate</label>
+          <select id="sampleRateSelect">
+            <option value="22050">22050 Hz</option>
+            <option value="44100" selected>44100 Hz</option>
+            <option value="48000">48000 Hz</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="status idle" id="statusDisplay">
+        Status: Idle
+      </div>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <label>Duration</label>
+          <value id="durationDisplay">0.0s</value>
+        </div>
+        <div class="info-card">
+          <label>File Size</label>
+          <value id="sizeDisplay">-</value>
+        </div>
+        <div class="info-card">
+          <label>Format</label>
+          <value id="formatDisplay">-</value>
+        </div>
+        <div class="info-card">
+          <label>State</label>
+          <value id="stateDisplay">idle</value>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn-primary" id="startBtn">Start Recording</button>
+        <button class="btn-secondary" id="pauseBtn" disabled>Pause</button>
+        <button class="btn-secondary" id="resumeBtn" disabled>Resume</button>
+        <button class="btn-danger" id="stopBtn" disabled>Stop</button>
+        <button class="btn-secondary" id="releaseBtn">Release Resources</button>
+      </div>
+
+      <div class="waveform-container">
+        <canvas id="waveformCanvas"></canvas>
+      </div>
+    </div>
+
+    <!-- Test 3: Audio Playback -->
+    <div class="test-section">
+      <h2>Test 3: Audio Playback & Validation</h2>
+      <div id="audioPreview" class="audio-preview" style="display: none;">
+        <h3>Recorded Audio</h3>
+        <div id="audioPlayer"></div>
+        <div id="validationResult"></div>
+      </div>
+    </div>
+
+    <!-- Test 3.5: Transcription -->
+    <div class="test-section">
+      <h2>Test 3.5: Speech-to-Text Transcription (Phase 3 Features)</h2>
+      <div style="margin-bottom: 15px;">
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+          <input type="checkbox" id="autoTranscribeCheckbox" checked style="width: 20px; height: 20px;">
+          <span>Automatically transcribe after recording stops</span>
+        </label>
+      </div>
+      
+      <!-- Phase 3 Options -->
+      <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e0e0e0;">
+        <h3 style="font-size: 16px; margin-bottom: 10px; color: #667eea;">Phase 3 Options:</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="includeTimestampsCheckbox" checked style="width: 18px; height: 18px;">
+            <span style="font-size: 14px;">Include Timestamps</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="includeConfidenceCheckbox" checked style="width: 18px; height: 18px;">
+            <span style="font-size: 14px;">Include Confidence Scores</span>
+          </label>
+          <div style="display: flex; flex-direction: column; gap: 5px;">
+            <label style="font-size: 12px; color: #666;">Language:</label>
+            <select id="languageSelect" style="padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+              <option value="">Auto-detect</option>
+              <option value="en" selected>English</option>
+              <option value="es">Spanish</option>
+              <option value="fr">French</option>
+              <option value="de">German</option>
+              <option value="it">Italian</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div id="transcriptionSection" style="display: none;">
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+          <button class="btn-primary" id="transcribeBtn" disabled>Transcribe Recording</button>
+          <button class="btn-secondary" id="clearTranscriptBtn" style="display: none;">Clear Transcript</button>
+        </div>
+        <div id="transcriptionStatus" style="margin-bottom: 15px;"></div>
+        <div id="transcriptionDisplay" style="
+          background: #f8f9fa;
+          border: 2px solid #667eea;
+          border-radius: 8px;
+          padding: 20px;
+          min-height: 100px;
+          font-size: 16px;
+          line-height: 1.6;
+          color: #333;
+        "></div>
+      </div>
+    </div>
+
+    <!-- Test 4: Error Handling -->
+    <div class="test-section">
+      <h2>Test 4: Error Handling</h2>
+      <h3>Test Scenarios:</h3>
+      <ul class="test-checklist" id="errorTests">
+        <li>Permission denied (deny microphone access)</li>
+        <li>No microphone (disconnect if possible)</li>
+        <li>Microphone in use (open another app using mic)</li>
+        <li>Invalid configuration</li>
+      </ul>
+    </div>
+
+    <!-- Test 5: Event System -->
+    <div class="test-section">
+      <h2>Test 5: Event System</h2>
+      <div class="log" id="eventLog"></div>
+    </div>
+
+    <!-- Test 6: API Integration -->
+    <div class="test-section">
+      <h2>Test 6: Backend API Integration</h2>
+      <div id="apiStatus"></div>
+      <button class="btn-primary" id="testApiBtn" style="margin-top: 10px;">Test API Connection</button>
+      <div id="transcriptionResult" style="margin-top: 15px;"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { 
+      AudioRecorder, 
+      AudioVisualizer, 
+      drawWaveform,
+      VoiceApiClient,
+      RECORDING_PRESETS 
+    } from './src/index.ts';
+
+    // Initialize components
+    let recorder = null;
+    let visualizer = null;
+    let durationInterval = null;
+    let currentRecording = null;
+
+    // DOM elements
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resumeBtn = document.getElementById('resumeBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const releaseBtn = document.getElementById('releaseBtn');
+    const statusDisplay = document.getElementById('statusDisplay');
+    const durationDisplay = document.getElementById('durationDisplay');
+    const sizeDisplay = document.getElementById('sizeDisplay');
+    const formatDisplay = document.getElementById('formatDisplay');
+    const stateDisplay = document.getElementById('stateDisplay');
+    const audioPreview = document.getElementById('audioPreview');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const validationResult = document.getElementById('validationResult');
+    const eventLog = document.getElementById('eventLog');
+    const waveformCanvas = document.getElementById('waveformCanvas');
+    const formatSelect = document.getElementById('formatSelect');
+    const bitrateSelect = document.getElementById('bitrateSelect');
+    const sampleRateSelect = document.getElementById('sampleRateSelect');
+    const browserSupport = document.getElementById('browserSupport');
+    const apiStatus = document.getElementById('apiStatus');
+    const testApiBtn = document.getElementById('testApiBtn');
+    const transcriptionResult = document.getElementById('transcriptionResult');
+    const autoTranscribeCheckbox = document.getElementById('autoTranscribeCheckbox');
+    const includeTimestampsCheckbox = document.getElementById('includeTimestampsCheckbox');
+    const includeConfidenceCheckbox = document.getElementById('includeConfidenceCheckbox');
+    const languageSelect = document.getElementById('languageSelect');
+    const transcriptionSection = document.getElementById('transcriptionSection');
+    const transcribeBtn = document.getElementById('transcribeBtn');
+    const clearTranscriptBtn = document.getElementById('clearTranscriptBtn');
+    const transcriptionStatus = document.getElementById('transcriptionStatus');
+    const transcriptionDisplay = document.getElementById('transcriptionDisplay');
+    let apiClient = null;
+
+    // Test 1: Browser Compatibility
+    function testBrowserSupport() {
+      const isSupported = AudioRecorder.isSupported();
+      const support = {
+        mediaRecorder: typeof MediaRecorder !== 'undefined',
+        getUserMedia: typeof navigator !== 'undefined' && 
+                     typeof navigator.mediaDevices !== 'undefined' &&
+                     typeof navigator.mediaDevices.getUserMedia !== 'undefined',
+        audioContext: typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined'
+      };
+
+      browserSupport.innerHTML = `
+        <div class="info-grid">
+          <div class="info-card">
+            <label>MediaRecorder API</label>
+            <value>${support.mediaRecorder ? '✅ Supported' : '❌ Not Supported'}</value>
+          </div>
+          <div class="info-card">
+            <label>getUserMedia</label>
+            <value>${support.getUserMedia ? '✅ Supported' : '❌ Not Supported'}</value>
+          </div>
+          <div class="info-card">
+            <label>AudioContext</label>
+            <value>${support.audioContext ? '✅ Supported' : '❌ Not Supported'}</value>
+          </div>
+          <div class="info-card">
+            <label>Overall</label>
+            <value>${isSupported ? '✅ Ready' : '❌ Not Ready'}</value>
+          </div>
+        </div>
+        <p style="margin-top: 10px; color: #666;">
+          Browser: ${navigator.userAgent.split(' ')[0]}<br>
+          Platform: ${navigator.platform}
+        </p>
+      `;
+    }
+
+    // Logging
+    function log(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      eventLog.appendChild(entry);
+      eventLog.scrollTop = eventLog.scrollHeight;
+    }
+
+    // Update status display
+    function updateStatus(state) {
+      statusDisplay.className = `status ${state}`;
+      statusDisplay.textContent = `Status: ${state.charAt(0).toUpperCase() + state.slice(1)}`;
+      stateDisplay.textContent = state;
+    }
+
+    // Update duration
+    function updateDuration() {
+      if (recorder) {
+        const duration = recorder.getDuration();
+        durationDisplay.textContent = `${duration.toFixed(1)}s`;
+      }
+    }
+
+    // Initialize recorder
+    function initRecorder() {
+      if (recorder) {
+        recorder.release();
+      }
+
+      const config = {
+        format: formatSelect.value,
+        bitrate: bitrateSelect.value,
+        sampleRate: parseInt(sampleRateSelect.value),
+        channels: 1
+      };
+
+      recorder = new AudioRecorder(config);
+      
+      // Setup event listeners
+      recorder.on('start', () => {
+        log('Recording started', 'success');
+        updateStatus('recording');
+        startBtn.disabled = true;
+        pauseBtn.disabled = false;
+        stopBtn.disabled = false;
+        resumeBtn.disabled = true;
+        durationInterval = setInterval(updateDuration, 100);
+      });
+
+      recorder.on('stop', () => {
+        log('Recording stopped', 'success');
+        updateStatus('stopped');
+        startBtn.disabled = false;
+        pauseBtn.disabled = true;
+        resumeBtn.disabled = true;
+        stopBtn.disabled = true;
+        if (durationInterval) {
+          clearInterval(durationInterval);
+          durationInterval = null;
+        }
+      });
+
+      recorder.on('pause', () => {
+        log('Recording paused', 'warning');
+        updateStatus('paused');
+        pauseBtn.disabled = true;
+        resumeBtn.disabled = false;
+      });
+
+      recorder.on('resume', () => {
+        log('Recording resumed', 'success');
+        updateStatus('recording');
+        pauseBtn.disabled = false;
+        resumeBtn.disabled = true;
+      });
+
+      recorder.on('error', (event) => {
+        log(`Error: ${event.error?.message || 'Unknown error'}`, 'error');
+        updateStatus('error');
+      });
+
+      recorder.on('statechange', (event) => {
+        log(`State changed: ${event.state}`, 'info');
+      });
+
+      log('Recorder initialized with config: ' + JSON.stringify(config));
+    }
+
+    // Initialize visualizer
+    async function initVisualizer() {
+      if (visualizer) {
+        visualizer.release();
+      }
+
+      if (!recorder || !recorder.getStream()) {
+        return;
+      }
+
+      visualizer = new AudioVisualizer();
+      await visualizer.initialize(recorder.getStream());
+      
+      visualizer.start((data) => {
+        drawWaveform(waveformCanvas, data.data, {
+          color: '#667eea',
+          lineWidth: 2,
+          backgroundColor: '#1a1a1a'
+        });
+      });
+
+      log('Visualizer initialized');
+    }
+
+    // Start recording
+    startBtn.addEventListener('click', async () => {
+      try {
+        initRecorder();
+        await recorder.requestPermission();
+        await initVisualizer();
+        await recorder.start();
+        log('Recording started successfully', 'success');
+      } catch (error) {
+        log(`Failed to start recording: ${error.message}`, 'error');
+        updateStatus('error');
+      }
+    });
+
+    // Pause recording
+    pauseBtn.addEventListener('click', () => {
+      recorder.pause();
+    });
+
+    // Resume recording
+    resumeBtn.addEventListener('click', () => {
+      recorder.resume();
+    });
+
+    // Stop recording
+    stopBtn.addEventListener('click', async () => {
+      try {
+        if (visualizer) {
+          visualizer.stop();
+        }
+        const result = await recorder.stop();
+        currentRecording = result;
+        
+        // Display results
+        sizeDisplay.textContent = `${(result.size / 1024).toFixed(2)} KB`;
+        formatDisplay.textContent = result.format;
+        
+        // Show audio preview
+        audioPlayer.innerHTML = `<audio controls src="${result.url}"></audio>`;
+        audioPreview.style.display = 'block';
+        
+        // Validate
+        const validation = recorder.validateRecording(result);
+        if (validation.valid) {
+          validationResult.innerHTML = '<p style="color: #27ae60;">✅ Recording is valid</p>';
+        } else {
+          validationResult.innerHTML = `<p style="color: #e74c3c;">❌ Validation failed: ${validation.errors.join(', ')}</p>`;
+        }
+        
+        // Show transcription section
+        transcriptionSection.style.display = 'block';
+        transcribeBtn.disabled = false;
+        
+        // Auto-transcribe if enabled
+        if (autoTranscribeCheckbox.checked) {
+          await transcribeRecording();
+        }
+        
+        log(`Recording complete: ${result.duration.toFixed(2)}s, ${(result.size / 1024).toFixed(2)}KB`, 'success');
+      } catch (error) {
+        log(`Failed to stop recording: ${error.message}`, 'error');
+      }
+    });
+
+    // Transcribe recording
+    async function transcribeRecording() {
+      if (!currentRecording) {
+        log('No recording available to transcribe', 'error');
+        return;
+      }
+
+      // Initialize API client if not already done
+      if (!apiClient) {
+        apiClient = new VoiceApiClient({ baseUrl: 'http://localhost:8000' });
+      }
+
+      // Show loading state
+      transcriptionStatus.innerHTML = '<p style="color: #667eea;">🔄 Transcribing audio... Please wait.</p>';
+      transcriptionDisplay.innerHTML = '';
+      transcribeBtn.disabled = true;
+      clearTranscriptBtn.style.display = 'none';
+
+      try {
+        log('Starting transcription...', 'info');
+        
+        // Phase 3: Use advanced transcription options
+        const transcriptionOptions = {
+          language: languageSelect.value || undefined,
+          responseFormat: 'verbose_json',
+          includeTimestamps: includeTimestampsCheckbox.checked,
+          includeConfidence: includeConfidenceCheckbox.checked,
+          chunkLargeFiles: true
+        };
+        
+        log(`Transcription options: ${JSON.stringify(transcriptionOptions)}`, 'info');
+        
+        const response = await apiClient.transcribe(
+          currentRecording.file, 
+          currentRecording.file.name,
+          transcriptionOptions
+        );
+        
+        if (response.status === 'success' && response.transcript) {
+          // Show success
+          transcriptionStatus.innerHTML = '<p style="color: #27ae60;">✅ Transcription successful!</p>';
+          
+          // Build display with Phase 3 features
+          let displayContent = `
+            <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <h4 style="margin: 0 0 15px 0; color: #667eea; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+                📝 Transcript:
+              </h4>
+              <p style="margin: 0 0 20px 0; font-size: 18px; line-height: 1.8; color: #333;">
+                "${response.transcript}"
+              </p>
+          `;
+          
+          // Phase 3: Show metadata
+          if (response.metadata) {
+            displayContent += `
+              <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                <h4 style="margin: 0 0 10px 0; color: #667eea; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+                  📊 Metadata:
+                </h4>
+                <div style="font-size: 14px; color: #666; line-height: 1.8;">
+                  <div>Duration: ${response.metadata.duration_seconds?.toFixed(2) || 'N/A'}s</div>
+                  <div>Format: ${response.metadata.format || 'N/A'}</div>
+                  <div>Sample Rate: ${response.metadata.sample_rate || 'N/A'} Hz</div>
+                  <div>Channels: ${response.metadata.channels || 'N/A'}</div>
+                  <div>Model: ${response.metadata.model || 'N/A'}</div>
+                  ${response.metadata.chunked ? `<div>Chunked: Yes (${response.metadata.num_chunks || 1} chunks)</div>` : ''}
+                </div>
+              </div>
+            `;
+          }
+          
+          // Phase 3: Show timestamps
+          if (response.timestamps && includeTimestampsCheckbox.checked) {
+            displayContent += `
+              <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                <h4 style="margin: 0 0 10px 0; color: #667eea; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+                  ⏱️ Timestamps:
+                </h4>
+                <div style="max-height: 200px; overflow-y: auto; font-size: 12px; color: #666;">
+            `;
+            
+            if (response.timestamps.segments && response.timestamps.segments.length > 0) {
+              displayContent += '<div style="margin-bottom: 10px;"><strong>Segments:</strong></div>';
+              response.timestamps.segments.slice(0, 5).forEach(segment => {
+                displayContent += `
+                  <div style="margin-bottom: 5px; padding: 5px; background: #f8f9fa; border-radius: 4px;">
+                    [${segment.start.toFixed(2)}s - ${segment.end.toFixed(2)}s] ${segment.text}
+                  </div>
+                `;
+              });
+              if (response.timestamps.segments.length > 5) {
+                displayContent += `<div style="color: #999; font-style: italic;">... and ${response.timestamps.segments.length - 5} more segments</div>`;
+              }
+            }
+            
+            if (response.timestamps.words && response.timestamps.words.length > 0) {
+              displayContent += '<div style="margin-top: 10px; margin-bottom: 10px;"><strong>Words (first 10):</strong></div>';
+              response.timestamps.words.slice(0, 10).forEach(word => {
+                displayContent += `
+                  <span style="display: inline-block; margin: 2px; padding: 3px 6px; background: #e3f2fd; border-radius: 3px; font-size: 11px;">
+                    ${word.word} [${word.start.toFixed(2)}s]
+                  </span>
+                `;
+              });
+              if (response.timestamps.words.length > 10) {
+                displayContent += `<div style="color: #999; font-style: italic; margin-top: 5px;">... and ${response.timestamps.words.length - 10} more words</div>`;
+              }
+            }
+            
+            displayContent += `</div></div>`;
+          }
+          
+          // Phase 3: Show confidence scores
+          if (response.confidence && includeConfidenceCheckbox.checked) {
+            displayContent += `
+              <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                <h4 style="margin: 0 0 10px 0; color: #667eea; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+                  📈 Confidence Scores:
+                </h4>
+                <div style="font-size: 14px; color: #666;">
+            `;
+            
+            // Show average confidence if available
+            if (response.confidence.average !== null && response.confidence.average !== undefined) {
+              displayContent += `
+                <div style="margin-bottom: 10px;">
+                  <strong>Average Confidence:</strong> ${(response.confidence.average * 100).toFixed(1)}%
+                </div>
+              `;
+            } else {
+              displayContent += `
+                <div style="margin-bottom: 10px; padding: 10px; background: #fff3cd; border-radius: 4px; color: #856404;">
+                  <strong>Note:</strong> ${response.confidence.note || 'Confidence scores not available from Whisper API. The standard Whisper API does not provide confidence scores directly.'}
+                </div>
+              `;
+            }
+            
+            // Show word-level confidence if available
+            if (response.confidence.word_level && response.confidence.word_level.length > 0) {
+              const wordsWithConfidence = response.confidence.word_level.filter(w => w.confidence !== null && w.confidence !== undefined);
+              
+              if (wordsWithConfidence.length > 0) {
+                displayContent += `
+                  <div style="margin-top: 10px;">
+                    <strong>Word-level Confidence (${wordsWithConfidence.length} of ${response.confidence.word_level.length} words):</strong>
+                  </div>
+                  <div style="max-height: 150px; overflow-y: auto; margin-top: 5px;">
+                `;
+                
+                wordsWithConfidence.slice(0, 10).forEach(word => {
+                  const confidencePercent = word.confidence ? (word.confidence * 100).toFixed(0) : 'N/A';
+                  displayContent += `
+                    <span style="display: inline-block; margin: 2px; padding: 3px 6px; background: #e8f5e9; border-radius: 3px; font-size: 11px;">
+                      ${word.word} (${confidencePercent}%)
+                    </span>
+                  `;
+                });
+                
+                if (wordsWithConfidence.length > 10) {
+                  displayContent += `<div style="color: #999; font-style: italic; margin-top: 5px;">... and ${wordsWithConfidence.length - 10} more words with confidence</div>`;
+                }
+                
+                displayContent += '</div>';
+              } else {
+                displayContent += `
+                  <div style="margin-top: 10px; color: #999; font-style: italic;">
+                    Word-level confidence scores not available
+                  </div>
+                `;
+              }
+            }
+            
+            displayContent += `</div></div>`;
+          }
+          
+          displayContent += `</div>`;
+          
+          transcriptionDisplay.innerHTML = displayContent;
+          clearTranscriptBtn.style.display = 'inline-block';
+          log(`Transcription successful: "${response.transcript.substring(0, 50)}..."`, 'success');
+          
+          // Log Phase 3 features
+          if (response.timestamps) {
+            log(`✅ Timestamps included: ${response.timestamps.words?.length || 0} words, ${response.timestamps.segments?.length || 0} segments`, 'success');
+          }
+          if (response.confidence) {
+            log(`✅ Confidence scores included: Average ${(response.confidence.average * 100).toFixed(1)}%`, 'success');
+          }
+          if (response.metadata) {
+            log(`✅ Metadata included: Duration ${response.metadata.duration_seconds?.toFixed(2)}s, Format ${response.metadata.format}`, 'success');
+          }
+        } else {
+          throw new Error(response.error || 'Transcription failed');
+        }
+      } catch (error) {
+        transcriptionStatus.innerHTML = `<p style="color: #e74c3c;">❌ Transcription failed: ${error.message}</p>`;
+        transcriptionDisplay.innerHTML = `
+          <div style="
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+          ">
+            <p style="margin: 0; color: #856404;">
+              <strong>Error:</strong> ${error.message}
+            </p>
+            <p style="margin: 10px 0 0 0; font-size: 14px; color: #856404;">
+              Make sure the backend API is running on http://localhost:8000 and has a valid OpenAI API key configured.
+            </p>
+          </div>
+        `;
+        log(`Transcription failed: ${error.message}`, 'error');
+      } finally {
+        transcribeBtn.disabled = false;
+      }
+    }
+
+    // Manual transcribe button
+    transcribeBtn.addEventListener('click', async () => {
+      await transcribeRecording();
+    });
+
+    // Clear transcript button
+    clearTranscriptBtn.addEventListener('click', () => {
+      transcriptionDisplay.innerHTML = '';
+      transcriptionStatus.innerHTML = '';
+      clearTranscriptBtn.style.display = 'none';
+      log('Transcript cleared', 'info');
+    });
+
+    // Release resources
+    releaseBtn.addEventListener('click', () => {
+      if (visualizer) {
+        visualizer.release();
+        visualizer = null;
+      }
+      if (recorder) {
+        recorder.release();
+        recorder = null;
+      }
+      if (durationInterval) {
+        clearInterval(durationInterval);
+        durationInterval = null;
+      }
+      updateStatus('idle');
+      durationDisplay.textContent = '0.0s';
+      sizeDisplay.textContent = '-';
+      formatDisplay.textContent = '-';
+      audioPreview.style.display = 'none';
+      transcriptionSection.style.display = 'none';
+      transcriptionDisplay.innerHTML = '';
+      transcriptionStatus.innerHTML = '';
+      currentRecording = null;
+      transcribeBtn.disabled = true;
+      clearTranscriptBtn.style.display = 'none';
+      log('Resources released', 'warning');
+    });
+
+    // Test API connection
+    testApiBtn.addEventListener('click', async () => {
+      // apiClient is already initialized below
+      
+      try {
+        const health = await apiClient.healthCheck();
+        apiStatus.innerHTML = `
+          <div style="background: #d4edda; padding: 15px; border-radius: 8px; border-left: 4px solid #27ae60;">
+            <p style="color: #155724; margin: 0 0 10px 0; font-weight: 600;">✅ API is healthy</p>
+            <pre style="background: white; padding: 10px; border-radius: 4px; margin: 0; font-size: 12px; overflow-x: auto;">${JSON.stringify(health, null, 2)}</pre>
+          </div>
+        `;
+        log('API health check passed', 'success');
+        
+        // If we have a recording, suggest transcribing
+        if (currentRecording) {
+          transcriptionResult.innerHTML = `
+            <p style="margin-top: 15px; color: #667eea;">
+              💡 You have a recording. Use the "Transcribe Recording" button above to test transcription.
+            </p>
+          `;
+        }
+      } catch (error) {
+        apiStatus.innerHTML = `
+          <div style="background: #f8d7da; padding: 15px; border-radius: 8px; border-left: 4px solid #e74c3c;">
+            <p style="color: #721c24; margin: 0 0 10px 0; font-weight: 600;">❌ API connection failed</p>
+            <p style="color: #721c24; margin: 0; font-size: 14px;">
+              ${error.message}<br>
+              <strong>Make sure:</strong> Backend is running on http://localhost:8000
+            </p>
+          </div>
+        `;
+        log(`API connection failed: ${error.message}`, 'error');
+      }
+    });
+
+    // Initialize API client
+    apiClient = new VoiceApiClient({ baseUrl: 'http://localhost:8000' });
+    
+    // Check API health on load
+    apiClient.healthCheck()
+      .then(health => {
+        apiStatus.innerHTML = `
+          <div style="background: #d4edda; padding: 10px; border-radius: 8px; border-left: 4px solid #27ae60;">
+            <p style="color: #155724; margin: 0; font-size: 14px;">
+              ✅ API is ready! Backend connected to http://localhost:8000
+            </p>
+          </div>
+        `;
+        log('API health check passed on load', 'success');
+      })
+      .catch(error => {
+        apiStatus.innerHTML = `
+          <div style="background: #fff3cd; padding: 10px; border-radius: 8px; border-left: 4px solid #ffc107;">
+            <p style="color: #856404; margin: 0; font-size: 14px;">
+              ⚠️ Backend API not available. Start it with: <code>cd ../voice && python main.py</code>
+            </p>
+          </div>
+        `;
+        log('API not available on load (this is OK if backend is not running)', 'warning');
+      });
+
+    // Initialize
+    testBrowserSupport();
+    initRecorder();
+    log('Test suite initialized', 'success');
+  </script>
+</body>
+</html>
+
