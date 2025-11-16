@@ -20,7 +20,20 @@ async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME} API v{settings.API_VERSION}")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"Debug mode: {settings.DEBUG}")
+    logger.info(f"Host: {settings.HOST}:{settings.PORT}")
     logger.info(f"CORS origins: {settings.cors_origins_list}")
+    
+    # Verify PrepWise AI is available
+    try:
+        from app.services.ai_service import AIService
+        logger.info("✅ PrepWise AI module loaded successfully")
+        # Try to initialize AI service
+        test_service = AIService()
+        logger.info("✅ AIService initialized successfully")
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize AIService: {e}")
+        logger.error("⚠️  AI features may not work properly")
+        logger.error("💡 Make sure to run: cd backend && pip install -e ../prepwise-ai")
     
     yield
     

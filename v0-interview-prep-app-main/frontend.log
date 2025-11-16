@@ -1,6 +1,6 @@
 
 > my-v0-project@0.1.0 dev /Users/ankitrao/Claude-Hackathon/v0-interview-prep-app-main
-> next dev
+> next dev -p 3000
 
  ⚠ `eslint` configuration in next.config.mjs is no longer supported. See more info here: https://nextjs.org/docs/app/api-reference/cli/next#next-lint-options
  ⚠ Invalid next.config.mjs options detected: 
@@ -12,9 +12,13 @@
    - Environments: .env.local
 
  ✓ Starting...
+Creating turbopack project {
+  dir: '/Users/ankitrao/Claude-Hackathon/v0-interview-prep-app-main',
+  testMode: true
+}
  ⚠ Minimum recommended TypeScript version is v5.1.0, older versions can potentially be incompatible with Next.js. Detected: 5.0.2
- ✓ Ready in 311ms
- GET / 200 in 1155ms (compile: 947ms, render: 208ms)
- GET /interview-setup 200 in 556ms (compile: 465ms, render: 91ms)
- GET /interview-setup 200 in 538ms (compile: 421ms, render: 117ms)
- GET /interview-setup 200 in 14ms (compile: 3ms, render: 11ms)
+ ✓ Ready in 839ms
+ GET / 200 in 1701ms (compile: 1515ms, render: 186ms)
+ GET /interview-setup 200 in 1676ms (compile: 1614ms, render: 62ms)
+ GET /interview-setup 200 in 8ms (compile: 1293µs, render: 7ms)
+ GET /interview-setup 200 in 27ms (compile: 5ms, render: 22ms)

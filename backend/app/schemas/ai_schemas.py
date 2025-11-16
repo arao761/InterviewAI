@@ -63,7 +63,10 @@ class ResumeParseResponse(BaseModel):
 
 class QuestionGenerationRequest(BaseModel):
     """Request schema for question generation."""
-    resume_data: Dict[str, Any] = Field(..., description="Parsed resume data")
+    resume_data: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Parsed resume data (flexible structure)"
+    )
     interview_type: InterviewType = Field(
         default=InterviewType.BOTH,
         description="Type of interview questions to generate"
@@ -80,6 +83,7 @@ class QuestionGenerationRequest(BaseModel):
     )
 
     class Config:
+        extra = "allow"
         json_schema_extra = {
             "example": {
                 "resume_data": {

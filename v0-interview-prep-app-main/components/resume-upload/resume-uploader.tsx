@@ -48,17 +48,23 @@ export default function ResumeUploader({ onResumeUploaded }: ResumeUploaderProps
     setError('');
 
     try {
+      console.log('📤 Uploading resume:', file.name);
       const response = await apiClient.parseResume(file);
+      console.log('📥 Parse response:', response);
 
       if (response.success && 'data' in response) {
+        console.log('✅ Resume parsed successfully');
         setUploadStatus('success');
         setResumeData(response.data);
+        // Pass the parsed data to parent
         onResumeUploaded?.(response.data);
       } else {
+        console.error('❌ Parse failed:', response);
         setUploadStatus('error');
         setError('error' in response ? response.error : 'Failed to parse resume');
       }
     } catch (err) {
+      console.error('❌ Upload error:', err);
       setUploadStatus('error');
       setError(err instanceof Error ? err.message : 'Failed to upload resume');
     } finally {

@@ -5,25 +5,21 @@ This service integrates the prepwise-ai module into the backend,
 providing AI-powered features like resume parsing, question generation,
 and response evaluation.
 """
-import sys
 import os
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from fastapi import UploadFile, HTTPException
 import tempfile
-import aiofiles
 
-# Add prepwise-ai to Python path
-prepwise_ai_path = Path(__file__).parent.parent.parent.parent / "prepwise-ai"
-sys.path.insert(0, str(prepwise_ai_path))
-
+# Import PrepWiseAPI correctly
 try:
-    from src.api import PrepWiseAPI
+    from src.api.prepwise_api import PrepWiseAPI
+    from src.resume_parser.schemas import ParsedResume
+    from src.question_generator.schemas import QuestionSet
 except ImportError as e:
-    raise ImportError(
-        f"Failed to import prepwise-ai module. "
-        f"Make sure prepwise-ai is in the parent directory. Error: {e}"
-    )
+    print(f"ERROR: Cannot import PrepWiseAPI. Make sure prepwise-ai is installed.")
+    print(f"Run: cd backend && pip install -e ../prepwise-ai")
+    raise ImportError(f"PrepWise AI not installed: {e}")
 
 from app.core.config import settings
 from app.core.logging import logger
@@ -44,15 +40,20 @@ class AIService:
         Args:
             api_key: OpenAI API key (uses settings if not provided)
         """
-        self.api_key = api_key or settings.OPENAI_API_KEY
-        if not self.api_key:
-            raise ValueError("OPENAI_API_KEY must be set in environment or settings")
-
-        # Set environment variable for PrepWiseAPI to use
-        os.environ["OPENAI_API_KEY"] = self.api_key
-
-        self.ai = PrepWiseAPI()
-        logger.info("AI Service initialized successfully")
+        try:
+            self.ai = PrepWiseAPI()
+            logger.info("✅ PrepWise AI initialized successfully")
+            
+            # Verify API key is configured
+            openai_key = os.getenv("OPENAI_API_KEY")
+            if not openai_key or openai_key == "your-openai-api-key-here":
+                logger.warning("⚠️  OPENAI_API_KEY not properly configured in .env")
+            else:
+                logger.info(f"✅ OpenAI API key configured (ends with: ...{openai_key[-4:]})")
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize PrepWise AI: {e}")
+            raise RuntimeError(f"PrepWise AI initialization failed: {e}")
 
     async def parse_resume_from_upload(self, file: UploadFile) -> Dict[str, Any]:
         """
@@ -128,23 +129,30 @@ class AIService:
         """
         try:
             logger.info(
-                f"Generating {num_questions} {interview_type} questions "
-                f"(domain: {domain or 'N/A'})"
+                f"🎯 Generating questions - Type: {interview_type}, "
+                f"Domain: {domain or 'N/A'}, Count: {num_questions}"
             )
 
-            # Extract target role from resume data or use default
+            # Extract target role from resume data
             target_role = "Software Engineer"  # Default
+            experience_level = "mid"  # Default
 
-            # Try to get from experience (ParsedResume structure)
-            if isinstance(resume_data.get("experience"), list) and len(resume_data["experience"]) > 0:
-                # Use most recent job title if available
-                exp = resume_data["experience"][0]
-                if isinstance(exp, dict):
-                    target_role = exp.get("title", target_role)
-                else:
-                    target_role = getattr(exp, "title", target_role)
+            # Try to extract from resume
+            if resume_data:
+                # Check for experience level
+                if "experience_level" in resume_data:
+                    experience_level = resume_data["experience_level"]
+                
+                # Check for job title from experience
+                if "experience" in resume_data and isinstance(resume_data["experience"], list):
+                    if len(resume_data["experience"]) > 0:
+                        first_exp = resume_data["experience"][0]
+                        if isinstance(first_exp, dict) and "title" in first_exp:
+                            target_role = first_exp["title"]
 
-            # Determine number of technical vs behavioral questions
+            logger.info(f"📋 Target role: {target_role}, Level: {experience_level}")
+
+            # Determine question split based on interview type
             if interview_type == "technical":
                 num_technical = num_questions
                 num_behavioral = 0
@@ -155,35 +163,63 @@ class AIService:
                 num_technical = num_questions // 2
                 num_behavioral = num_questions - num_technical
 
-            # Convert resume dict back to ParsedResume if needed
+            logger.info(f"📊 Question split - Technical: {num_technical}, Behavioral: {num_behavioral}")
+
+            # Convert resume_data to ParsedResume if possible
             resume_obj = None
             try:
-                from src.resume_parser.schemas import ParsedResume
-                # Only pass resume_obj if we successfully convert it
                 if resume_data:
                     resume_obj = ParsedResume(**resume_data)
+                    logger.info("✅ Converted resume_data to ParsedResume object")
             except Exception as e:
-                logger.warning(f"Could not convert resume_data to ParsedResume: {e}")
-                resume_obj = None
+                logger.warning(f"⚠️  Could not convert to ParsedResume (will use dict): {e}")
 
-            # Use PrepWiseAPI's generate_questions method
+            # Generate questions using PrepWise AI
+            focus_areas = []
+            if domain:
+                focus_areas = [domain]
+            
+            # Extract skills as focus areas if available
+            if resume_data and "skills" in resume_data:
+                if isinstance(resume_data["skills"], dict) and "technical" in resume_data["skills"]:
+                    skills = resume_data["skills"]["technical"]
+                    if isinstance(skills, list):
+                        focus_areas.extend(skills[:3])  # Top 3 skills
+                elif isinstance(resume_data["skills"], list):
+                    focus_areas.extend(resume_data["skills"][:3])
+
+            logger.info(f"🔍 Focus areas: {focus_areas}")
+
+            # Call PrepWise API
             question_set = self.ai.generate_questions(
                 target_role=target_role,
-                experience_level="mid",  # Could extract this from resume
+                experience_level=experience_level,
                 num_technical=num_technical,
                 num_behavioral=num_behavioral,
-                focus_areas=[domain] if domain else [],
+                focus_areas=focus_areas if focus_areas else None,
                 resume_data=resume_obj
             )
 
-            # Convert QuestionSet to list of dicts
-            questions = [q.model_dump() for q in question_set.questions]
+            # Convert questions to dicts
+            questions = []
+            for q in question_set.questions:
+                question_dict = q.model_dump()
+                # Ensure required fields for frontend
+                question_dict["id"] = question_dict.get("question", "")[:50]  # Generate simple ID
+                questions.append(question_dict)
 
-            logger.info(f"Generated {len(questions)} questions successfully")
+            logger.info(f"✅ Generated {len(questions)} questions successfully")
+            
+            # Log first question for verification
+            if questions:
+                logger.info(f"📝 Sample question: {questions[0].get('question', '')[:100]}...")
+
             return questions
 
         except Exception as e:
-            logger.error(f"Error generating questions: {str(e)}")
+            logger.error(f"❌ Question generation error: {str(e)}")
+            import traceback
+            logger.error(f"Full traceback: {traceback.format_exc()}")
             raise HTTPException(
                 status_code=500,
                 detail=f"Failed to generate questions: {str(e)}"

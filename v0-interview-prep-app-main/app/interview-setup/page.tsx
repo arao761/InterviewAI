@@ -49,24 +49,48 @@ export default function InterviewSetup() {
     }
   };
 
-  const handleStartInterview = async () => {
-    setIsGenerating(true);
-    try {
-      // Prepare resume data - convert to plain object if needed
-      let resumeForAPI: any = {
+  // Helper function to prepare resume data for backend API
+  const prepareResumeData = (resume: ParsedResume | null): any => {
+    console.log('📦 Preparing resume data...');
+    console.log('Raw resumeData:', resume);
+    
+    if (!resume) {
+      console.log('⚠️  No resume data, using minimal structure');
+      return {
         name: formData.jobTitle || 'Candidate',
-        skills: [],
+        skills: formData.focusAreas || [],
         experience: [],
         education: [],
       };
+    }
+    
+    // Backend parse response comes as { success: true, data: {...} }
+    // Check if we received the parsed data wrapper
+    if ('data' in resume && resume.data) {
+      console.log('✅ Using parsed resume data from backend');
+      return resume.data;
+    }
+    
+    // Otherwise use resume as-is (already in correct format)
+    console.log('✅ Using resume data as-is');
+    return resume;
+  };
 
-      // If we have resume data, use it
-      if (resumeData) {
-        // Make sure nested objects are serializable
-        resumeForAPI = JSON.parse(JSON.stringify(resumeData));
-      }
+  const handleStartInterview = async () => {
+    setIsGenerating(true);
+    console.log('🚀 Starting interview generation...');
+    console.log('📝 Form data:', formData);
+    console.log('📄 Resume data state:', resumeData);
 
-      console.log('Resume data being sent:', resumeForAPI);
+    try {
+      // Prepare resume data using helper function
+      const resumeForAPI = prepareResumeData(resumeData);
+
+      console.log('📤 Sending to backend:', {
+        resume_data: resumeForAPI,
+        interview_type: formData.interviewType,
+        num_questions: formData.numberOfQuestions,
+      });
 
       // Generate questions from backend
       const response = await apiClient.generateQuestions({
@@ -75,25 +99,27 @@ export default function InterviewSetup() {
         num_questions: parseInt(formData.numberOfQuestions) || 5,
       });
 
+      console.log('📥 Backend response:', response);
+
       if (response.success && 'questions' in response) {
-        // Store interview data in sessionStorage
-        const interviewSession = {
+        console.log(`✅ Generated ${response.questions.length} questions`);
+        
+        sessionStorage.setItem('interviewSession', JSON.stringify({
           questions: response.questions,
           formData,
-          resumeData,
+          resumeData: resumeForAPI,
           startTime: new Date().toISOString(),
-        };
-        sessionStorage.setItem('interviewSession', JSON.stringify(interviewSession));
+        }));
 
-        // Navigate to interview page
         router.push('/interview');
       } else {
-        console.error('Failed to generate questions:', response);
-        alert('Failed to generate questions. Please try again.');
+        console.error('❌ Failed to generate questions:', response);
+        const errorMsg = 'error' in response ? response.error : 'Unknown error';
+        alert(`Failed to generate questions: ${errorMsg}\n\nCheck browser console for details.`);
       }
     } catch (error) {
-      console.error('Error starting interview:', error);
-      alert('An error occurred. Please try again.');
+      console.error('❌ Error starting interview:', error);
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}\n\nCheck browser console for details.`);
     } finally {
       setIsGenerating(false);
     }

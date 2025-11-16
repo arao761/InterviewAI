@@ -9,6 +9,7 @@ This module provides REST API endpoints for AI-powered features:
 """
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from typing import Dict, Any
+import traceback
 
 from app.schemas.ai_schemas import (
     ResumeParseResponse,
@@ -51,7 +52,7 @@ async def parse_resume(
     - Returns parsed resume data including name, contact, skills, experience, education
     """
     try:
-        logger.info(f"Received resume upload: {file.filename}")
+        logger.info(f"📤 Received resume upload: {file.filename}")
 
         # Parse resume using AI service
         resume_data = await ai_service.parse_resume_from_upload(file)
@@ -65,8 +66,12 @@ async def parse_resume(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Unexpected error in parse_resume: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ Resume parsing failed: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to parse resume: {str(e)}"
+        )
 
 
 @router.post(
@@ -89,18 +94,26 @@ async def generate_questions(
     """
     try:
         logger.info(
-            f"Generating questions - Type: {request.interview_type}, "
-            f"Domain: {request.domain}, Count: {request.num_questions}"
+            f"📝 Question generation request - "
+            f"Type: {request.interview_type}, "
+            f"Domain: {request.domain}, "
+            f"Count: {request.num_questions}"
         )
-
+        
+        # Log resume data summary
+        if request.resume_data:
+            logger.info(f"📋 Resume data keys: {list(request.resume_data.keys())}")
+        
         # Generate questions
         questions = await ai_service.generate_questions(
-            resume_data=request.resume_data,
+            resume_data=request.resume_data or {},
             interview_type=request.interview_type.value,
             domain=request.domain.value if request.domain else None,
             num_questions=request.num_questions,
         )
 
+        logger.info(f"✅ Generated {len(questions)} questions")
+        
         return QuestionGenerationResponse(
             success=True,
             questions=questions,
@@ -111,8 +124,12 @@ async def generate_questions(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Unexpected error in generate_questions: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ Question generation failed: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate questions: {str(e)}"
+        )
 
 
 @router.post(

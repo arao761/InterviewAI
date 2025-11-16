@@ -1,0 +1,30 @@
+{
+  "user_id": "user_compare",
+  "username": "user_compare",
+  "email": null,
+  "total_sessions": 2,
+  "completed_sessions": 2,
+  "total_questions_answered": 2,
+  "total_time_spent_hours": 0.08333333333333333,
+  "average_score": 30.0,
+  "best_score": 30.0,
+  "worst_score": 30.0,
+  "technical_average": 30.0,
+  "behavioral_average": 0.0,
+  "improvement_rate": 0.0,
+  "score_trend": [
+    30.0,
+    30.0
+  ],
+  "top_strengths": [],
+  "top_weaknesses": [],
+  "mastered_topics": [],
+  "needs_practice": [],
+  "recent_sessions": [
+    "sess_899127e1371e",
+    "sess_cdee77064d76"
+  ],
+  "last_session_date": "2025-11-15T18:38:07.162741",
+  "created_at": "2025-11-15T18:38:11.562779",
+  "updated_at": "2025-11-15T18:38:11.562796"
+}
