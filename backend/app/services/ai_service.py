@@ -135,36 +135,47 @@ class AIService:
 
             # Extract target role from resume data
             target_role = "Software Engineer"  # Default
-            
-            # ⚡ CRITICAL FIX: Ensure experience_level is NEVER None
-            experience_level = resume_data.get('experience_level', 'mid') if resume_data else 'mid'
-            
-            # Validate experience_level
-            if experience_level not in ['junior', 'mid', 'senior']:
-                logger.warning(f"⚠️  Invalid experience_level: {experience_level}, defaulting to 'mid'")
-                experience_level = 'mid'
-            
-            # Try to infer from total_years_experience if available
+            experience_level = "mid"  # Default
+
+            # Valid experience levels
+            VALID_LEVELS = ["junior", "mid", "senior"]
+
+            # Try to extract from resume
             if resume_data:
-                total_years = resume_data.get('total_years_experience', 0)
-                if total_years > 0:
-                    if total_years < 2:
-                        experience_level = 'junior'
-                    elif total_years < 5:
-                        experience_level = 'mid'
-                    else:
-                        experience_level = 'senior'
-                    logger.info(f"   Inferred experience level from {total_years} years: {experience_level}")
-                
+                # Check for experience level - must be non-None and valid
+                raw_level = resume_data.get("experience_level")
+                if raw_level and isinstance(raw_level, str) and raw_level.lower() in VALID_LEVELS:
+                    experience_level = raw_level.lower()
+                elif raw_level:
+                    logger.warning(f"⚠️  Invalid experience_level '{raw_level}', defaulting to 'mid'")
+                    experience_level = "mid"
+
+                # Try to infer from total_years_experience if level is still default/invalid
+                if experience_level == "mid" and "total_years_experience" in resume_data:
+                    total_years = resume_data.get("total_years_experience")
+                    if total_years is not None and isinstance(total_years, (int, float)):
+                        if total_years < 2:
+                            experience_level = "junior"
+                        elif total_years >= 7:
+                            experience_level = "senior"
+                        else:
+                            experience_level = "mid"
+                        logger.info(f"📊 Inferred experience level from {total_years} years: {experience_level}")
+
                 # Check for job title from experience
                 if "experience" in resume_data and isinstance(resume_data["experience"], list):
                     if len(resume_data["experience"]) > 0:
                         first_exp = resume_data["experience"][0]
                         if isinstance(first_exp, dict):
-                            # Try multiple possible keys for job title
+                            # Try multiple keys for job title
                             target_role = first_exp.get("title") or first_exp.get("position") or target_role
 
-            logger.info(f"📋 Target role: {target_role}, Level: {experience_level} (type: {type(experience_level)})")
+            # Final validation - ensure experience_level is never None or invalid
+            if not experience_level or experience_level not in VALID_LEVELS:
+                logger.warning(f"⚠️  Experience level invalid or None, forcing to 'mid'")
+                experience_level = "mid"
+
+            logger.info(f"📋 Target role: {target_role}, Level: {experience_level}")
 
             # Determine question split based on interview type
             if interview_type == "technical":
@@ -204,15 +215,37 @@ class AIService:
 
             logger.info(f"🔍 Focus areas: {focus_areas}")
 
-            # Call PrepWise API
-            question_set = self.ai.generate_questions(
-                target_role=target_role,
-                experience_level=experience_level,
-                num_technical=num_technical,
-                num_behavioral=num_behavioral,
-                focus_areas=focus_areas if focus_areas else None,
-                resume_data=resume_obj
-            )
+            # Final validation before calling PrepWise API
+            logger.info(f"🔧 Final params - Role: {target_role}, Level: {experience_level} (type: {type(experience_level).__name__})")
+
+            # Ensure experience_level is a valid string
+            if not isinstance(experience_level, str) or experience_level not in VALID_LEVELS:
+                logger.error(f"❌ Invalid experience_level before API call: {experience_level}")
+                experience_level = "mid"
+                logger.info(f"✅ Forced experience_level to 'mid'")
+
+            # Call PrepWise API with validated parameters
+            try:
+                question_set = self.ai.generate_questions(
+                    target_role=target_role,
+                    experience_level=experience_level,
+                    num_technical=num_technical,
+                    num_behavioral=num_behavioral,
+                    focus_areas=focus_areas if focus_areas else None,
+                    resume_data=resume_obj
+                )
+            except Exception as api_error:
+                logger.error(f"❌ PrepWise API error: {str(api_error)}")
+                # If API call fails, try with minimal parameters
+                logger.info("🔄 Retrying with minimal parameters...")
+                question_set = self.ai.generate_questions(
+                    target_role="Software Engineer",
+                    experience_level="mid",
+                    num_technical=num_technical,
+                    num_behavioral=num_behavioral,
+                    focus_areas=None,
+                    resume_data=None
+                )
 
             # Convert questions to dicts
             questions = []

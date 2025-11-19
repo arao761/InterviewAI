@@ -4,7 +4,7 @@
 
 // Interview Types
 export type InterviewType = 'behavioral' | 'technical' | 'both' | 'mixed';
-export type TechnicalDomain = 'algorithms' | 'web_development' | 'machine_learning' | 'system_design' | 'database' | 'devops';
+export type TechnicalDomain = 'software_engineering' | 'algorithms' | 'web_development' | 'machine_learning' | 'system_design' | 'database' | 'devops';
 
 // Resume Data
 export interface ParsedResume {

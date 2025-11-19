@@ -16,6 +16,7 @@ class InterviewType(str, Enum):
 
 class TechnicalDomain(str, Enum):
     """Technical domain enumeration."""
+    SOFTWARE_ENGINEERING = "software_engineering"
     ALGORITHMS = "algorithms"
     WEB_DEVELOPMENT = "web_development"
     MACHINE_LEARNING = "machine_learning"
