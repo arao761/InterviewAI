@@ -1,10 +1,10 @@
-# PrepWise AI
+# InterviewAI
 
 An AI-powered interview preparation platform that helps candidates practice and improve their interview skills with personalized feedback.
 
-## What is PrepWise?
+## What is InterviewAI?
 
-PrepWise AI is a comprehensive interview preparation tool that uses artificial intelligence to provide a realistic interview experience. The platform offers:
+InterviewAI is a comprehensive interview preparation tool that uses artificial intelligence to provide a realistic interview experience. The platform offers:
 
 ### Key Features
 
