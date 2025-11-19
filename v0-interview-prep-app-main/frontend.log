@@ -17,9 +17,12 @@ Creating turbopack project {
   testMode: true
 }
  ⚠ Minimum recommended TypeScript version is v5.1.0, older versions can potentially be incompatible with Next.js. Detected: 5.0.2
- ✓ Ready in 381ms
- GET / 200 in 1451ms (compile: 1273ms, render: 179ms)
- GET /interview-setup 200 in 205ms (compile: 188ms, render: 16ms)
- GET /interview-setup 200 in 13ms (compile: 3ms, render: 10ms)
- GET /interview 200 in 243ms (compile: 213ms, render: 30ms)
+ ✓ Ready in 569ms
+ GET / 200 in 1702ms (compile: 1510ms, render: 193ms)
+ GET /interview-setup 200 in 223ms (compile: 204ms, render: 19ms)
+ GET /interview 200 in 193ms (compile: 174ms, render: 18ms)
+ GET /interview 200 in 47ms (compile: 6ms, render: 41ms)
+ GET /interview 200 in 18ms (compile: 1660µs, render: 17ms)
+ GET /interview 200 in 18ms (compile: 1100µs, render: 17ms)
+ GET /interview 200 in 33ms (compile: 6ms, render: 27ms)
 [?25h
