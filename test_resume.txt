@@ -1,0 +1,85 @@
+JOHN DOE
+Software Engineer
+Email: john.doe@example.com
+Phone: (555) 123-4567
+Location: San Francisco, CA
+LinkedIn: linkedin.com/in/johndoe
+GitHub: github.com/johndoe
+
+PROFESSIONAL SUMMARY
+Results-driven Software Engineer with 5 years of experience in full-stack web development. Expertise in React, Node.js, and cloud technologies. Proven track record of delivering scalable applications and leading cross-functional teams.
+
+SKILLS
+Technical Skills:
+- Programming Languages: JavaScript, TypeScript, Python, Java
+- Frontend: React, Next.js, Vue.js, HTML5, CSS3, Tailwind CSS
+- Backend: Node.js, Express, FastAPI, Django
+- Databases: PostgreSQL, MongoDB, Redis
+- Cloud: AWS (EC2, S3, Lambda), Google Cloud Platform
+- DevOps: Docker, Kubernetes, CI/CD, GitHub Actions
+- Tools: Git, VS Code, Postman, Jira
+
+Soft Skills:
+- Team Leadership
+- Agile Methodologies
+- Problem Solving
+- Communication
+
+WORK EXPERIENCE
+
+Senior Software Engineer
+Tech Innovations Inc., San Francisco, CA
+January 2022 - Present
+- Led development of microservices architecture serving 1M+ daily active users
+- Implemented CI/CD pipelines reducing deployment time by 60%
+- Mentored team of 5 junior developers
+- Technologies: React, Node.js, AWS, Docker, PostgreSQL
+- Achievements: Reduced API response time by 40%, improved code coverage to 85%
+
+Software Engineer
+StartupCo, San Jose, CA
+June 2019 - December 2021
+- Developed and maintained full-stack web applications using MERN stack
+- Collaborated with product team to define technical requirements
+- Implemented RESTful APIs serving 100K+ requests per day
+- Technologies: MongoDB, Express, React, Node.js, AWS
+- Achievements: Launched 3 major features ahead of schedule
+
+Junior Software Developer
+WebSolutions Ltd., Palo Alto, CA
+May 2018 - May 2019
+- Built responsive web interfaces using React and Vue.js
+- Participated in code reviews and agile sprint planning
+- Fixed bugs and improved application performance
+- Technologies: React, Vue.js, JavaScript, CSS3
+
+EDUCATION
+
+Bachelor of Science in Computer Science
+Stanford University, Stanford, CA
+Graduated: May 2018
+GPA: 3.8/4.0
+Relevant Coursework: Data Structures, Algorithms, Web Development, Database Systems
+
+CERTIFICATIONS
+
+- AWS Certified Solutions Architect - Associate (2023)
+- Google Cloud Professional Cloud Architect (2022)
+- Certified Kubernetes Administrator (CKA) (2021)
+
+PROJECTS
+
+E-Commerce Platform
+- Built a full-stack e-commerce platform with payment integration
+- Technologies: Next.js, Stripe API, PostgreSQL, Tailwind CSS
+- Features: Product catalog, shopping cart, payment processing, order management
+
+AI Chatbot
+- Developed an AI-powered customer service chatbot
+- Technologies: Python, OpenAI API, FastAPI, React
+- Integrated with company's existing CRM system
+
+DevOps Dashboard
+- Created a real-time monitoring dashboard for microservices
+- Technologies: React, Node.js, WebSockets, Grafana
+- Monitors system health, performance metrics, and alerts

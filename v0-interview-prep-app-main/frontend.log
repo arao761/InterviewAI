@@ -8,7 +8,7 @@
  ⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
    ▲ Next.js 16.0.3 (Turbopack)
    - Local:         http://localhost:3000
-   - Network:       http://172.25.64.92:3000
+   - Network:       http://172.25.105.88:3000
    - Environments: .env.local
 
  ✓ Starting...
@@ -17,8 +17,8 @@ Creating turbopack project {
   testMode: true
 }
  ⚠ Minimum recommended TypeScript version is v5.1.0, older versions can potentially be incompatible with Next.js. Detected: 5.0.2
- ✓ Ready in 839ms
- GET / 200 in 1701ms (compile: 1515ms, render: 186ms)
- GET /interview-setup 200 in 1676ms (compile: 1614ms, render: 62ms)
- GET /interview-setup 200 in 8ms (compile: 1293µs, render: 7ms)
- GET /interview-setup 200 in 27ms (compile: 5ms, render: 22ms)
+ ✓ Ready in 793ms
+ GET / 200 in 1304ms (compile: 1175ms, render: 129ms)
+ GET /interview-setup 200 in 224ms (compile: 207ms, render: 17ms)
+ GET /interview 200 in 254ms (compile: 236ms, render: 18ms)
+[?25h

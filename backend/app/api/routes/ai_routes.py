@@ -234,10 +234,11 @@ async def ai_health_check(
 
     Returns status and configuration info.
     """
+    import os
     return {
         "status": "healthy",
         "service": "AI/NLP Service",
         "model": "PrepWise AI (Multi-Model Support)",
         "ready": True,
-        "api_key_configured": bool(ai_service.api_key),
+        "api_key_configured": bool(os.getenv("OPENAI_API_KEY")),
     }

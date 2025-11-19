@@ -135,22 +135,36 @@ class AIService:
 
             # Extract target role from resume data
             target_role = "Software Engineer"  # Default
-            experience_level = "mid"  # Default
-
-            # Try to extract from resume
+            
+            # ⚡ CRITICAL FIX: Ensure experience_level is NEVER None
+            experience_level = resume_data.get('experience_level', 'mid') if resume_data else 'mid'
+            
+            # Validate experience_level
+            if experience_level not in ['junior', 'mid', 'senior']:
+                logger.warning(f"⚠️  Invalid experience_level: {experience_level}, defaulting to 'mid'")
+                experience_level = 'mid'
+            
+            # Try to infer from total_years_experience if available
             if resume_data:
-                # Check for experience level
-                if "experience_level" in resume_data:
-                    experience_level = resume_data["experience_level"]
+                total_years = resume_data.get('total_years_experience', 0)
+                if total_years > 0:
+                    if total_years < 2:
+                        experience_level = 'junior'
+                    elif total_years < 5:
+                        experience_level = 'mid'
+                    else:
+                        experience_level = 'senior'
+                    logger.info(f"   Inferred experience level from {total_years} years: {experience_level}")
                 
                 # Check for job title from experience
                 if "experience" in resume_data and isinstance(resume_data["experience"], list):
                     if len(resume_data["experience"]) > 0:
                         first_exp = resume_data["experience"][0]
-                        if isinstance(first_exp, dict) and "title" in first_exp:
-                            target_role = first_exp["title"]
+                        if isinstance(first_exp, dict):
+                            # Try multiple possible keys for job title
+                            target_role = first_exp.get("title") or first_exp.get("position") or target_role
 
-            logger.info(f"📋 Target role: {target_role}, Level: {experience_level}")
+            logger.info(f"📋 Target role: {target_role}, Level: {experience_level} (type: {type(experience_level)})")
 
             # Determine question split based on interview type
             if interview_type == "technical":

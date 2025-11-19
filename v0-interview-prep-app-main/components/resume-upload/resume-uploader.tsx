@@ -198,26 +198,37 @@ export default function ResumeUploader({ onResumeUploaded }: ResumeUploaderProps
             {resumeData.email && (
               <p><strong>Email:</strong> {resumeData.email}</p>
             )}
-            {resumeData.skills && resumeData.skills.length > 0 && (
-              <div>
-                <strong>Skills:</strong>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {resumeData.skills.slice(0, 10).map((skill, i) => (
-                    <span
-                      key={i}
-                      className="px-2 py-1 bg-primary/10 text-primary rounded text-xs"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                  {resumeData.skills.length > 10 && (
-                    <span className="px-2 py-1 bg-muted rounded text-xs">
-                      +{resumeData.skills.length - 10} more
-                    </span>
-                  )}
+            {resumeData.skills && (() => {
+              const skillsArray = Array.isArray(resumeData.skills)
+                ? resumeData.skills
+                : [
+                    ...(resumeData.skills.technical || []),
+                    ...(resumeData.skills.soft || []),
+                    ...(resumeData.skills.tools || []),
+                    ...(resumeData.skills.languages || [])
+                  ];
+
+              return skillsArray.length > 0 && (
+                <div>
+                  <strong>Skills:</strong>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {skillsArray.slice(0, 10).map((skill, i) => (
+                      <span
+                        key={i}
+                        className="px-2 py-1 bg-primary/10 text-primary rounded text-xs"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                    {skillsArray.length > 10 && (
+                      <span className="px-2 py-1 bg-muted rounded text-xs">
+                        +{skillsArray.length - 10} more
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       )}
