@@ -92,7 +92,18 @@ tts_voice_*.mp3
 # Backup files
 *.bak
 
-# Documentation (exclude all .md except README.md files)
-*.md
-!README.md
-!**/README.md
+# Documentation (exclude all .md files except README.md)
+# Specific files to ignore
+PHASE*.md
+SETUP_GUIDE.md
+QUICKSTART.md
+TESTING_GUIDE.md
+VAPI_API_KEY_GUIDE.md
+TEST_*.md
+PHASE*_COMPLETE.md
+*_TESTING_GUIDE.md
+*_SUMMARY.md
+*_QUICKSTART.md
+HANDS_ON_TESTING.md
+QUICK_FIX.md
+QUICK_TEST_GUIDE.md
