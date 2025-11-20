@@ -214,3 +214,4 @@ https://nextjs.org/docs/messages/module-not-found
  GET /interview-setup 200 in 100ms (compile: 81ms, render: 19ms)
  ✓ Compiled in 28ms
  GET /interview-setup 200 in 65ms (compile: 4ms, render: 61ms)
+[?25h

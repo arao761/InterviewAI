@@ -91,3 +91,8 @@ tts_voice_*.mp3
 
 # Backup files
 *.bak
+
+# Documentation (exclude all .md except README.md files)
+*.md
+!README.md
+!**/README.md
