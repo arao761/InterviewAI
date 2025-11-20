@@ -4,14 +4,16 @@ import { Button } from '@/components/ui/button';
 export default function InterviewHeader({
   questionNumber,
   totalQuestions,
+  onExit,
 }: {
   questionNumber: number;
   totalQuestions: number;
+  onExit: () => void;
 }) {
   return (
     <div className="bg-card border-b border-border px-6 py-4 flex justify-between items-center">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" className="hover:bg-muted">
+        <Button variant="ghost" size="sm" className="hover:bg-muted" onClick={onExit}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Exit
         </Button>

@@ -162,7 +162,7 @@ export default function InterviewSetup() {
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-              PrepWise AI
+              InterviewAI
             </span>
           </Link>
         </div>

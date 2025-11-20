@@ -1,5 +1,5 @@
 import { Card } from '@/components/ui/card';
-import { Code, Users, Briefcase, MessageSquare } from 'lucide-react';
+import { Code, Users } from 'lucide-react';
 
 const interviewTypes = [
   {
@@ -13,18 +13,6 @@ const interviewTypes = [
     name: 'Behavioral Interview',
     description: 'Master situational and competency-based questions',
     icon: Users,
-  },
-  {
-    id: 'case-study',
-    name: 'Case Study',
-    description: 'Solve business and product case studies',
-    icon: Briefcase,
-  },
-  {
-    id: 'mock',
-    name: 'Full Mock Interview',
-    description: 'Complete interview simulation with mixed questions',
-    icon: MessageSquare,
   },
 ];
 
