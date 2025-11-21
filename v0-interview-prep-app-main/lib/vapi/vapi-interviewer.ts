@@ -1,31 +1,30 @@
 /**
  * Vapi AI Interviewer Integration
- * High-level interface for real-time AI interviewer using Vapi
+ * High-level interface for real-time AI interviewer using official Vapi SDK
  */
 
-import { VapiStreamingClient, VapiStreamingConfig, VapiStreamingCallbacks } from './vapi-streaming-client';
-import { AudioRecorder } from './audio-recorder';
+import Vapi from '@vapi-ai/web';
 
 export interface InterviewerConfig {
   vapiApiKey: string;
   assistantId: string;
-  baseUrl?: string;
 }
 
 export interface InterviewerCallbacks {
   onTranscript?: (text: string, isFinal: boolean) => void;
   onAssistantMessage?: (message: string) => void;
   onError?: (error: Error) => void;
-  onCallStart?: (callId: string) => void;
+  onCallStart?: () => void;
   onCallEnd?: () => void;
+  onSpeechStart?: () => void;
+  onSpeechEnd?: () => void;
 }
 
 export class VapiInterviewer {
   private config: InterviewerConfig;
   private callbacks: InterviewerCallbacks;
-  private streamingClient: VapiStreamingClient | null = null;
-  private audioRecorder: AudioRecorder | null = null;
-  private audioStream: MediaStream | null = null;
+  private vapi: Vapi | null = null;
+  private isCallActive: boolean = false;
 
   constructor(config: InterviewerConfig, callbacks: InterviewerCallbacks = {}) {
     this.config = config;
@@ -35,54 +34,63 @@ export class VapiInterviewer {
   /**
    * Start the interview
    */
-  async startInterview(): Promise<string> {
+  async startInterview(): Promise<void> {
     try {
-      // Request microphone access
-      this.audioStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
+      // Create Vapi instance with API key
+      this.vapi = new Vapi(this.config.vapiApiKey);
+
+      // Set up event listeners
+      this.vapi.on('call-start', () => {
+        console.log('VAPI call started');
+        this.isCallActive = true;
+        this.callbacks.onCallStart?.();
       });
 
-      // Create streaming client
-      const streamingConfig: VapiStreamingConfig = {
-        apiKey: this.config.vapiApiKey,
-        assistantId: this.config.assistantId,
-        baseUrl: this.config.baseUrl,
-      };
+      this.vapi.on('call-end', () => {
+        console.log('VAPI call ended');
+        this.isCallActive = false;
+        this.callbacks.onCallEnd?.();
+      });
 
-      const streamingCallbacks: VapiStreamingCallbacks = {
-        onTranscript: (text, isFinal) => {
-          // Only show user transcripts (not assistant)
-          if (isFinal) {
+      this.vapi.on('speech-start', () => {
+        this.callbacks.onSpeechStart?.();
+      });
+
+      this.vapi.on('speech-end', () => {
+        this.callbacks.onSpeechEnd?.();
+      });
+
+      this.vapi.on('message', (message: any) => {
+        // Handle different message types
+        if (message.type === 'transcript') {
+          const text = message.transcript || '';
+          const isFinal = message.transcriptType === 'final';
+
+          if (message.role === 'user') {
             this.callbacks.onTranscript?.(text, isFinal);
+          } else if (message.role === 'assistant' && isFinal) {
+            this.callbacks.onAssistantMessage?.(text);
           }
-        },
-        onMessage: (message) => {
-          // Handle assistant messages
-          if (message.role === 'assistant' && message.content) {
-            this.callbacks.onAssistantMessage?.(message.content);
+        } else if (message.type === 'conversation-update') {
+          // Handle conversation updates
+          const conversation = message.conversation || [];
+          const lastMessage = conversation[conversation.length - 1];
+          if (lastMessage && lastMessage.role === 'assistant') {
+            this.callbacks.onAssistantMessage?.(lastMessage.content);
           }
-        },
-        onError: (error) => {
-          this.callbacks.onError?.(error);
-        },
-        onCallStart: (callId) => {
-          this.callbacks.onCallStart?.(callId);
-        },
-        onCallEnd: () => {
-          this.callbacks.onCallEnd?.();
-        },
-      };
+        }
+      });
 
-      this.streamingClient = new VapiStreamingClient(streamingConfig, streamingCallbacks);
+      this.vapi.on('error', (error: any) => {
+        console.error('VAPI error:', error);
+        this.callbacks.onError?.(error instanceof Error ? error : new Error(String(error.message || error)));
+      });
 
-      // Start the call
-      const callId = await this.streamingClient.startCall(this.audioStream);
-      return callId;
+      // Start the call with the assistant
+      await this.vapi.start(this.config.assistantId);
+
     } catch (error) {
+      console.error('Error starting VAPI interview:', error);
       this.callbacks.onError?.(error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
@@ -92,29 +100,26 @@ export class VapiInterviewer {
    * Stop the interview
    */
   async stopInterview(): Promise<void> {
-    if (this.streamingClient) {
-      await this.streamingClient.stopCall();
-      this.streamingClient = null;
+    if (this.vapi) {
+      this.vapi.stop();
+      this.vapi = null;
     }
-
-    if (this.audioStream) {
-      this.audioStream.getTracks().forEach(track => track.stop());
-      this.audioStream = null;
-    }
+    this.isCallActive = false;
   }
 
   /**
    * Check if interview is active
    */
   get isActive(): boolean {
-    return this.streamingClient?.connected || false;
+    return this.isCallActive;
   }
 
   /**
-   * Get current call ID
+   * Send a message to the assistant (for context)
    */
-  get callId(): string | null {
-    return this.streamingClient?.currentCallId || null;
+  send(message: any): void {
+    if (this.vapi) {
+      this.vapi.send(message);
+    }
   }
 }
-

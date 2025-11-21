@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Mic, Square, SkipForward, Check } from 'lucide-react';
+import { Mic, Square, SkipForward, Check, Wifi, Loader2, Volume2 } from 'lucide-react';
 
 export default function RecordingControls({
   isRecording,
@@ -8,6 +8,9 @@ export default function RecordingControls({
   onSkip,
   isLastQuestion,
   disabled = false,
+  isConnecting = false,
+  isConnected = false,
+  aiSpeaking = false,
 }: {
   isRecording: boolean;
   onToggleRecording: () => void;
@@ -15,25 +18,49 @@ export default function RecordingControls({
   onSkip: () => void;
   isLastQuestion: boolean;
   disabled?: boolean;
+  isConnecting?: boolean;
+  isConnected?: boolean;
+  aiSpeaking?: boolean;
 }) {
   return (
     <div className="space-y-6">
+      {/* Connection Status */}
+      {isConnected && (
+        <div className="flex justify-center items-center gap-2 text-sm">
+          <Wifi className="w-4 h-4 text-green-500" />
+          <span className="text-green-500 font-medium">Connected to AI Interviewer</span>
+          {aiSpeaking && (
+            <span className="flex items-center gap-1 text-blue-500">
+              <Volume2 className="w-4 h-4 animate-pulse" />
+              AI Speaking
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Recording Button */}
       <div className="flex justify-center">
         <Button
           onClick={onToggleRecording}
           size="lg"
-          disabled={disabled}
+          disabled={disabled || isConnecting}
           className={`rounded-full w-32 h-32 flex items-center justify-center text-lg font-semibold transition-all ${
-            isRecording
+            isConnecting
+              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              : isRecording || isConnected
               ? 'bg-red-600 text-white hover:bg-red-700 animate-pulse'
               : 'bg-primary text-primary-foreground hover:bg-primary/90'
           }`}
         >
-          {isRecording ? (
+          {isConnecting ? (
+            <>
+              <Loader2 className="w-6 h-6 mr-2 animate-spin" />
+              Connecting
+            </>
+          ) : isRecording || isConnected ? (
             <>
               <Square className="w-6 h-6 mr-2" />
-              Stop
+              End Call
             </>
           ) : (
             <>
@@ -47,13 +74,18 @@ export default function RecordingControls({
       {/* Status Text */}
       <div className="text-center">
         <p className="text-sm text-muted-foreground">
-          {isRecording ? (
+          {isConnecting ? (
+            <span className="text-blue-500 font-semibold flex items-center justify-center gap-2">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Connecting to AI interviewer...
+            </span>
+          ) : isRecording || isConnected ? (
             <span className="text-red-500 font-semibold flex items-center justify-center gap-2">
               <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-              Recording in progress...
+              Voice call in progress...
             </span>
           ) : (
-            'Click to start recording your response'
+            'Click to start voice interview with AI'
           )}
         </p>
       </div>

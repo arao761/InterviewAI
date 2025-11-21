@@ -1,15 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import InterviewHeader from '@/components/interview-session/interview-header';
-import QuestionDisplay from '@/components/interview-session/question-display';
-import RecordingControls from '@/components/interview-session/recording-controls';
+import { Button } from '@/components/ui/button';
+import { Loader2, Volume2, Wifi, WifiOff, Phone, PhoneOff } from 'lucide-react';
 import TranscriptPanel from '@/components/interview-session/transcript-panel';
 import TimerDisplay from '@/components/interview-session/timer-display';
-import { apiClient } from '@/lib/api/client';
-import type { InterviewQuestion, ResponseEvaluation } from '@/lib/api/types';
+import { VapiInterviewer } from '@/lib/vapi/vapi-interviewer';
 
 // Dynamic import for CodeEditor to avoid SSR issues with Monaco
 const CodeEditor = dynamic(
@@ -17,39 +15,15 @@ const CodeEditor = dynamic(
   { ssr: false, loading: () => <div className="flex items-center justify-center h-full bg-[#1e1e1e] text-gray-400">Loading editor...</div> }
 );
 
-// Type declarations for Web Speech API
-interface SpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList;
-  resultIndex: number;
-}
-
-interface SpeechRecognitionErrorEvent extends Event {
-  error: string;
-  message: string;
-}
-
-interface SpeechRecognition extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start(): void;
-  stop(): void;
-  abort(): void;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
-  onend: (() => void) | null;
-  onstart: (() => void) | null;
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition: new () => SpeechRecognition;
-    webkitSpeechRecognition: new () => SpeechRecognition;
-  }
+// Message type for conversation history
+interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
 }
 
 interface InterviewSessionData {
-  questions: InterviewQuestion[];
+  questions: any[];
   formData: any;
   resumeData: any;
   startTime: string;
@@ -57,133 +31,138 @@ interface InterviewSessionData {
 
 export default function InterviewSession() {
   const router = useRouter();
-  const [isRecording, setIsRecording] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(1800); // 30 minutes
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [transcript, setTranscript] = useState('');
-  const [responses, setResponses] = useState<Array<{ question: InterviewQuestion; answer: string; evaluation?: ResponseEvaluation }>>([]);
-  const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
-  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(1800);
   const [sessionData, setSessionData] = useState<InterviewSessionData | null>(null);
-  const [speechError, setSpeechError] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [codeLanguage, setCodeLanguage] = useState('javascript');
 
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  // VAPI state
+  const [isCallActive, setIsCallActive] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [conversationMessages, setConversationMessages] = useState<ConversationMessage[]>([]);
+  const [aiSpeaking, setAiSpeaking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [transcript, setTranscript] = useState('');
+
+  const vapiInterviewerRef = useRef<VapiInterviewer | null>(null);
   const finalTranscriptRef = useRef<string>('');
 
-  // Determine if current question should show code editor
-  const isCodeQuestion = () => {
-    if (!sessionData?.formData?.interviewType) return false;
-    if (sessionData.formData.interviewType !== 'technical') return false;
-
-    const question = questions[currentQuestionIndex];
-    if (!question) return false;
-
-    // Check if it's a coding question based on type or content
-    const questionText = (question.question || question.text || '').toLowerCase();
-    const isCodingType = question.type?.toLowerCase().includes('coding') ||
-                         question.type?.toLowerCase().includes('algorithm') ||
-                         question.type?.toLowerCase().includes('implementation');
-    const hasCodingKeywords = questionText.includes('implement') ||
-                              questionText.includes('write a function') ||
-                              questionText.includes('write a program') ||
-                              questionText.includes('code') ||
-                              questionText.includes('algorithm');
-
-    return isCodingType || hasCodingKeywords;
-  };
+  // Check if this is a technical interview
+  const isTechnicalInterview = sessionData?.formData?.interviewType === 'technical';
 
   const handleCodeChange = (newCode: string, language: string) => {
     setCode(newCode);
     setCodeLanguage(language);
   };
 
-  // Initialize speech recognition
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  // Initialize VAPI interviewer
+  const initializeVapi = useCallback(() => {
+    const apiKey = process.env.NEXT_PUBLIC_VAPI_API_KEY;
+    const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
 
-      if (SpeechRecognitionAPI) {
-        const recognition = new SpeechRecognitionAPI();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
-
-        recognition.onresult = (event: SpeechRecognitionEvent) => {
-          let interimTranscript = '';
-          let finalTranscript = finalTranscriptRef.current;
-
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcriptPart = event.results[i][0].transcript;
-            if (event.results[i].isFinal) {
-              finalTranscript += transcriptPart + ' ';
-              finalTranscriptRef.current = finalTranscript;
-            } else {
-              interimTranscript += transcriptPart;
-            }
-          }
-
-          setTranscript(finalTranscript + interimTranscript);
-        };
-
-        recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-          console.error('Speech recognition error:', event.error);
-          if (event.error === 'not-allowed') {
-            setSpeechError('Microphone access denied. Please allow microphone access in your browser settings.');
-          } else if (event.error === 'no-speech') {
-            // This is common, don't show error
-          } else {
-            setSpeechError(`Speech recognition error: ${event.error}`);
-          }
-        };
-
-        recognition.onend = () => {
-          // Restart if still recording (handles browser auto-stop)
-          if (isRecording && recognitionRef.current) {
-            try {
-              recognitionRef.current.start();
-            } catch (e) {
-              // Already started
-            }
-          }
-        };
-
-        recognitionRef.current = recognition;
-      } else {
-        setSpeechError('Speech recognition is not supported in this browser. Please use Chrome.');
-      }
+    if (!apiKey || !assistantId) {
+      setError('VAPI configuration missing. Please check your environment variables.');
+      return null;
     }
 
+    const interviewer = new VapiInterviewer(
+      {
+        vapiApiKey: apiKey,
+        assistantId: assistantId,
+      },
+      {
+        onTranscript: (text, isFinal) => {
+          if (text.trim()) {
+            if (isFinal) {
+              // Add to transcript
+              const newTranscript = finalTranscriptRef.current + text + ' ';
+              finalTranscriptRef.current = newTranscript;
+              setTranscript(newTranscript);
+
+              // Add user message to conversation
+              setConversationMessages(prev => [...prev, {
+                role: 'user',
+                content: text,
+                timestamp: new Date(),
+              }]);
+            }
+          }
+        },
+        onAssistantMessage: (message) => {
+          if (message.trim()) {
+            // Add assistant message to conversation
+            setConversationMessages(prev => [...prev, {
+              role: 'assistant',
+              content: message,
+              timestamp: new Date(),
+            }]);
+          }
+        },
+        onError: (err) => {
+          console.error('VAPI error:', err);
+          setError(`Voice AI error: ${err.message}`);
+          setIsCallActive(false);
+          setIsConnecting(false);
+        },
+        onCallStart: () => {
+          console.log('VAPI call started');
+          setIsCallActive(true);
+          setIsConnecting(false);
+          setError(null);
+        },
+        onCallEnd: () => {
+          console.log('VAPI call ended');
+          setIsCallActive(false);
+          setIsConnecting(false);
+        },
+        onSpeechStart: () => {
+          setAiSpeaking(true);
+        },
+        onSpeechEnd: () => {
+          setAiSpeaking(false);
+        },
+      }
+    );
+
+    return interviewer;
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
     return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
+      if (vapiInterviewerRef.current) {
+        vapiInterviewerRef.current.stopInterview();
       }
     };
-  }, [isRecording]);
+  }, []);
 
-  const handleToggleRecording = () => {
-    if (!recognitionRef.current) {
-      setSpeechError('Speech recognition is not available.');
-      return;
-    }
+  const handleStartCall = async () => {
+    setError(null);
+    setIsConnecting(true);
 
-    if (isRecording) {
-      // Stop recording
-      recognitionRef.current.stop();
-      setIsRecording(false);
-    } else {
-      // Start recording
-      setSpeechError(null);
-      finalTranscriptRef.current = transcript; // Keep existing transcript
-      try {
-        recognitionRef.current.start();
-        setIsRecording(true);
-      } catch (e) {
-        console.error('Error starting speech recognition:', e);
-        setSpeechError('Failed to start speech recognition. Please try again.');
+    try {
+      const interviewer = initializeVapi();
+      if (!interviewer) {
+        setIsConnecting(false);
+        return;
       }
+
+      vapiInterviewerRef.current = interviewer;
+      await interviewer.startInterview();
+      // State updates handled by callbacks
+    } catch (e) {
+      console.error('Error starting VAPI interview:', e);
+      setError('Failed to start voice interview. Please check your microphone permissions and try again.');
+      setIsConnecting(false);
     }
+  };
+
+  const handleEndCall = async () => {
+    if (vapiInterviewerRef.current) {
+      await vapiInterviewerRef.current.stopInterview();
+      vapiInterviewerRef.current = null;
+    }
+    setIsCallActive(false);
   };
 
   useEffect(() => {
@@ -192,7 +171,6 @@ export default function InterviewSession() {
     if (savedSession) {
       const session: InterviewSessionData = JSON.parse(savedSession);
       setSessionData(session);
-      setQuestions(session.questions || []);
 
       // Set timer based on duration
       const duration = parseInt(session.formData?.duration || '30');
@@ -205,7 +183,7 @@ export default function InterviewSession() {
 
   useEffect(() => {
     if (timeRemaining <= 0) {
-      setIsRecording(false);
+      handleEndCall();
       handleCompleteInterview();
       return;
     }
@@ -217,129 +195,20 @@ export default function InterviewSession() {
     return () => clearInterval(timer);
   }, [timeRemaining]);
 
-  const handleNextQuestion = async () => {
-    const hasCode = isCodeQuestion() && code.trim();
-    if (!transcript.trim() && !hasCode) {
-      alert('Please provide an answer before proceeding.');
-      return;
-    }
-
-    setIsEvaluating(true);
-    setIsRecording(false);
-
-    // Combine transcript and code for the full answer
-    let fullAnswer = transcript;
-    if (hasCode) {
-      fullAnswer = transcript
-        ? `${transcript}\n\n--- Code (${codeLanguage}) ---\n${code}`
-        : `--- Code (${codeLanguage}) ---\n${code}`;
-    }
-
-    try {
-      // Evaluate the response
-      const currentQuestion = questions[currentQuestionIndex];
-      const response = await apiClient.evaluateResponse({
-        question: currentQuestion,
-        transcript: fullAnswer,
-        question_type: currentQuestion.type,
-      });
-
-      const newResponse = {
-        question: currentQuestion,
-        answer: fullAnswer,
-        evaluation: response.success && 'evaluation' in response ? response.evaluation : undefined,
-      };
-
-      setResponses([...responses, newResponse]);
-      setTranscript('');
-      setCode('');
-      finalTranscriptRef.current = '';
-
-      // Move to next question or complete
-      if (currentQuestionIndex < questions.length - 1) {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-      } else {
-        // Interview complete
-        handleCompleteInterview();
-      }
-    } catch (error) {
-      console.error('Error evaluating response:', error);
-      // Store response without evaluation
-      setResponses([
-        ...responses,
-        {
-          question: questions[currentQuestionIndex],
-          answer: fullAnswer,
-        },
-      ]);
-      setTranscript('');
-      setCode('');
-      finalTranscriptRef.current = '';
-
-      if (currentQuestionIndex < questions.length - 1) {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-      } else {
-        handleCompleteInterview();
-      }
-    } finally {
-      setIsEvaluating(false);
-    }
-  };
-
-  const handleSkipQuestion = () => {
-    // Stop recording if active
-    if (isRecording && recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsRecording(false);
-    }
-
-    setResponses([
-      ...responses,
-      {
-        question: questions[currentQuestionIndex],
-        answer: transcript || '(skipped)',
-      },
-    ]);
-    setTranscript('');
-    setCode('');
-    finalTranscriptRef.current = '';
-
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-    } else {
-      handleCompleteInterview();
-    }
-  };
-
   const handleCompleteInterview = async () => {
+    // Stop call if active
+    await handleEndCall();
+
     // Store results in sessionStorage
     const results = {
-      responses,
+      responses: conversationMessages,
       sessionData,
+      transcript: finalTranscriptRef.current,
+      code: code,
+      codeLanguage: codeLanguage,
       completedAt: new Date().toISOString(),
     };
     sessionStorage.setItem('interviewResults', JSON.stringify(results));
-
-    // Optionally: Get full interview evaluation
-    if (responses.length > 0) {
-      try {
-        const questionsAndResponses = responses.map(r => ({
-          question: r.question,
-          response: r.answer,
-        }));
-
-        const evaluation = await apiClient.evaluateInterview({
-          questions_and_responses: questionsAndResponses,
-          interview_type: sessionData?.formData?.interviewType || 'mixed',
-        });
-
-        if (evaluation.success && 'report' in evaluation) {
-          sessionStorage.setItem('interviewEvaluation', JSON.stringify(evaluation.report));
-        }
-      } catch (error) {
-        console.error('Error getting full evaluation:', error);
-      }
-    }
 
     // Navigate to results page
     router.push('/results');
@@ -350,16 +219,17 @@ export default function InterviewSession() {
       'Are you sure you want to exit? Your progress will be lost.'
     );
     if (confirmExit) {
-      // Clear session data
+      handleEndCall();
       sessionStorage.removeItem('interviewSession');
       router.push('/interview-setup');
     }
   };
 
-  if (questions.length === 0) {
+  if (!sessionData) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
           <p className="text-muted-foreground">Loading interview...</p>
         </div>
       </div>
@@ -368,61 +238,142 @@ export default function InterviewSession() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <InterviewHeader questionNumber={currentQuestionIndex + 1} totalQuestions={questions.length} onExit={handleExit} />
-
-      <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)]">
-        {/* Main Interview Section */}
-        <div className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r border-border">
-          {/* Timer */}
-          <div className="bg-card border-b border-border p-4 flex justify-end">
-            <TimerDisplay timeRemaining={timeRemaining} />
-          </div>
-
-          {/* Question Display */}
-          <div className={`${isCodeQuestion() ? 'p-4' : 'flex-1 flex items-center justify-center p-8'}`}>
-            <QuestionDisplay
-              question={questions[currentQuestionIndex].question || questions[currentQuestionIndex].text || ''}
-              questionNumber={currentQuestionIndex + 1}
-              totalQuestions={questions.length}
-            />
-          </div>
-
-          {/* Code Editor - shown for coding questions */}
-          {isCodeQuestion() && (
-            <div className="flex-1 p-4 pt-0 min-h-[300px]">
-              <CodeEditor onCodeChange={handleCodeChange} />
-            </div>
-          )}
-
-          {/* Recording Controls */}
-          <div className="bg-card border-t border-border p-8">
-            <RecordingControls
-              isRecording={isRecording}
-              onToggleRecording={handleToggleRecording}
-              onNextQuestion={handleNextQuestion}
-              onSkip={handleSkipQuestion}
-              isLastQuestion={currentQuestionIndex === questions.length - 1}
-              disabled={isEvaluating}
-            />
-            {isEvaluating && (
-              <p className="text-center text-sm text-muted-foreground mt-4">
-                Evaluating your response...
-              </p>
-            )}
-            {speechError && (
-              <p className="text-center text-sm text-red-500 mt-4">
-                {speechError}
-              </p>
-            )}
+      {/* Header */}
+      <div className="bg-card border-b border-border px-6 py-4 flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" className="hover:bg-muted" onClick={handleExit}>
+            Exit
+          </Button>
+          <div className="h-6 w-px bg-border"></div>
+          <div className="text-sm text-muted-foreground">
+            {sessionData.formData?.interviewType === 'technical' ? 'Technical' :
+             sessionData.formData?.interviewType === 'behavioral' ? 'Behavioral' : 'Mixed'} Interview
           </div>
         </div>
 
-        {/* Transcript Panel */}
-        <div className="w-full lg:w-80 bg-card border-t lg:border-t-0 border-border overflow-hidden flex flex-col">
+        <div className="flex items-center gap-4">
+          {/* Connection Status */}
+          <div className="flex items-center gap-2 text-sm">
+            {isConnecting ? (
+              <>
+                <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+                <span className="text-blue-500">Connecting...</span>
+              </>
+            ) : isCallActive ? (
+              <>
+                <Wifi className="w-4 h-4 text-green-500" />
+                <span className="text-green-500">Voice Active</span>
+              </>
+            ) : (
+              <>
+                <WifiOff className="w-4 h-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Voice Off</span>
+              </>
+            )}
+          </div>
+
+          <TimerDisplay timeRemaining={timeRemaining} />
+        </div>
+      </div>
+
+      <div className="flex h-[calc(100vh-73px)]">
+        {/* Main Section - Call Controls & Code Editor */}
+        <div className="flex-1 flex flex-col">
+          {/* Call Controls - Center of screen when no code editor */}
+          <div className={`${isTechnicalInterview ? 'p-8' : 'flex-1 flex items-center justify-center'}`}>
+            <div className="text-center space-y-8">
+              {/* AI Speaking Indicator */}
+              {aiSpeaking && (
+                <div className="flex items-center justify-center gap-2 text-blue-500">
+                  <Volume2 className="w-5 h-5 animate-pulse" />
+                  <span className="font-medium">AI is speaking...</span>
+                </div>
+              )}
+
+              {/* Main Call Button */}
+              <div className="flex justify-center">
+                {!isCallActive && !isConnecting ? (
+                  <Button
+                    onClick={handleStartCall}
+                    size="lg"
+                    className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <Phone className="w-10 h-10 mb-2" />
+                    Start Interview
+                  </Button>
+                ) : isConnecting ? (
+                  <Button
+                    disabled
+                    size="lg"
+                    className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-blue-600 text-white"
+                  >
+                    <Loader2 className="w-10 h-10 mb-2 animate-spin" />
+                    Connecting...
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleEndCall}
+                    size="lg"
+                    className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-red-600 hover:bg-red-700 text-white animate-pulse"
+                  >
+                    <PhoneOff className="w-10 h-10 mb-2" />
+                    End Call
+                  </Button>
+                )}
+              </div>
+
+              {/* Instructions */}
+              <div className="text-sm text-muted-foreground max-w-md mx-auto">
+                {!isCallActive && !isConnecting ? (
+                  <p>Click the button above to start your voice interview with the AI interviewer. Make sure your microphone is enabled.</p>
+                ) : isConnecting ? (
+                  <p>Connecting to AI interviewer... Please allow microphone access if prompted.</p>
+                ) : (
+                  <p>Your interview is in progress. Speak naturally and the AI will guide you through the interview questions.</p>
+                )}
+              </div>
+
+              {/* Error Display */}
+              {error && (
+                <div className="text-red-500 text-sm bg-red-500/10 p-4 rounded-lg max-w-md mx-auto">
+                  {error}
+                </div>
+              )}
+
+              {/* Complete Interview Button */}
+              {isCallActive && (
+                <Button
+                  onClick={handleCompleteInterview}
+                  variant="outline"
+                  className="mt-4"
+                >
+                  Complete Interview
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Code Editor - shown for technical interviews */}
+          {isTechnicalInterview && (
+            <div className="flex-1 p-4 pt-0 min-h-[400px] border-t border-border">
+              <div className="h-full">
+                <div className="text-sm font-medium mb-2 text-muted-foreground">Code Editor</div>
+                <div className="h-[calc(100%-24px)]">
+                  <CodeEditor onCodeChange={handleCodeChange} />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Conversation Panel */}
+        <div className="w-96 bg-card border-l border-border overflow-hidden flex flex-col">
           <TranscriptPanel
             transcript={transcript}
             onTranscriptChange={setTranscript}
-            isRecording={isRecording}
+            isRecording={isCallActive}
+            conversationMessages={conversationMessages}
+            aiSpeaking={aiSpeaking}
           />
         </div>
       </div>
