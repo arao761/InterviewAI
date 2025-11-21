@@ -65,10 +65,22 @@ export default function InterviewSession() {
       return null;
     }
 
+    // Build interview context from session data
+    const context = sessionData ? {
+      resumeData: sessionData.resumeData,
+      questions: sessionData.questions,
+      interviewType: sessionData.formData?.interviewType,
+      difficulty: sessionData.formData?.difficulty,
+      jobTitle: sessionData.formData?.jobTitle,
+      company: sessionData.formData?.company,
+      duration: sessionData.formData?.duration,
+    } : undefined;
+
     const interviewer = new VapiInterviewer(
       {
         vapiApiKey: apiKey,
         assistantId: assistantId,
+        context: context,
       },
       {
         onTranscript: (text, isFinal) => {
@@ -125,7 +137,7 @@ export default function InterviewSession() {
     );
 
     return interviewer;
-  }, []);
+  }, [sessionData]);
 
   // Cleanup on unmount
   useEffect(() => {

@@ -5,9 +5,20 @@
 
 import Vapi from '@vapi-ai/web';
 
+export interface InterviewContext {
+  resumeData?: any;
+  questions?: any[];
+  interviewType?: string;
+  difficulty?: string;
+  jobTitle?: string;
+  company?: string;
+  duration?: string;
+}
+
 export interface InterviewerConfig {
   vapiApiKey: string;
   assistantId: string;
+  context?: InterviewContext;
 }
 
 export interface InterviewerCallbacks {
@@ -29,6 +40,76 @@ export class VapiInterviewer {
   constructor(config: InterviewerConfig, callbacks: InterviewerCallbacks = {}) {
     this.config = config;
     this.callbacks = callbacks;
+  }
+
+  /**
+   * Build the system prompt with interview context
+   */
+  private buildSystemPrompt(): string {
+    const ctx = this.config.context;
+    if (!ctx) {
+      return '';
+    }
+
+    let prompt = `You are an AI interviewer conducting a ${ctx.interviewType || 'mixed'} interview.\n\n`;
+
+    // Add interview details
+    if (ctx.jobTitle || ctx.company) {
+      prompt += `## Interview Details\n`;
+      if (ctx.jobTitle) prompt += `- Position: ${ctx.jobTitle}\n`;
+      if (ctx.company) prompt += `- Company: ${ctx.company}\n`;
+      if (ctx.difficulty) prompt += `- Difficulty: ${ctx.difficulty}\n`;
+      if (ctx.duration) prompt += `- Duration: ${ctx.duration} minutes\n`;
+      prompt += `\n`;
+    }
+
+    // Add resume/candidate information
+    if (ctx.resumeData) {
+      prompt += `## Candidate Background\n`;
+      if (ctx.resumeData.name) prompt += `- Name: ${ctx.resumeData.name}\n`;
+      if (ctx.resumeData.email) prompt += `- Email: ${ctx.resumeData.email}\n`;
+      if (ctx.resumeData.skills && ctx.resumeData.skills.length > 0) {
+        prompt += `- Skills: ${ctx.resumeData.skills.join(', ')}\n`;
+      }
+      if (ctx.resumeData.experience && ctx.resumeData.experience.length > 0) {
+        prompt += `\n### Work Experience\n`;
+        ctx.resumeData.experience.forEach((exp: any) => {
+          prompt += `- ${exp.title || exp.position} at ${exp.company} (${exp.duration || exp.dates})\n`;
+          if (exp.description) prompt += `  ${exp.description}\n`;
+        });
+      }
+      if (ctx.resumeData.education && ctx.resumeData.education.length > 0) {
+        prompt += `\n### Education\n`;
+        ctx.resumeData.education.forEach((edu: any) => {
+          prompt += `- ${edu.degree} from ${edu.school || edu.institution} (${edu.year || edu.dates})\n`;
+        });
+      }
+      prompt += `\n`;
+    }
+
+    // Add questions to ask
+    if (ctx.questions && ctx.questions.length > 0) {
+      prompt += `## Interview Questions\n`;
+      prompt += `Ask these questions during the interview, adapting based on the conversation flow:\n\n`;
+      ctx.questions.forEach((q: any, i: number) => {
+        const questionText = q.question || q.text || q;
+        prompt += `${i + 1}. ${questionText}\n`;
+        if (q.type) prompt += `   (Type: ${q.type})\n`;
+      });
+      prompt += `\n`;
+    }
+
+    // Add instructions
+    prompt += `## Instructions\n`;
+    prompt += `- Start by greeting the candidate and introducing yourself\n`;
+    prompt += `- Ask questions naturally, one at a time\n`;
+    prompt += `- Listen actively and ask follow-up questions when appropriate\n`;
+    prompt += `- Provide brief acknowledgments of their responses\n`;
+    prompt += `- Reference their background when relevant to personalize the interview\n`;
+    prompt += `- Keep track of time and pace the interview accordingly\n`;
+    prompt += `- At the end, thank them and let them know next steps\n`;
+
+    return prompt;
   }
 
   /**
@@ -86,8 +167,29 @@ export class VapiInterviewer {
         this.callbacks.onError?.(error instanceof Error ? error : new Error(String(error.message || error)));
       });
 
-      // Start the call with the assistant
-      await this.vapi.start(this.config.assistantId);
+      // Build assistant overrides with context
+      const systemPrompt = this.buildSystemPrompt();
+
+      if (systemPrompt) {
+        // Start with assistant overrides including the personalized system prompt
+        // Use variableValues to pass context that can be used in assistant's prompt template
+        // Or use firstMessage override for initial context
+        await this.vapi.start(this.config.assistantId, {
+          firstMessage: `Hello! I've reviewed your background and I'm ready to conduct your interview. ${
+            this.config.context?.jobTitle ? `We'll be discussing the ${this.config.context.jobTitle} position` : ''
+          }${this.config.context?.company ? ` at ${this.config.context.company}` : ''}. Let's get started!`,
+          variableValues: {
+            interviewContext: systemPrompt,
+            candidateName: this.config.context?.resumeData?.name || 'Candidate',
+            jobTitle: this.config.context?.jobTitle || 'the position',
+            company: this.config.context?.company || 'our company',
+            interviewType: this.config.context?.interviewType || 'mixed',
+          },
+        });
+      } else {
+        // Start without overrides
+        await this.vapi.start(this.config.assistantId);
+      }
 
     } catch (error) {
       console.error('Error starting VAPI interview:', error);

@@ -23,11 +23,17 @@ Creating turbopack project {
   dir: '/Users/ankitrao/Desktop/InterviewAI/v0-interview-prep-app-main',
   testMode: true
 }
- ✓ Ready in 316ms
- GET / 200 in 1021ms (compile: 924ms, render: 97ms)
- GET /interview-setup 200 in 226ms (compile: 212ms, render: 14ms)
- GET /interview 200 in 288ms (compile: 271ms, render: 17ms)
- GET /interview-setup 200 in 20ms (compile: 6ms, render: 14ms)
- GET /interview 200 in 28ms (compile: 8ms, render: 20ms)
- GET /interview-setup 200 in 23ms (compile: 8ms, render: 15ms)
+ ✓ Ready in 457ms
+ GET / 200 in 1125ms (compile: 1029ms, render: 96ms)
+ GET /interview-setup 200 in 234ms (compile: 219ms, render: 15ms)
+ GET /interview 200 in 290ms (compile: 272ms, render: 18ms)
+ GET /interview-setup 200 in 28ms (compile: 12ms, render: 16ms)
+ GET / 200 in 28ms (compile: 2ms, render: 26ms)
+ GET /interview-setup 200 in 23ms (compile: 6ms, render: 17ms)
+ GET /interview 200 in 21ms (compile: 6ms, render: 15ms)
+ GET /interview-setup 200 in 25ms (compile: 10ms, render: 15ms)
+ GET /interview 200 in 27ms (compile: 8ms, render: 19ms)
+ GET /interview-setup 200 in 17ms (compile: 6ms, render: 11ms)
+ GET /interview-setup 200 in 27ms (compile: 3ms, render: 24ms)
+ GET /interview-setup 200 in 9ms (compile: 1122µs, render: 8ms)
 [?25h
