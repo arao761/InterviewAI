@@ -15,7 +15,7 @@
 
    ▲ Next.js 16.0.3 (Turbopack)
    - Local:         http://localhost:3000
-   - Network:       http://172.26.89.94:3000
+   - Network:       http://172.26.35.128:3000
    - Environments: .env.local
 
  ✓ Starting...
@@ -23,17 +23,12 @@ Creating turbopack project {
   dir: '/Users/ankitrao/Desktop/InterviewAI/v0-interview-prep-app-main',
   testMode: true
 }
- ✓ Ready in 457ms
- GET / 200 in 1125ms (compile: 1029ms, render: 96ms)
- GET /interview-setup 200 in 234ms (compile: 219ms, render: 15ms)
- GET /interview 200 in 290ms (compile: 272ms, render: 18ms)
- GET /interview-setup 200 in 28ms (compile: 12ms, render: 16ms)
- GET / 200 in 28ms (compile: 2ms, render: 26ms)
- GET /interview-setup 200 in 23ms (compile: 6ms, render: 17ms)
- GET /interview 200 in 21ms (compile: 6ms, render: 15ms)
- GET /interview-setup 200 in 25ms (compile: 10ms, render: 15ms)
- GET /interview 200 in 27ms (compile: 8ms, render: 19ms)
- GET /interview-setup 200 in 17ms (compile: 6ms, render: 11ms)
- GET /interview-setup 200 in 27ms (compile: 3ms, render: 24ms)
- GET /interview-setup 200 in 9ms (compile: 1122µs, render: 8ms)
+ ✓ Ready in 441ms
+ GET / 200 in 1126ms (compile: 1043ms, render: 83ms)
+ GET /interview-setup 200 in 208ms (compile: 191ms, render: 17ms)
+ GET /interview 200 in 274ms (compile: 260ms, render: 14ms)
+ GET /results 200 in 268ms (compile: 246ms, render: 23ms)
+ GET /interview-setup 200 in 26ms (compile: 8ms, render: 18ms)
+ GET /interview 200 in 22ms (compile: 7ms, render: 15ms)
+ GET /interview-setup 200 in 25ms (compile: 9ms, render: 16ms)
 [?25h

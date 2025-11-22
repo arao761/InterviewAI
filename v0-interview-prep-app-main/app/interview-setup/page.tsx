@@ -90,6 +90,7 @@ export default function InterviewSetup() {
         resume_data: resumeForAPI,
         interview_type: formData.interviewType,
         num_questions: formData.numberOfQuestions,
+        company: formData.company,
       });
 
       // Generate questions from backend
@@ -97,6 +98,7 @@ export default function InterviewSetup() {
         resume_data: resumeForAPI,
         interview_type: (formData.interviewType || 'both') as InterviewType,
         num_questions: parseInt(formData.numberOfQuestions) || 5,
+        company: formData.company || undefined,
       });
 
       console.log('📥 Backend response:', response);

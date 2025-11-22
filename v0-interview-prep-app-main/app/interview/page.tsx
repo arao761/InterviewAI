@@ -91,23 +91,37 @@ export default function InterviewSession() {
               finalTranscriptRef.current = newTranscript;
               setTranscript(newTranscript);
 
-              // Add user message to conversation
-              setConversationMessages(prev => [...prev, {
-                role: 'user',
-                content: text,
-                timestamp: new Date(),
-              }]);
+              // Add user message to conversation (with deduplication)
+              setConversationMessages(prev => {
+                const lastMsg = prev[prev.length - 1];
+                // Skip if same content as last message
+                if (lastMsg && lastMsg.role === 'user' && lastMsg.content === text.trim()) {
+                  return prev;
+                }
+                return [...prev, {
+                  role: 'user',
+                  content: text.trim(),
+                  timestamp: new Date(),
+                }];
+              });
             }
           }
         },
         onAssistantMessage: (message) => {
           if (message.trim()) {
-            // Add assistant message to conversation
-            setConversationMessages(prev => [...prev, {
-              role: 'assistant',
-              content: message,
-              timestamp: new Date(),
-            }]);
+            // Add assistant message to conversation (with deduplication)
+            setConversationMessages(prev => {
+              const lastMsg = prev[prev.length - 1];
+              // Skip if same content as last message
+              if (lastMsg && lastMsg.role === 'assistant' && lastMsg.content === message.trim()) {
+                return prev;
+              }
+              return [...prev, {
+                role: 'assistant',
+                content: message.trim(),
+                timestamp: new Date(),
+              }];
+            });
           }
         },
         onError: (err) => {

@@ -79,6 +79,7 @@ export interface QuestionGenerationRequest {
   interview_type: InterviewType;
   domain?: TechnicalDomain;
   num_questions: number;
+  company?: string;
 }
 
 export interface ResponseEvaluationRequest {

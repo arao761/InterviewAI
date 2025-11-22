@@ -113,7 +113,8 @@ class AIService:
         resume_data: Dict[str, Any],
         interview_type: str = "both",
         domain: Optional[str] = None,
-        num_questions: int = 5
+        num_questions: int = 5,
+        company: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
         Generate interview questions based on resume.
@@ -123,6 +124,7 @@ class AIService:
             interview_type: Type of interview ("behavioral", "technical", "both")
             domain: Technical domain (for technical questions)
             num_questions: Number of questions to generate
+            company: Target company for company-specific questions
 
         Returns:
             List of generated questions
@@ -130,7 +132,8 @@ class AIService:
         try:
             logger.info(
                 f"🎯 Generating questions - Type: {interview_type}, "
-                f"Domain: {domain or 'N/A'}, Count: {num_questions}"
+                f"Domain: {domain or 'N/A'}, Count: {num_questions}, "
+                f"Company: {company or 'N/A'}"
             )
 
             # Extract target role from resume data
@@ -232,7 +235,8 @@ class AIService:
                     num_technical=num_technical,
                     num_behavioral=num_behavioral,
                     focus_areas=focus_areas if focus_areas else None,
-                    resume_data=resume_obj
+                    resume_data=resume_obj,
+                    target_company=company
                 )
             except Exception as api_error:
                 logger.error(f"❌ PrepWise API error: {str(api_error)}")
@@ -244,7 +248,8 @@ class AIService:
                     num_technical=num_technical,
                     num_behavioral=num_behavioral,
                     focus_areas=None,
-                    resume_data=None
+                    resume_data=None,
+                    target_company=None
                 )
 
             # Convert questions to dicts

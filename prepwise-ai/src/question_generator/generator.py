@@ -280,14 +280,15 @@ class QuestionGenerator:
             "role": request.target_role,
             "level": request.target_level,
             "focus_areas": request.focus_areas or [],
-            "avoid_topics": request.avoid_topics or []
+            "avoid_topics": request.avoid_topics or [],
+            "company": request.target_company
         }
-        
+
         # Add resume context if available
         if request.resume_context and request.tailor_to_experience:
             context["skills"] = request.resume_context.get("skills", {})
             context["experience"] = request.resume_context.get("experience", [])
-        
+
         return context
     
     def _build_behavioral_context(self, request: QuestionGenerationRequest) -> Dict[str, Any]:
@@ -295,30 +296,36 @@ class QuestionGenerator:
         context = {
             "role": request.target_role,
             "level": request.target_level,
-            "company": request.target_company
+            "company": request.target_company,
+            "resume_context": request.resume_context
         }
-        
+
         if request.resume_context:
             context["past_roles"] = [
                 exp.get("title") for exp in request.resume_context.get("experience", [])
             ]
-        
+            context["skills"] = request.resume_context.get("skills", {})
+            context["experience"] = request.resume_context.get("experience", [])
+            context["education"] = request.resume_context.get("education", [])
+            context["projects"] = request.resume_context.get("projects", [])
+
         return context
     
     def _build_technical_prompt(self, context: Dict, count: int) -> str:
         """Build prompt for technical questions"""
-        if self.technical_prompt:
-            return self.technical_prompt.format(
-                role=context["role"],
-                level=context["level"],
-                count=count,
-                focus_areas=", ".join(context.get("focus_areas", [])) or "general programming"
-            )
-        
-        # Fallback prompt
-        return f"""Generate {count} technical interview questions for a {context['level']} {context['role']} position.
+        company = context.get("company")
+        focus_areas = ", ".join(context.get("focus_areas", [])) or "general programming"
 
-Focus areas: {', '.join(context.get('focus_areas', [])) or 'general programming'}
+        if company:
+            # Company-specific prompt
+            return f"""Generate {count} technical interview questions that are frequently asked at {company} for a {context['level']} {context['role']} position.
+
+These should be the types of questions that {company} is known to ask in their technical interviews. Include:
+- Algorithm and data structure questions typical of {company}
+- System design questions if appropriate for the level
+- Coding problems that match {company}'s interview style
+
+Focus areas: {focus_areas}
 
 For each question, provide:
 1. The question text
@@ -327,17 +334,117 @@ For each question, provide:
 4. Skills being tested
 5. Expected duration in minutes
 
-Format as JSON array."""
+Format as JSON array with keys: question, difficulty, category, skills_tested (array), duration"""
+
+        # Generic prompt when no company specified
+        return f"""Generate {count} technical interview questions for a {context['level']} {context['role']} position.
+
+Focus areas: {focus_areas}
+
+For each question, provide:
+1. The question text
+2. Difficulty level (easy/medium/hard)
+3. Category/topic
+4. Skills being tested
+5. Expected duration in minutes
+
+Format as JSON array with keys: question, difficulty, category, skills_tested (array), duration"""
     
     def _build_behavioral_prompt(self, context: Dict, count: int) -> str:
         """Build prompt for behavioral questions"""
-        if self.behavioral_prompt:
-            return self.behavioral_prompt.format(
-                role=context["role"],
-                level=context["level"],
-                count=count
-            )
-        
+        company = context.get("company")
+        resume_context = context.get("resume_context")
+
+        # Build resume context string if available
+        resume_info = ""
+        if resume_context:
+            experience = resume_context.get("experience", [])
+            skills = resume_context.get("skills", {})
+            projects = resume_context.get("projects", [])
+
+            if experience:
+                resume_info += "\n\nCandidate's Work Experience:\n"
+                for exp in experience[:3]:  # Top 3 experiences
+                    title = exp.get("title") or exp.get("position", "")
+                    company_name = exp.get("company", "")
+                    desc = exp.get("description", "")
+                    resume_info += f"- {title} at {company_name}: {desc[:200] if desc else 'N/A'}\n"
+
+            if projects:
+                resume_info += "\nCandidate's Projects:\n"
+                for proj in projects[:2]:  # Top 2 projects
+                    name = proj.get("name", "")
+                    desc = proj.get("description", "")
+                    resume_info += f"- {name}: {desc[:150] if desc else 'N/A'}\n"
+
+            if skills:
+                if isinstance(skills, dict):
+                    tech_skills = skills.get("technical", [])
+                    if tech_skills:
+                        resume_info += f"\nTechnical Skills: {', '.join(tech_skills[:10])}\n"
+                elif isinstance(skills, list):
+                    resume_info += f"\nSkills: {', '.join(skills[:10])}\n"
+
+        # Calculate split between resume-based and general behavioral questions
+        resume_based_count = count // 2 if resume_context else 0
+        general_count = count - resume_based_count
+
+        if company and resume_context:
+            return f"""Generate {count} behavioral interview questions for a {context['level']} {context['role']} position at {company}.
+
+IMPORTANT: Generate a mix of questions:
+- {resume_based_count} questions should be based on the candidate's resume/experience below (ask about specific projects, roles, or experiences from their background)
+- {general_count} questions should be general behavioral questions that {company} typically asks
+
+{resume_info}
+
+For resume-based questions, reference specific experiences, projects, or skills from their background.
+For general questions, focus on behavioral patterns that {company} values.
+
+Focus on STAR method questions that evaluate:
+- Leadership and teamwork
+- Problem solving
+- Communication
+- Adaptability
+- Conflict resolution
+
+Format as JSON array with keys: question, difficulty, category, skills_tested (array), duration"""
+
+        elif resume_context:
+            return f"""Generate {count} behavioral interview questions for a {context['level']} {context['role']} position.
+
+IMPORTANT: Generate a mix of questions:
+- {resume_based_count} questions should be based on the candidate's resume/experience below (ask about specific projects, roles, or experiences from their background)
+- {general_count} questions should be general behavioral questions
+
+{resume_info}
+
+For resume-based questions, reference specific experiences, projects, or skills from their background.
+
+Focus on STAR method questions that evaluate:
+- Leadership and teamwork
+- Problem solving
+- Communication
+- Adaptability
+- Conflict resolution
+
+Format as JSON array with keys: question, difficulty, category, skills_tested (array), duration"""
+
+        elif company:
+            return f"""Generate {count} behavioral interview questions that are frequently asked at {company} for a {context['level']} {context['role']} position.
+
+These should reflect {company}'s culture and values. Focus on behavioral patterns that {company} values in their candidates.
+
+Focus on STAR method questions that evaluate:
+- Leadership and teamwork
+- Problem solving
+- Communication
+- Adaptability
+- Conflict resolution
+
+Format as JSON array with keys: question, difficulty, category, skills_tested (array), duration"""
+
+        # Generic behavioral questions
         return f"""Generate {count} behavioral interview questions for a {context['level']} {context['role']} position.
 
 Focus on STAR method questions that evaluate:
@@ -347,7 +454,7 @@ Focus on STAR method questions that evaluate:
 - Adaptability
 - Conflict resolution
 
-Format as JSON array with question details."""
+Format as JSON array with keys: question, difficulty, category, skills_tested (array), duration"""
     
     def _parse_llm_response(
         self,

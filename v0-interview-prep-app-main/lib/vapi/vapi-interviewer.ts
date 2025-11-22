@@ -36,6 +36,8 @@ export class VapiInterviewer {
   private callbacks: InterviewerCallbacks;
   private vapi: Vapi | null = null;
   private isCallActive: boolean = false;
+  private lastAssistantMessage: string = '';
+  private lastUserTranscript: string = '';
 
   constructor(config: InterviewerConfig, callbacks: InterviewerCallbacks = {}) {
     this.config = config;
@@ -99,13 +101,29 @@ export class VapiInterviewer {
       prompt += `\n`;
     }
 
-    // Add instructions
+    // Add instructions based on interview type
     prompt += `## Instructions\n`;
-    prompt += `- Start by greeting the candidate and introducing yourself\n`;
+    prompt += `- Start by greeting the candidate\n`;
     prompt += `- Ask questions naturally, one at a time\n`;
     prompt += `- Listen actively and ask follow-up questions when appropriate\n`;
     prompt += `- Provide brief acknowledgments of their responses\n`;
-    prompt += `- Reference their background when relevant to personalize the interview\n`;
+
+    // Different behavior based on interview type
+    if (ctx.interviewType === 'technical') {
+      prompt += `- IMPORTANT: This is a TECHNICAL interview. Focus on technical questions, whether it be coding or just technical.\n`;
+      prompt += `- Briefly ask about their background, resume, or past experiences\n`;
+      prompt += `- Ask technical questions\n`;
+      prompt += `- Ask follow-up questions about technical concepts\n`;
+    } else if (ctx.interviewType === 'behavioral') {
+      prompt += `- This is a BEHAVIORAL interview. You can reference their background and experiences\n`;
+      prompt += `- Ask about specific projects, roles, and situations from their resume\n`;
+      prompt += `- Use the STAR method (Situation, Task, Action, Result) to probe deeper\n`;
+    } else {
+      prompt += `- This is a MIXED interview with both technical and behavioral questions\n`;
+      prompt += `- For technical questions, focus only on technical concepts\n`;
+      prompt += `- For behavioral questions, you can reference their background\n`;
+    }
+
     prompt += `- Keep track of time and pace the interview accordingly\n`;
     prompt += `- At the end, thank them and let them know next steps\n`;
 
@@ -148,16 +166,32 @@ export class VapiInterviewer {
           const isFinal = message.transcriptType === 'final';
 
           if (message.role === 'user') {
-            this.callbacks.onTranscript?.(text, isFinal);
+            // Deduplicate user transcripts
+            if (isFinal && text.trim() && text !== this.lastUserTranscript) {
+              this.lastUserTranscript = text;
+              this.callbacks.onTranscript?.(text, isFinal);
+            } else if (!isFinal) {
+              // Pass through interim transcripts without deduplication
+              this.callbacks.onTranscript?.(text, isFinal);
+            }
           } else if (message.role === 'assistant' && isFinal) {
-            this.callbacks.onAssistantMessage?.(text);
+            // Deduplicate assistant messages from transcript
+            if (text.trim() && text !== this.lastAssistantMessage) {
+              this.lastAssistantMessage = text;
+              this.callbacks.onAssistantMessage?.(text);
+            }
           }
         } else if (message.type === 'conversation-update') {
-          // Handle conversation updates
+          // Handle conversation updates - but avoid duplicates
           const conversation = message.conversation || [];
           const lastMessage = conversation[conversation.length - 1];
-          if (lastMessage && lastMessage.role === 'assistant') {
-            this.callbacks.onAssistantMessage?.(lastMessage.content);
+          if (lastMessage && lastMessage.role === 'assistant' && lastMessage.content) {
+            const content = lastMessage.content.trim();
+            // Only trigger if this is a new message
+            if (content && content !== this.lastAssistantMessage) {
+              this.lastAssistantMessage = content;
+              this.callbacks.onAssistantMessage?.(content);
+            }
           }
         }
       });
@@ -177,7 +211,7 @@ export class VapiInterviewer {
         await this.vapi.start(this.config.assistantId, {
           firstMessage: `Hello! I've reviewed your background and I'm ready to conduct your interview. ${
             this.config.context?.jobTitle ? `We'll be discussing the ${this.config.context.jobTitle} position` : ''
-          }${this.config.context?.company ? ` at ${this.config.context.company}` : ''}. Let's get started!`,
+          }${this.config.context?.company ? ` at ${this.config.context.company}` : ''}. Are you ready to get started?`,
           variableValues: {
             interviewContext: systemPrompt,
             candidateName: this.config.context?.resumeData?.name || 'Candidate',

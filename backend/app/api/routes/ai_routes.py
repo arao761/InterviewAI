@@ -97,19 +97,21 @@ async def generate_questions(
             f"📝 Question generation request - "
             f"Type: {request.interview_type}, "
             f"Domain: {request.domain}, "
-            f"Count: {request.num_questions}"
+            f"Count: {request.num_questions}, "
+            f"Company: {request.company or 'N/A'}"
         )
-        
+
         # Log resume data summary
         if request.resume_data:
             logger.info(f"📋 Resume data keys: {list(request.resume_data.keys())}")
-        
+
         # Generate questions
         questions = await ai_service.generate_questions(
             resume_data=request.resume_data or {},
             interview_type=request.interview_type.value,
             domain=request.domain.value if request.domain else None,
             num_questions=request.num_questions,
+            company=request.company,
         )
 
         logger.info(f"✅ Generated {len(questions)} questions")

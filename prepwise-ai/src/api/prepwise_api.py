@@ -333,22 +333,24 @@ class PrepWiseAPI:
         num_technical: int = 5,
         num_behavioral: int = 3,
         focus_areas: Optional[List[str]] = None,
-        resume_data: Optional[ParsedResume] = None
+        resume_data: Optional[ParsedResume] = None,
+        target_company: Optional[str] = None
     ) -> QuestionSet:
         """
         Generate interview questions (without creating a session)
-        
+
         Useful for previewing questions or custom workflows
         """
         request = QuestionGenerationRequest(
             target_role=target_role,
             target_level=experience_level,
+            target_company=target_company,
             num_technical=num_technical,
             num_behavioral=num_behavioral,
             focus_areas=focus_areas or [],
             resume_context=resume_data.model_dump() if resume_data else None
         )
-        
+
         return self.question_generator.generate_questions(request)
     
     # ==================== Evaluation Operations ====================

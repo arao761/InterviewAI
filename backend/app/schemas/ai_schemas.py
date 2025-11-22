@@ -82,6 +82,10 @@ class QuestionGenerationRequest(BaseModel):
         le=20,
         description="Number of questions to generate"
     )
+    company: Optional[str] = Field(
+        default=None,
+        description="Target company for company-specific questions"
+    )
 
     class Config:
         extra = "allow"
@@ -94,7 +98,8 @@ class QuestionGenerationRequest(BaseModel):
                 },
                 "interview_type": "both",
                 "domain": "web_development",
-                "num_questions": 5
+                "num_questions": 5,
+                "company": "Google"
             }
         }
 
