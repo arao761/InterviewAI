@@ -36,9 +36,10 @@ const features = [
 
 export default function FeaturesSection() {
   return (
-    <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
+    <section className="relative py-16 pb-24 bg-gradient-to-b from-background via-muted/5 to-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Section header */}
-      <div className="text-center mb-20">
+      <div className="text-center mb-12">
         <div className="inline-block mb-4">
           <span className="text-sm font-semibold tracking-wider uppercase bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             Powerful Features
@@ -72,7 +73,7 @@ export default function FeaturesSection() {
               <div className={`absolute -inset-0.5 bg-gradient-to-r ${feature.iconGradient} rounded-3xl blur opacity-0 group-hover:opacity-20 transition duration-500`}></div>
 
               {/* Card */}
-              <div className={`relative bg-card/50 backdrop-blur-sm border border-border rounded-3xl p-8 hover:border-primary/30 transition-all duration-300 overflow-hidden ${
+              <div className={`relative bg-card backdrop-blur-sm border-2 border-border/80 rounded-3xl p-8 hover:border-primary/50 transition-all duration-300 overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-primary/20 ${
                 index === 0 ? 'lg:flex lg:items-center lg:gap-12' : ''
               }`}>
                 {/* Background decoration */}
@@ -90,10 +91,10 @@ export default function FeaturesSection() {
                   </div>
 
                   {/* Text content */}
-                  <h3 className="text-2xl font-bold mb-3 group-hover:bg-gradient-to-r group-hover:from-primary group-hover:to-accent group-hover:bg-clip-text group-hover:text-transparent transition-all">
+                  <h3 className="text-2xl font-bold mb-3 text-foreground group-hover:bg-gradient-to-r group-hover:from-primary group-hover:to-accent group-hover:bg-clip-text group-hover:text-transparent transition-all">
                     {feature.title}
                   </h3>
-                  <p className="text-muted-foreground text-lg leading-relaxed mb-4">
+                  <p className="text-foreground/80 text-lg leading-relaxed mb-4">
                     {feature.description}
                   </p>
 
@@ -124,6 +125,7 @@ export default function FeaturesSection() {
       {/* Decorative elements */}
       <div className="absolute top-10 right-10 w-20 h-20 border border-primary/10 rounded-full animate-pulse"></div>
       <div className="absolute bottom-20 left-10 w-16 h-16 bg-accent/5 rotate-45" style={{ clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }}></div>
+      </div>
     </section>
   );
 }

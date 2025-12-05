@@ -2,6 +2,7 @@
 
 import Navigation from '@/components/navigation';
 import HeroSection from '@/components/hero-section';
+import SocialProofSection from '@/components/social-proof-section';
 import FeaturesSection from '@/components/features-section';
 import Footer from '@/components/footer';
 
@@ -11,7 +12,7 @@ export default function Home() {
       <Navigation />
       <main>
         <HeroSection />
-        <FeaturesSection />
+        <SocialProofSection />
       </main>
       <Footer />
     </div>

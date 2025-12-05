@@ -13,7 +13,7 @@ export default function HeroSection() {
   const { ref: parallaxRef3, offset: offset3 } = useParallax(0.2);
 
   return (
-    <section className="relative min-h-[800px] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-32 overflow-hidden">
+    <section className="relative min-h-[700px] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-20 overflow-hidden">
       {/* Enhanced background effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div
@@ -68,7 +68,7 @@ export default function HeroSection() {
         </div>
 
         {/* CTA with visual elements */}
-        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-20">
+        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
           <Link href="/interview-setup">
             <Button
               size="lg"
