@@ -126,3 +126,40 @@ Creating turbopack project {
  GET /interview-setup 200 in 21ms (compile: 6ms, render: 15ms)
  GET / 200 in 101ms (compile: 72ms, render: 29ms)
  GET /about 200 in 10ms (compile: 2ms, render: 8ms)
+ GET /about 200 in 29ms (compile: 12ms, render: 17ms)
+ GET /pricing 200 in 15ms (compile: 3ms, render: 11ms)
+ GET /about 200 in 23ms (compile: 5ms, render: 18ms)
+ GET / 200 in 24ms (compile: 6ms, render: 18ms)
+ GET /interview-setup 200 in 29ms (compile: 6ms, render: 23ms)
+ ✓ Compiled in 49ms
+ ✓ Compiled in 29ms
+ ✓ Compiled in 53ms
+ ✓ Compiled in 22ms
+ ✓ Compiled in 25ms
+ ✓ Compiled in 24ms
+ ✓ Compiled in 26ms
+ ✓ Compiled in 32ms
+ ✓ Compiled in 26ms
+ ✓ Compiled in 25ms
+ ✓ Compiled in 38ms
+ ✓ Compiled in 28ms
+ ✓ Compiled in 29ms
+ ✓ Compiled in 20ms
+ ✓ Compiled in 28ms
+ ✓ Compiled in 26ms
+ ✓ Compiled in 24ms
+ ✓ Compiled in 25ms
+ ✓ Compiled in 23ms
+ ✓ Compiled in 26ms
+ ✓ Compiled in 26ms
+ ✓ Compiled in 23ms
+ ✓ Compiled in 24ms
+ ✓ Compiled in 86ms
+ ✓ Compiled in 36ms
+ ✓ Compiled in 25ms
+ ✓ Compiled in 20ms
+ GET / 200 in 178ms (compile: 75ms, render: 104ms)
+ GET /about 200 in 96ms (compile: 64ms, render: 32ms)
+ GET /pricing 200 in 23ms (compile: 6ms, render: 17ms)
+ GET /about 200 in 17ms (compile: 4ms, render: 14ms)
+ GET /about 200 in 9ms (compile: 1565µs, render: 8ms)

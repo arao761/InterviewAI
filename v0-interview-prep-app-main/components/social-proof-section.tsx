@@ -5,19 +5,19 @@ import { Quote, Star } from 'lucide-react';
 export default function SocialProofSection() {
   const testimonials = [
     {
-      name: 'Sarah Chen',
+      name: 'Maya Chen',
       role: 'Software Engineer at Google',
       content: 'InterviewAI helped me prepare for my Google interview. The real-time feedback was invaluable!',
       rating: 5,
     },
     {
-      name: 'Marcus Johnson',
+      name: 'Priya Sharma',
       role: 'Product Manager at Amazon',
       content: 'The AI coaching felt like having a personal interview coach. Landed my dream PM role!',
       rating: 5,
     },
     {
-      name: 'Emily Rodriguez',
+      name: 'Marcus Rodriguez',
       role: 'Data Scientist at Meta',
       content: 'Practice sessions were incredibly realistic. Helped me build confidence for the real thing.',
       rating: 5,
@@ -30,7 +30,7 @@ export default function SocialProofSection() {
     { name: 'Amazon', logo: '📦' },
     { name: 'Microsoft', logo: '💻' },
     { name: 'Apple', logo: '🍎' },
-    { name: 'Netflix', logo: '🎬' },
+    { name: 'LinkedIn', logo: '🎬' },
   ];
 
   return (
