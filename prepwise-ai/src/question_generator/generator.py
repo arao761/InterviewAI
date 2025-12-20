@@ -467,17 +467,30 @@ Format as JSON array with keys: question, difficulty, category, skills_tested (a
         
         try:
             import json
+            import re
             data = json.loads(response)
             
             if isinstance(data, list):
                 for item in data:
+                    # Convert difficulty to lowercase for case-insensitive matching
+                    difficulty_str = item.get("difficulty", "medium")
+                    if isinstance(difficulty_str, str):
+                        difficulty_str = difficulty_str.lower()
+                    
+                    # Parse duration - handle both int and string formats
+                    duration = item.get("duration", 5)
+                    if isinstance(duration, str):
+                        # Extract number from strings like "10 minutes", "5 min", "7"
+                        duration_match = re.search(r'(\d+)', duration)
+                        duration = int(duration_match.group(1)) if duration_match else 5
+                    
                     question = InterviewQuestion(
                         question=item.get("question", ""),
                         type=question_type,
-                        difficulty=DifficultyLevel(item.get("difficulty", "medium")),
+                        difficulty=DifficultyLevel(difficulty_str),
                         category=item.get("category", "general"),
                         skills_tested=item.get("skills_tested", []),
-                        expected_duration_minutes=item.get("duration", 5),
+                        expected_duration_minutes=duration,
                         follow_up_questions=item.get("follow_ups", []),
                         hints=item.get("hints", [])
                     )
@@ -485,6 +498,8 @@ Format as JSON array with keys: question, difficulty, category, skills_tested (a
         
         except Exception as e:
             print(f"Error parsing LLM response: {e}")
+            import traceback
+            traceback.print_exc()
         
         return questions
     

@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DownloadCloud, Share2, ArrowLeft } from 'lucide-react';
 import { useScrollFadeIn } from '@/hooks/use-scroll-fade-in';
+import { calculatePerformanceMetrics, calculateSimpleMetrics } from '@/lib/utils/metrics-calculator';
 import type { InterviewEvaluationReport, ResponseEvaluation } from '@/lib/api/types';
 
 export default function ResultsPage() {
@@ -35,7 +36,14 @@ export default function ResultsPage() {
       setResponses(results.responses || []);
     }
 
-    // If no results, redirect to setup
+    // If no evaluation but have results, redirect to processing
+    if (!savedEvaluation && savedResults) {
+      console.log('No evaluation found, redirecting to processing...');
+      router.push('/interview/processing');
+      return;
+    }
+
+    // If no results at all, redirect to setup
     if (!savedEvaluation && !savedResults) {
       router.push('/interview-setup');
     }
@@ -50,13 +58,14 @@ export default function ResultsPage() {
   const calculateMetrics = () => {
     if (!evaluation) return {};
 
-    return {
-      clarity: Math.round((evaluation.overall_score + (evaluation.behavioral_score || evaluation.overall_score)) / 2),
-      confidence: Math.round(evaluation.overall_score),
-      structure: Math.round(evaluation.overall_score * 0.9),
-      technicalAccuracy: evaluation.technical_score || evaluation.overall_score,
-      engagement: Math.round(evaluation.overall_score * 1.05),
-    };
+    try {
+      // Use advanced keyword-based metrics calculation
+      return calculatePerformanceMetrics(evaluation);
+    } catch (error) {
+      console.warn('Failed to calculate advanced metrics, using fallback:', error);
+      // Fallback to simple calculation
+      return calculateSimpleMetrics(evaluation);
+    }
   };
 
   if (!evaluation && responses.length === 0) {

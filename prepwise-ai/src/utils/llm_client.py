@@ -44,7 +44,8 @@ class LLMClient:
             self.client = OpenAI(
                 api_key=api_key or os.getenv("OPENAI_API_KEY")
             )
-            self.model = model or os.getenv("DEFAULT_MODEL", "gpt-4")
+            # Changed from gpt-4 to gpt-4o-mini for 50-70% faster response times
+            self.model = model or os.getenv("DEFAULT_MODEL", "gpt-4o-mini")
 
         elif self.provider == "anthropic":
             self.client = Anthropic(

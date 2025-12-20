@@ -236,8 +236,8 @@ export default function InterviewSession() {
     };
     sessionStorage.setItem('interviewResults', JSON.stringify(results));
 
-    // Navigate to results page
-    router.push('/results');
+    // Navigate to processing page for evaluation
+    router.push('/interview/processing');
   };
 
   const handleExit = () => {

@@ -8,6 +8,7 @@ from app.core.logging import logger
 from app.utils.exceptions import PrepWiseException
 from app.utils.error_handlers import prepwise_exception_handler, general_exception_handler
 from app.api import api_router
+from app.core.cache import cache_manager
 from contextlib import asynccontextmanager
 
 
@@ -23,6 +24,10 @@ async def lifespan(app: FastAPI):
     logger.info(f"Host: {settings.HOST}:{settings.PORT}")
     logger.info(f"CORS origins: {settings.cors_origins_list}")
     
+    # Initialize Redis cache
+    logger.info("Initializing Redis cache...")
+    await cache_manager.connect()
+
     # Verify PrepWise AI is available
     try:
         from app.services.ai_service import AIService
@@ -34,11 +39,12 @@ async def lifespan(app: FastAPI):
         logger.error(f"❌ Failed to initialize AIService: {e}")
         logger.error("⚠️  AI features may not work properly")
         logger.error("💡 Make sure to run: cd backend && pip install -e ../prepwise-ai")
-    
+
     yield
-    
+
     # Shutdown
     logger.info(f"Shutting down {settings.APP_NAME} API")
+    await cache_manager.close()
 
 
 # Create FastAPI app instance

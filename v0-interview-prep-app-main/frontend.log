@@ -15,7 +15,7 @@
 
    ▲ Next.js 16.0.3 (Turbopack)
    - Local:         http://localhost:3000
-   - Network:       http://172.25.149.145:3000
+   - Network:       http://192.168.1.167:3000
    - Environments: .env.local
 
  ✓ Starting...
@@ -24,142 +24,9 @@ Creating turbopack project {
   dir: '/Users/ankitrao/Desktop/InterviewAI/v0-interview-prep-app-main',
   testMode: true
 }
- ✓ Ready in 448ms
- GET / 200 in 1097ms (compile: 998ms, render: 99ms)
- GET / 200 in 27ms (compile: 10ms, render: 17ms)
- GET /pricing 200 in 269ms (compile: 251ms, render: 18ms)
- GET / 200 in 25ms (compile: 7ms, render: 18ms)
- GET /about 200 in 191ms (compile: 178ms, render: 13ms)
- GET / 200 in 17ms (compile: 5ms, render: 12ms)
- GET / 200 in 16ms (compile: 3ms, render: 13ms)
- GET / 200 in 19ms (compile: 4ms, render: 14ms)
- GET / 200 in 13ms (compile: 3ms, render: 10ms)
- GET / 200 in 21ms (compile: 5ms, render: 16ms)
- GET / 200 in 21ms (compile: 4ms, render: 17ms)
- GET / 200 in 20ms (compile: 4ms, render: 16ms)
- GET /interview-setup 200 in 198ms (compile: 180ms, render: 18ms)
- ✓ Compiled in 65ms
- ✓ Compiled in 30ms
- ✓ Compiled in 23ms
- ✓ Compiled in 57ms
- ✓ Compiled in 63ms
- ✓ Compiled in 92ms
- ✓ Compiled in 32ms
- ✓ Compiled in 86ms
- ✓ Compiled in 26ms
- ✓ Compiled in 66ms
- GET / 200 in 173ms (compile: 56ms, render: 117ms)
- GET / 200 in 14ms (compile: 2ms, render: 12ms)
- GET /pricing 200 in 85ms (compile: 57ms, render: 28ms)
- GET / 200 in 14ms (compile: 3ms, render: 12ms)
- GET / 200 in 22ms (compile: 4ms, render: 18ms)
- GET / 200 in 47ms (compile: 4ms, render: 43ms)
- GET / 200 in 42ms (compile: 3ms, render: 39ms)
- GET /pricing 200 in 20ms (compile: 5ms, render: 15ms)
- GET /about 200 in 100ms (compile: 60ms, render: 40ms)
- GET /pricing 200 in 24ms (compile: 6ms, render: 18ms)
- GET / 200 in 24ms (compile: 5ms, render: 18ms)
- GET /about 200 in 26ms (compile: 10ms, render: 16ms)
- GET /interview-setup 200 in 17ms (compile: 5ms, render: 12ms)
- GET / 200 in 22ms (compile: 5ms, render: 17ms)
- GET /interview-setup 200 in 12ms (compile: 1931µs, render: 10ms)
- GET / 200 in 13ms (compile: 3ms, render: 9ms)
- GET /pricing 200 in 20ms (compile: 5ms, render: 15ms)
- GET /about 200 in 21ms (compile: 5ms, render: 16ms)
- GET /pricing 200 in 20ms (compile: 5ms, render: 15ms)
- GET /interview-setup 200 in 25ms (compile: 6ms, render: 19ms)
- GET / 200 in 23ms (compile: 6ms, render: 17ms)
- GET /? 200 in 36ms (compile: 1716µs, render: 34ms)
- GET /interview-setup 200 in 22ms (compile: 9ms, render: 13ms)
- GET / 200 in 40ms (compile: 3ms, render: 37ms)
- GET / 200 in 41ms (compile: 3ms, render: 37ms)
- ✓ Compiled in 101ms
- ✓ Compiled in 25ms
- ⚠ Fast Refresh had to perform a full reload due to a runtime error.
- ✓ Compiled in 16ms
- GET / 200 in 248ms (compile: 131ms, render: 117ms)
- GET / 200 in 42ms (compile: 5ms, render: 37ms)
- GET /interview-setup 200 in 19ms (compile: 6ms, render: 13ms)
- GET / 200 in 42ms (compile: 5ms, render: 37ms)
- GET /about 200 in 108ms (compile: 62ms, render: 46ms)
- ✓ Compiled in 125ms
- GET /about 200 in 99ms (compile: 60ms, render: 39ms)
- GET /interview-setup 200 in 29ms (compile: 16ms, render: 13ms)
- GET /about 200 in 15ms (compile: 5ms, render: 9ms)
- GET /about 200 in 14ms (compile: 3ms, render: 11ms)
- GET / 200 in 27ms (compile: 7ms, render: 19ms)
- GET / 200 in 42ms (compile: 4ms, render: 39ms)
- GET /interview-setup 200 in 20ms (compile: 5ms, render: 15ms)
- GET /interview-setup 200 in 15ms (compile: 3ms, render: 12ms)
- GET / 200 in 38ms (compile: 3ms, render: 35ms)
- GET /about 200 in 20ms (compile: 6ms, render: 14ms)
- ✓ Compiled in 115ms
- ✓ Compiled in 19ms
- ✓ Compiled in 57ms
- GET / 200 in 217ms (compile: 74ms, render: 143ms)
- ✓ Compiled in 30ms
- ✓ Compiled in 50ms
- ✓ Compiled in 114ms
- ✓ Compiled in 45ms
- GET / 200 in 201ms (compile: 59ms, render: 142ms)
- ✓ Compiled in 42ms
- ✓ Compiled in 45ms
- GET / 200 in 113ms (compile: 46ms, render: 67ms)
- GET / 200 in 35ms (compile: 3ms, render: 32ms)
- GET / 200 in 25ms (compile: 1731µs, render: 24ms)
- ✓ Compiled in 117ms
- GET / 200 in 143ms (compile: 82ms, render: 61ms)
- GET / 200 in 84ms (compile: 5ms, render: 79ms)
- GET / 200 in 37ms (compile: 2ms, render: 35ms)
- GET /pricing 200 in 19ms (compile: 7ms, render: 12ms)
- GET /about 200 in 19ms (compile: 7ms, render: 12ms)
- GET /about 200 in 9ms (compile: 1617µs, render: 8ms)
- GET /pricing 200 in 13ms (compile: 2ms, render: 10ms)
- GET / 200 in 20ms (compile: 5ms, render: 15ms)
- GET / 200 in 38ms (compile: 5ms, render: 33ms)
- ✓ Compiled in 72ms
- GET /interview-setup 200 in 30ms (compile: 14ms, render: 15ms)
- GET /about 200 in 31ms (compile: 10ms, render: 21ms)
- GET /pricing 200 in 30ms (compile: 6ms, render: 23ms)
- GET /pricing 200 in 12ms (compile: 1442µs, render: 11ms)
- GET /about 200 in 15ms (compile: 3ms, render: 12ms)
- GET /interview-setup 200 in 21ms (compile: 6ms, render: 15ms)
- GET / 200 in 101ms (compile: 72ms, render: 29ms)
- GET /about 200 in 10ms (compile: 2ms, render: 8ms)
- GET /about 200 in 29ms (compile: 12ms, render: 17ms)
- GET /pricing 200 in 15ms (compile: 3ms, render: 11ms)
- GET /about 200 in 23ms (compile: 5ms, render: 18ms)
- GET / 200 in 24ms (compile: 6ms, render: 18ms)
- GET /interview-setup 200 in 29ms (compile: 6ms, render: 23ms)
- ✓ Compiled in 49ms
- ✓ Compiled in 29ms
- ✓ Compiled in 53ms
- ✓ Compiled in 22ms
- ✓ Compiled in 25ms
- ✓ Compiled in 24ms
- ✓ Compiled in 26ms
- ✓ Compiled in 32ms
- ✓ Compiled in 26ms
- ✓ Compiled in 25ms
- ✓ Compiled in 38ms
- ✓ Compiled in 28ms
- ✓ Compiled in 29ms
- ✓ Compiled in 20ms
- ✓ Compiled in 28ms
- ✓ Compiled in 26ms
- ✓ Compiled in 24ms
- ✓ Compiled in 25ms
- ✓ Compiled in 23ms
- ✓ Compiled in 26ms
- ✓ Compiled in 26ms
- ✓ Compiled in 23ms
- ✓ Compiled in 24ms
- ✓ Compiled in 86ms
- ✓ Compiled in 36ms
- ✓ Compiled in 25ms
- ✓ Compiled in 20ms
- GET / 200 in 178ms (compile: 75ms, render: 104ms)
- GET /about 200 in 96ms (compile: 64ms, render: 32ms)
- GET /pricing 200 in 23ms (compile: 6ms, render: 17ms)
- GET /about 200 in 17ms (compile: 4ms, render: 14ms)
- GET /about 200 in 9ms (compile: 1565µs, render: 8ms)
+ ✓ Ready in 386ms
+ GET / 200 in 1135ms (compile: 1030ms, render: 105ms)
+ GET /interview-setup 200 in 249ms (compile: 231ms, render: 19ms)
+ GET /interview 200 in 284ms (compile: 266ms, render: 18ms)
+ GET /interview/processing 200 in 248ms (compile: 232ms, render: 16ms)
+ GET /results 200 in 177ms (compile: 157ms, render: 20ms)

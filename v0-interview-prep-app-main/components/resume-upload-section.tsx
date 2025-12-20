@@ -65,7 +65,7 @@ export default function ResumeUploadSection({ onBack }: { onBack: () => void }) 
               onDragOver={handleDrag}
               onDrop={handleDrop}
               className="space-y-6"
-            >
+            > 
               <div
                 className={`relative border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
                   dragActive ? 'border-primary bg-primary/5' : 'border-border'

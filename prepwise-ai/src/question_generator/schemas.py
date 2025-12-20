@@ -22,6 +22,28 @@ class DifficultyLevel(str, Enum):
     EASY = "easy"
     MEDIUM = "medium"
     HARD = "hard"
+    
+    @classmethod
+    def _missing_(cls, value):
+        """Handle case-insensitive matching and synonyms"""
+        if isinstance(value, str):
+            value = value.lower()
+            # Handle synonyms and frontend mappings
+            if value == "high":
+                value = "hard"
+            elif value == "low":
+                value = "easy"
+            elif value == "beginner":
+                value = "easy"
+            elif value == "intermediate":
+                value = "medium"
+            elif value == "advanced":
+                value = "hard"
+            
+            for member in cls:
+                if member.value == value:
+                    return member
+        return None
 
 
 class InterviewQuestion(BaseModel):

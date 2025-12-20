@@ -94,11 +94,11 @@ class AnswerEvaluator:
         prompt = self._build_evaluation_prompt(request)
         
         try:
-            # Get LLM evaluation
+            # Get LLM evaluation (reduced from 2000 to 1200 for faster response)
             llm_response = self.llm_client.generate_json(
                 prompt=prompt,
                 temperature=0.3,
-                max_tokens=2000
+                max_tokens=1200
             )
             
             # Parse LLM response
