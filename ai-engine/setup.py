@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="prepwise-ai",
+    name="ai-engine",
     version="0.1.0",
     description="AI/NLP intelligence layer for PrepWise interview preparation platform",
     author="PrepWise Team - Person 4 (AI/NLP Engineer)",

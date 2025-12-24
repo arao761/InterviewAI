@@ -46,18 +46,18 @@ pytest-asyncio==0.23.3
 black==24.1.1
 flake8==7.0.0
 
-# AI/NLP Dependencies - NOTE: These are managed by prepwise-ai
+# AI/NLP Dependencies - NOTE: These are managed by ai-engine
 # The versions below are listed for reference only
-# Actual versions will come from prepwise-ai installation
+# Actual versions will come from ai-engine installation
 # openai==1.12.0
 # anthropic==0.18.1
 # langchain==0.1.9
 # langchain-openai==0.0.6
 # spacy==3.7.4
 
-# PrepWise AI Integration - Install as editable package
+# AI Engine Integration - Install as editable package
 # This will install all the AI/NLP dependencies automatically
-# NOTE: prepwise-ai is installed via render.yaml build command
-# For local development: cd backend && pip install -e ../prepwise-ai
+# NOTE: ai-engine is installed via render.yaml build command
+# For local development: cd backend && pip install -e ../ai-engine
 
-# Use pydantic from prepwise-ai (2.12.4)
+# Use pydantic from ai-engine (2.12.4)

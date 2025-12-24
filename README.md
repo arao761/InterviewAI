@@ -59,7 +59,7 @@ To stop all services:
 
 ```
 ├── backend/                    # FastAPI REST API
-├── prepwise-ai/               # AI/NLP processing engine
+├── ai-engine/                 # AI/NLP processing engine
 ├── v0-interview-prep-app-main/ # Next.js frontend
 └── SETUP_PROJECT.sh           # Initial setup script
 ```

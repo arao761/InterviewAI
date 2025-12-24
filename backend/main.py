@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"❌ Failed to initialize AIService: {e}")
         logger.error("⚠️  AI features may not work properly")
-        logger.error("💡 Make sure to run: cd backend && pip install -e ../prepwise-ai")
+        logger.error("💡 Make sure to run: cd backend && pip install -e ../ai-engine")
 
     yield
 
