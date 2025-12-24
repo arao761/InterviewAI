@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import SettingsHeader from '@/components/settings/settings-header';
 import ProfileSettings from '@/components/settings/profile-settings';
 import PreferencesSettings from '@/components/settings/preferences-settings';
@@ -13,6 +15,7 @@ import { ArrowLeft } from 'lucide-react';
 type SettingsTab = 'profile' | 'preferences' | 'notifications' | 'privacy';
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [isSaved, setIsSaved] = useState(false);
 
@@ -28,6 +31,10 @@ export default function SettingsPage() {
     setTimeout(() => setIsSaved(false), 3000);
   };
 
+  const handleCancel = () => {
+    router.push('/dashboard');
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SettingsHeader />
@@ -35,10 +42,12 @@ export default function SettingsPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <div className="mb-8">
-          <Button variant="ghost" size="sm" className="hover:bg-muted mb-4">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
+          <Link href="/dashboard">
+            <Button variant="ghost" size="sm" className="hover:bg-muted mb-4">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+          </Link>
           <h1 className="text-4xl font-bold">Settings</h1>
           <p className="text-muted-foreground mt-2">Manage your account and preferences</p>
         </div>
@@ -83,7 +92,7 @@ export default function SettingsPage() {
 
               {/* Save Button */}
               <div className="mt-8 pt-8 border-t border-border flex justify-end gap-4">
-                <Button variant="outline" className="border-border hover:bg-card">
+                <Button variant="outline" className="border-border hover:bg-card" onClick={handleCancel}>
                   Cancel
                 </Button>
                 <Button

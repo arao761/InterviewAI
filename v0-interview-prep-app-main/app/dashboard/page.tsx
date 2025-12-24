@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import DashboardHeader from '@/components/dashboard/dashboard-header';
 import QuickStats from '@/components/dashboard/quick-stats';
 import ProgressChart from '@/components/dashboard/progress-chart';
@@ -71,10 +72,12 @@ export default function Dashboard() {
             <p className="text-muted-foreground">Track your interview preparation progress</p>
           </div>
 
-          <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-            <Plus className="w-4 h-4 mr-2" />
-            New Interview
-          </Button>
+          <Link href="/interview-setup">
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Plus className="w-4 h-4 mr-2" />
+              New Interview
+            </Button>
+          </Link>
         </div>
 
         {/* Quick Stats */}

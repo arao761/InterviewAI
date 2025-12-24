@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Navigation from '@/components/navigation';
@@ -101,16 +102,18 @@ export default function PricingPage() {
                 <span className="text-4xl font-bold">{plan.price}</span>
                 <span className="text-muted-foreground ml-2">{plan.period}</span>
               </div>
-              <Button
-                size="lg"
-                className={`mb-8 w-full ${
-                  plan.highlight
-                    ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                    : 'bg-accent text-accent-foreground hover:bg-accent/90'
-                }`}
-              >
-                {plan.cta}
-              </Button>
+              <Link href="/register" className="w-full">
+                <Button
+                  size="lg"
+                  className={`mb-8 w-full ${
+                    plan.highlight
+                      ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                      : 'bg-accent text-accent-foreground hover:bg-accent/90'
+                  }`}
+                >
+                  {plan.cta}
+                </Button>
+              </Link>
               <div className="space-y-4 flex-1">
                 {plan.features.map((feature, featureIndex) => (
                   <div key={featureIndex} className="flex gap-3 items-start">

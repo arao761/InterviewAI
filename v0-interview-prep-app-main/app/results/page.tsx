@@ -15,9 +15,8 @@ import type { InterviewEvaluationReport, ResponseEvaluation } from '@/lib/api/ty
 
 export default function ResultsPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('overview');
   const [evaluation, setEvaluation] = useState<InterviewEvaluationReport | null>(null);
-  const [responses, setResponses] = useState<Array<any>>([]);
+  const [sessionData, setSessionData] = useState<any>(null);
   const overallScoreRef = useScrollFadeIn();
   const metricsRef = useScrollFadeIn();
   const questionsRef = useScrollFadeIn();
@@ -33,7 +32,7 @@ export default function ResultsPage() {
 
     if (savedResults) {
       const results = JSON.parse(savedResults);
-      setResponses(results.responses || []);
+      setSessionData(results.sessionData);
     }
 
     // If no evaluation but have results, redirect to processing
@@ -49,12 +48,6 @@ export default function ResultsPage() {
     }
   }, [router]);
 
-  const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'detailed', label: 'Detailed Feedback' },
-    { id: 'transcript', label: 'Transcript' },
-  ];
-
   const calculateMetrics = () => {
     if (!evaluation) return {};
 
@@ -68,7 +61,77 @@ export default function ResultsPage() {
     }
   };
 
-  if (!evaluation && responses.length === 0) {
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Interview Results',
+          text: `I scored ${overallScore}% on my interview!`,
+          url: window.location.href
+        });
+      } else {
+        // Fallback: copy link
+        await navigator.clipboard.writeText(window.location.href);
+        alert('Link copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  };
+
+  const handleDownload = () => {
+    if (!evaluation) return;
+
+    // Generate text report
+    const report = `
+INTERVIEW RESULTS REPORT
+========================
+
+Date: ${new Date().toLocaleDateString()}
+Overall Score: ${Math.round(evaluation.overall_score)}%
+${evaluation.technical_score ? `Technical Score: ${Math.round(evaluation.technical_score)}%` : ''}
+${evaluation.behavioral_score ? `Behavioral Score: ${Math.round(evaluation.behavioral_score)}%` : ''}
+
+OVERALL FEEDBACK
+----------------
+${evaluation.detailed_feedback}
+
+STRENGTHS
+---------
+${evaluation.strengths?.map((s, i) => `${i + 1}. ${s}`).join('\n') || 'N/A'}
+
+AREAS FOR IMPROVEMENT
+---------------------
+${evaluation.areas_for_improvement?.map((a, i) => `${i + 1}. ${a}`).join('\n') || 'N/A'}
+
+RECOMMENDATIONS
+---------------
+${evaluation.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || 'N/A'}
+
+INDIVIDUAL QUESTION RESULTS
+----------------------------
+${evaluation.individual_evaluations?.map((eval, i) => `
+Question ${i + 1}
+Score: ${Math.round(eval.score)}%
+Feedback: ${eval.feedback}
+Strengths: ${eval.strengths?.join(', ') || 'N/A'}
+Areas to Improve: ${eval.weaknesses?.join(', ') || 'N/A'}
+`).join('\n') || 'N/A'}
+    `.trim();
+
+    // Download as text file
+    const blob = new Blob([report], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `interview-results-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  if (!evaluation) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -78,8 +141,10 @@ export default function ResultsPage() {
     );
   }
 
-  const overallScore = Math.round(evaluation?.overall_score || 0);
+  const overallScore = Math.round(evaluation.overall_score || 0);
   const metrics = calculateMetrics();
+  const questions = sessionData?.questions || [];
+  const individualEvals = evaluation.individual_evaluations || [];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -96,11 +161,11 @@ export default function ResultsPage() {
           </div>
 
           <div className="flex gap-3">
-            <Button variant="outline" className="border-border hover:bg-card">
+            <Button variant="outline" className="border-border hover:bg-card" onClick={handleShare}>
               <Share2 className="w-4 h-4 mr-2" />
               Share
             </Button>
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleDownload}>
               <DownloadCloud className="w-4 h-4 mr-2" />
               Download Report
             </Button>
@@ -176,57 +241,39 @@ export default function ResultsPage() {
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="mb-8">
-          <div className="flex border-b border-border mb-6 gap-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 -mb-px ${
-                  activeTab === tab.id
-                    ? 'border-primary text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Overview Tab - Individual Question Results */}
-          {activeTab === 'overview' && (
+        {/* Individual Question Results */}
+        {individualEvals.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-6">Individual Question Results</h2>
             <div ref={questionsRef} className="space-y-6 fade-in-animation">
-              {responses.map((response, index) => {
-                const evaluation = response.evaluation;
+              {individualEvals.map((evalItem, index) => {
+                const question = questions[index];
                 return (
                   <Card key={index} className="bg-card border-border p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
                         <h3 className="font-semibold text-lg mb-2">
-                          Q{index + 1}: {response.question?.question || response.question?.text || 'Question'}
+                          Q{index + 1}: {question?.question || question?.text || `Question ${index + 1}`}
                         </h3>
                       </div>
-                      {evaluation && (
-                        <div className="text-right">
-                          <div className="text-3xl font-bold text-primary">{Math.round(evaluation.score)}</div>
-                          <div className="text-xs text-muted-foreground">out of 100</div>
-                        </div>
-                      )}
+                      <div className="text-right">
+                        <div className="text-3xl font-bold text-primary">{Math.round(evalItem.score)}</div>
+                        <div className="text-xs text-muted-foreground">out of 100</div>
+                      </div>
                     </div>
 
-                    {evaluation?.feedback && (
+                    {evalItem.feedback && (
                       <div className="bg-muted/50 rounded-lg p-4 mb-4">
-                        <p className="text-sm text-foreground">{evaluation.feedback}</p>
+                        <p className="text-sm text-foreground">{evalItem.feedback}</p>
                       </div>
                     )}
 
                     <div className="grid md:grid-cols-2 gap-4">
-                      {evaluation?.strengths && evaluation.strengths.length > 0 && (
+                      {evalItem.strengths && evalItem.strengths.length > 0 && (
                         <div>
                           <h4 className="font-semibold text-sm mb-3 text-green-500">Strengths</h4>
                           <ul className="space-y-2">
-                            {evaluation.strengths.map((strength, i) => (
+                            {evalItem.strengths.map((strength, i) => (
                               <li key={i} className="flex items-start gap-2 text-sm">
                                 <span className="text-green-500 mt-1">✓</span>
                                 <span>{strength}</span>
@@ -235,11 +282,11 @@ export default function ResultsPage() {
                           </ul>
                         </div>
                       )}
-                      {evaluation?.weaknesses && evaluation.weaknesses.length > 0 && (
+                      {evalItem.weaknesses && evalItem.weaknesses.length > 0 && (
                         <div>
                           <h4 className="font-semibold text-sm mb-3 text-yellow-500">Areas to Improve</h4>
                           <ul className="space-y-2">
-                            {evaluation.weaknesses.map((weakness, i) => (
+                            {evalItem.weaknesses.map((weakness, i) => (
                               <li key={i} className="flex items-start gap-2 text-sm">
                                 <span className="text-yellow-500 mt-1">→</span>
                                 <span>{weakness}</span>
@@ -253,26 +300,8 @@ export default function ResultsPage() {
                 );
               })}
             </div>
-          )}
-
-          {/* Transcript Tab */}
-          {activeTab === 'transcript' && (
-            <div className="bg-card border border-border rounded-lg p-6">
-              <div className="space-y-6">
-                {responses.map((response, index) => (
-                  <div key={index} className="border-b border-border pb-6 last:border-b-0">
-                    <h3 className="font-semibold mb-3">
-                      Q{index + 1}: {response.question?.question || response.question?.text}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                      {response.answer}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Bottom Actions */}
         <div className="flex justify-between items-center pt-8 border-t border-border">

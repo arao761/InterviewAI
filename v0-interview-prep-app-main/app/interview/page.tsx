@@ -74,6 +74,7 @@ export default function InterviewSession() {
       jobTitle: sessionData.formData?.jobTitle,
       company: sessionData.formData?.company,
       duration: sessionData.formData?.duration,
+      timeRemainingMinutes: Math.floor(timeRemaining / 60),
     } : undefined;
 
     const interviewer = new VapiInterviewer(
@@ -215,7 +216,16 @@ export default function InterviewSession() {
     }
 
     const timer = setInterval(() => {
-      setTimeRemaining((prev) => Math.max(0, prev - 1));
+      setTimeRemaining((prev) => {
+        const newTime = Math.max(0, prev - 1);
+
+        // Update VAPI with time remaining at key thresholds
+        if (vapiInterviewerRef.current) {
+          vapiInterviewerRef.current.updateTimeRemaining(newTime);
+        }
+
+        return newTime;
+      });
     }, 1000);
 
     return () => clearInterval(timer);

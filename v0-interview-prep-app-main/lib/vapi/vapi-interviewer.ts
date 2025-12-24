@@ -13,6 +13,7 @@ export interface InterviewContext {
   jobTitle?: string;
   company?: string;
   duration?: string;
+  timeRemainingMinutes?: number;
 }
 
 export interface InterviewerConfig {
@@ -101,6 +102,25 @@ export class VapiInterviewer {
       prompt += `\n`;
     }
 
+    // Add time management instructions
+    prompt += `## Time Management\n`;
+    if (ctx.duration) {
+      prompt += `- Total interview duration: ${ctx.duration} minutes\n`;
+    }
+    if (ctx.timeRemainingMinutes !== undefined) {
+      prompt += `- Time remaining: ${ctx.timeRemainingMinutes} minutes\n`;
+      if (ctx.timeRemainingMinutes <= 5) {
+        prompt += `- ⚠️ CRITICAL: Less than 5 minutes remaining! Begin wrapping up the interview NOW.\n`;
+        prompt += `- Skip any remaining questions and ask the candidate if they have any final questions\n`;
+        prompt += `- Provide a brief closing statement and thank them for their time\n`;
+      } else if (ctx.timeRemainingMinutes <= 10) {
+        prompt += `- ⚠️ WARNING: Less than 10 minutes remaining. Start transitioning to final questions.\n`;
+        prompt += `- Focus on the most important remaining questions\n`;
+        prompt += `- Keep follow-ups brief\n`;
+      }
+    }
+    prompt += `\n`;
+
     // Add instructions based on interview type
     prompt += `## Instructions\n`;
     prompt += `- Start by greeting the candidate\n`;
@@ -124,7 +144,8 @@ export class VapiInterviewer {
       prompt += `- For behavioral questions, you can reference their background\n`;
     }
 
-    prompt += `- Keep track of time and pace the interview accordingly\n`;
+    prompt += `- IMPORTANT: Continuously monitor time and pace the interview accordingly\n`;
+    prompt += `- When time is running low, gracefully wrap up the interview\n`;
     prompt += `- At the end, thank them and let them know next steps\n`;
 
     return prompt;
@@ -256,6 +277,44 @@ export class VapiInterviewer {
   send(message: any): void {
     if (this.vapi) {
       this.vapi.send(message);
+    }
+  }
+
+  /**
+   * Update time remaining during the interview
+   * Sends context update to assistant about remaining time
+   */
+  updateTimeRemaining(timeRemainingSeconds: number): void {
+    if (!this.vapi || !this.isCallActive) {
+      return;
+    }
+
+    const minutes = Math.floor(timeRemainingSeconds / 60);
+
+    // Only send updates at key thresholds to avoid spam
+    // Send at: 10min, 5min, 3min, 2min, 1min remaining
+    const thresholds = [10, 5, 3, 2, 1];
+    if (thresholds.includes(minutes)) {
+      let timeMessage = '';
+
+      if (minutes <= 2) {
+        timeMessage = `URGENT: Only ${minutes} minute${minutes !== 1 ? 's' : ''} remaining in the interview. You must begin wrapping up NOW. Ask the candidate if they have any final questions, then provide a brief closing statement.`;
+      } else if (minutes <= 5) {
+        timeMessage = `CRITICAL: ${minutes} minutes remaining. Start transitioning to final questions and prepare to wrap up the interview.`;
+      } else if (minutes <= 10) {
+        timeMessage = `WARNING: ${minutes} minutes remaining. Focus on the most important questions and keep responses concise.`;
+      }
+
+      if (timeMessage) {
+        console.log(`⏰ Sending time update to VAPI: ${minutes} minutes remaining`);
+        this.vapi.send({
+          type: 'add-message',
+          message: {
+            role: 'system',
+            content: timeMessage,
+          },
+        });
+      }
     }
   }
 }

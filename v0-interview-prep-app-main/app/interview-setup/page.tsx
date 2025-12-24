@@ -29,7 +29,6 @@ export default function InterviewSetup() {
     yearsOfExperience: '',
     difficulty: '',
     duration: '30',
-    numberOfQuestions: '5',
     focusAreas: [] as string[],
   });
 
@@ -224,7 +223,6 @@ export default function InterviewSetup() {
               <InterviewSettingsForm
                 data={{
                   duration: formData.duration,
-                  numberOfQuestions: formData.numberOfQuestions,
                   focusAreas: formData.focusAreas,
                 }}
                 onChange={(updates) => setFormData({ ...formData, ...updates })}

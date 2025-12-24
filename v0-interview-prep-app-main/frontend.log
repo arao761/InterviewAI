@@ -24,9 +24,50 @@ Creating turbopack project {
   dir: '/Users/ankitrao/Desktop/InterviewAI/v0-interview-prep-app-main',
   testMode: true
 }
- ✓ Ready in 386ms
- GET / 200 in 1135ms (compile: 1030ms, render: 105ms)
- GET /interview-setup 200 in 249ms (compile: 231ms, render: 19ms)
- GET /interview 200 in 284ms (compile: 266ms, render: 18ms)
- GET /interview/processing 200 in 248ms (compile: 232ms, render: 16ms)
- GET /results 200 in 177ms (compile: 157ms, render: 20ms)
+ ✓ Ready in 496ms
+ GET / 200 in 1243ms (compile: 1143ms, render: 100ms)
+ GET /interview-setup 200 in 267ms (compile: 249ms, render: 18ms)
+ GET /interview 200 in 319ms (compile: 302ms, render: 17ms)
+ GET /interview/processing 200 in 166ms (compile: 152ms, render: 14ms)
+ ⨯ ./v0-interview-prep-app-main/app/results/page.tsx:113:43
+Parsing ecmascript source code failed
+[0m [90m 111 |[39m [32mINDIVIDUAL QUESTION RESULTS[39m
+ [90m 112 |[39m [32m----------------------------[39m
+[31m[1m>[22m[39m[90m 113 |[39m [32m${evaluation.individual_evaluations?.map((eval, i) => `[39m
+ [90m     |[39m                                           [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 114 |[39m [32mQuestion ${i + 1}[39m
+ [90m 115 |[39m [32mScore: ${Math.round(eval.score)}%[39m
+ [90m 116 |[39m [32mFeedback: ${eval.feedback}[39m[0m
+
+'eval' and 'arguments' cannot be used as a binding identifier in strict mode
+
+
+ GET /results 500 in 589ms (compile: 529ms, render: 59ms)
+ ⨯ ./v0-interview-prep-app-main/app/results/page.tsx:113:43
+Parsing ecmascript source code failed
+[0m [90m 111 |[39m [32mINDIVIDUAL QUESTION RESULTS[39m
+ [90m 112 |[39m [32m----------------------------[39m
+[31m[1m>[22m[39m[90m 113 |[39m [32m${evaluation.individual_evaluations?.map((eval, i) => `[39m
+ [90m     |[39m                                           [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 114 |[39m [32mQuestion ${i + 1}[39m
+ [90m 115 |[39m [32mScore: ${Math.round(eval.score)}%[39m
+ [90m 116 |[39m [32mFeedback: ${eval.feedback}[39m[0m
+
+'eval' and 'arguments' cannot be used as a binding identifier in strict mode
+
+
+ GET /results 500 in 15ms (compile: 7ms, render: 7ms)
+ ⨯ ./v0-interview-prep-app-main/app/results/page.tsx:113:43
+Parsing ecmascript source code failed
+[0m [90m 111 |[39m [32mINDIVIDUAL QUESTION RESULTS[39m
+ [90m 112 |[39m [32m----------------------------[39m
+[31m[1m>[22m[39m[90m 113 |[39m [32m${evaluation.individual_evaluations?.map((eval, i) => `[39m
+ [90m     |[39m                                           [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 114 |[39m [32mQuestion ${i + 1}[39m
+ [90m 115 |[39m [32mScore: ${Math.round(eval.score)}%[39m
+ [90m 116 |[39m [32mFeedback: ${eval.feedback}[39m[0m
+
+'eval' and 'arguments' cannot be used as a binding identifier in strict mode
+
+
+ GET /results 500 in 114ms (compile: 73ms, render: 41ms)
