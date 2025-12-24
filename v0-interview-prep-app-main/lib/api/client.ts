@@ -268,6 +268,88 @@ class PrepWiseAPIClient {
 
     return await response.json();
   }
+
+  /**
+   * Create Stripe checkout session for subscription
+   */
+  async createCheckoutSession(plan: 'starter' | 'professional'): Promise<{ checkout_url: string; session_id: string }> {
+    const token = this.getToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${this.baseURL}/payments/create-checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ plan }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        detail: response.statusText,
+      }));
+      throw new Error(error.detail || 'Failed to create checkout session');
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Get user's subscription status
+   */
+  async getSubscription(): Promise<any> {
+    const token = this.getToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${this.baseURL}/payments/subscription`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        detail: response.statusText,
+      }));
+      throw new Error(error.detail || 'Failed to get subscription');
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Cancel user's subscription
+   */
+  async cancelSubscription(): Promise<any> {
+    const token = this.getToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${this.baseURL}/payments/cancel-subscription`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        detail: response.statusText,
+      }));
+      throw new Error(error.detail || 'Failed to cancel subscription');
+    }
+
+    return await response.json();
+  }
 }
 
 // Export singleton instance

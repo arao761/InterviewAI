@@ -47,6 +47,13 @@ class Settings(BaseSettings):
     AI_MODEL: str = "gpt-4"
     AI_TEMPERATURE: float = 0.7
 
+    # Stripe Configuration
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_PUBLISHABLE_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_PRICE_STARTER: str = ""  # Stripe Price ID for Starter plan
+    STRIPE_PRICE_PROFESSIONAL: str = ""  # Stripe Price ID for Professional plan
+
     @property
     def cors_origins_list(self) -> List[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]

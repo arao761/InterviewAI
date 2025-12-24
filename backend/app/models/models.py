@@ -50,12 +50,22 @@ class User(Base):
     name = Column(String(255), nullable=False)
     hashed_password = Column(String(255), nullable=False)
     
+    # Subscription information
+    subscription_plan = Column(String(50), nullable=True)  # 'starter', 'professional', 'enterprise', None
+    subscription_status = Column(String(50), nullable=True)  # 'active', 'canceled', 'past_due', 'trialing', None
+    stripe_customer_id = Column(String(255), nullable=True, unique=True, index=True)
+    stripe_subscription_id = Column(String(255), nullable=True, unique=True, index=True)
+    subscription_start_date = Column(DateTime(timezone=True), nullable=True)
+    subscription_end_date = Column(DateTime(timezone=True), nullable=True)
+    trial_end_date = Column(DateTime(timezone=True), nullable=True)
+    
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
     sessions = relationship("Session", back_populates="user")
+    payments = relationship("Payment", back_populates="user")
 
 
 # ====== SESSION MODEL ======
@@ -155,3 +165,38 @@ class Feedback(Base):
     
     # Relationships
     response = relationship("Response", back_populates="feedback")
+
+
+# ====== PAYMENT MODEL ======
+class Payment(Base):
+    """Payment and subscription tracking model."""
+    __tablename__ = "payments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    
+    # Stripe information
+    stripe_payment_intent_id = Column(String(255), nullable=True, unique=True, index=True)
+    stripe_charge_id = Column(String(255), nullable=True, unique=True, index=True)
+    stripe_invoice_id = Column(String(255), nullable=True, unique=True, index=True)
+    
+    # Payment details
+    amount = Column(Float, nullable=False)  # Amount in dollars
+    currency = Column(String(10), default="usd", nullable=False)
+    status = Column(String(50), nullable=False)  # 'succeeded', 'pending', 'failed', 'refunded'
+    payment_method = Column(String(50), nullable=True)  # 'card', 'paypal', etc.
+    
+    # Subscription details (if applicable)
+    subscription_plan = Column(String(50), nullable=True)
+    billing_period_start = Column(DateTime(timezone=True), nullable=True)
+    billing_period_end = Column(DateTime(timezone=True), nullable=True)
+    
+    # Metadata
+    payment_metadata = Column(JSON, nullable=True)  # Additional payment metadata
+    
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    user = relationship("User", back_populates="payments")

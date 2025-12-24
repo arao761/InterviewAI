@@ -1,16 +1,23 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Navigation from '@/components/navigation';
 import Footer from '@/components/footer';
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { useScrollFadeIn } from '@/hooks/use-scroll-fade-in';
+import { useAuth } from '@/context/AuthContext';
+import { apiClient } from '@/lib/api/client';
 
 export default function PricingPage() {
   const fadeInRef = useScrollFadeIn();
+  const router = useRouter();
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const [processingPlan, setProcessingPlan] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const pricingSection = document.getElementById('pricing-plans');
@@ -19,9 +26,39 @@ export default function PricingPage() {
     }
   }, []);
 
+  const handlePlanClick = async (planName: string, planKey: string) => {
+    setError('');
+    
+    // Enterprise plan - contact sales
+    if (planKey === 'enterprise') {
+      // You can add a contact form or email link here
+      return;
+    }
+    
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      router.push('/login?redirect=/pricing');
+      return;
+    }
+    
+    // Create checkout session
+    setProcessingPlan(planKey);
+    try {
+      const { checkout_url } = await apiClient.createCheckoutSession(
+        planKey as 'starter' | 'professional'
+      );
+      // Redirect to Stripe Checkout
+      window.location.href = checkout_url;
+    } catch (err: any) {
+      setError(err.message || 'Failed to start checkout process');
+      setProcessingPlan(null);
+    }
+  };
+
   const plans = [
     {
       name: 'Starter',
+      key: 'starter',
       price: '$9',
       period: '/month',
       description: 'Perfect for beginners',
@@ -36,6 +73,7 @@ export default function PricingPage() {
     },
     {
       name: 'Professional',
+      key: 'professional',
       price: '$29',
       period: '/month',
       description: 'For serious candidates',
@@ -46,12 +84,14 @@ export default function PricingPage() {
         'Skill improvement tracking',
         'Priority support',
         'Custom interview types',
+        '14-day free trial',
       ],
       cta: 'Start Free Trial',
       highlight: true,
     },
     {
       name: 'Enterprise',
+      key: 'enterprise',
       price: 'Custom',
       period: 'pricing',
       description: 'For teams & organizations',
@@ -81,6 +121,12 @@ export default function PricingPage() {
           </p>
         </div>
 
+        {error && (
+          <div className="mb-6 p-4 bg-destructive/10 border border-destructive text-destructive rounded-lg">
+            {error}
+          </div>
+        )}
+
         <div id="pricing-plans" ref={fadeInRef} className="grid md:grid-cols-3 gap-8 mb-16 fade-in-animation">
           {plans.map((plan, index) => (
             <Card
@@ -102,18 +148,25 @@ export default function PricingPage() {
                 <span className="text-4xl font-bold">{plan.price}</span>
                 <span className="text-muted-foreground ml-2">{plan.period}</span>
               </div>
-              <Link href="/register" className="w-full">
-                <Button
-                  size="lg"
-                  className={`mb-8 w-full ${
-                    plan.highlight
-                      ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                      : 'bg-accent text-accent-foreground hover:bg-accent/90'
-                  }`}
-                >
-                  {plan.cta}
-                </Button>
-              </Link>
+              <Button
+                size="lg"
+                onClick={() => handlePlanClick(plan.name, plan.key)}
+                disabled={processingPlan === plan.key || authLoading}
+                className={`mb-8 w-full ${
+                  plan.highlight
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                    : 'bg-accent text-accent-foreground hover:bg-accent/90'
+                }`}
+              >
+                {processingPlan === plan.key ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  plan.cta
+                )}
+              </Button>
               <div className="space-y-4 flex-1">
                 {plan.features.map((feature, featureIndex) => (
                   <div key={featureIndex} className="flex gap-3 items-start">
