@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: interviewai-backend
+    env: python
+    region: oregon
+    plan: free
+    # Root directory is the repository root, not backend/
+    rootDir: .
+    buildCommand: |
+      # Install prepwise-ai first
+      pip install -e ./prepwise-ai
+      # Then install backend dependencies
+      pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.0
+      # Required API Keys - Set these in Render dashboard
+      - key: OPENAI_API_KEY
+        sync: false
+      # Database (Use Render PostgreSQL or SQLite)
+      - key: DATABASE_URL
+        sync: false
+      # Redis cache
+      - key: REDIS_URL
+        sync: false
+      # App configuration
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: APP_NAME
+        value: PrepWise AI
+      - key: API_VERSION
+        value: v1
+      - key: WORKERS
+        value: 4
