@@ -53,6 +53,7 @@ flake8==7.0.0
 
 # PrepWise AI Integration - Install as editable package
 # This will install all the AI/NLP dependencies automatically
--e ../prepwise-ai
+# NOTE: prepwise-ai is installed via render.yaml build command
+# For local development: cd backend && pip install -e ../prepwise-ai
 
 # Use pydantic from prepwise-ai (2.12.4)

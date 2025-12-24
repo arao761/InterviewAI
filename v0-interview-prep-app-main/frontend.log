@@ -24,88 +24,12 @@ Creating turbopack project {
   dir: '/Users/ankitrao/Desktop/InterviewAI/v0-interview-prep-app-main',
   testMode: true
 }
- ✓ Ready in 496ms
- GET / 200 in 1243ms (compile: 1143ms, render: 100ms)
- GET /interview-setup 200 in 267ms (compile: 249ms, render: 18ms)
- GET /interview 200 in 319ms (compile: 302ms, render: 17ms)
- GET /interview/processing 200 in 166ms (compile: 152ms, render: 14ms)
- ⨯ ./v0-interview-prep-app-main/app/results/page.tsx:113:43
-Parsing ecmascript source code failed
-[0m [90m 111 |[39m [32mINDIVIDUAL QUESTION RESULTS[39m
- [90m 112 |[39m [32m----------------------------[39m
-[31m[1m>[22m[39m[90m 113 |[39m [32m${evaluation.individual_evaluations?.map((eval, i) => `[39m
- [90m     |[39m                                           [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
- [90m 114 |[39m [32mQuestion ${i + 1}[39m
- [90m 115 |[39m [32mScore: ${Math.round(eval.score)}%[39m
- [90m 116 |[39m [32mFeedback: ${eval.feedback}[39m[0m
-
-'eval' and 'arguments' cannot be used as a binding identifier in strict mode
-
-
- GET /results 500 in 589ms (compile: 529ms, render: 59ms)
- ⨯ ./v0-interview-prep-app-main/app/results/page.tsx:113:43
-Parsing ecmascript source code failed
-[0m [90m 111 |[39m [32mINDIVIDUAL QUESTION RESULTS[39m
- [90m 112 |[39m [32m----------------------------[39m
-[31m[1m>[22m[39m[90m 113 |[39m [32m${evaluation.individual_evaluations?.map((eval, i) => `[39m
- [90m     |[39m                                           [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
- [90m 114 |[39m [32mQuestion ${i + 1}[39m
- [90m 115 |[39m [32mScore: ${Math.round(eval.score)}%[39m
- [90m 116 |[39m [32mFeedback: ${eval.feedback}[39m[0m
-
-'eval' and 'arguments' cannot be used as a binding identifier in strict mode
-
-
- GET /results 500 in 15ms (compile: 7ms, render: 7ms)
- ⨯ ./v0-interview-prep-app-main/app/results/page.tsx:113:43
-Parsing ecmascript source code failed
-[0m [90m 111 |[39m [32mINDIVIDUAL QUESTION RESULTS[39m
- [90m 112 |[39m [32m----------------------------[39m
-[31m[1m>[22m[39m[90m 113 |[39m [32m${evaluation.individual_evaluations?.map((eval, i) => `[39m
- [90m     |[39m                                           [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
- [90m 114 |[39m [32mQuestion ${i + 1}[39m
- [90m 115 |[39m [32mScore: ${Math.round(eval.score)}%[39m
- [90m 116 |[39m [32mFeedback: ${eval.feedback}[39m[0m
-
-'eval' and 'arguments' cannot be used as a binding identifier in strict mode
-
-
- GET /results 500 in 114ms (compile: 73ms, render: 41ms)
- ⨯ ./v0-interview-prep-app-main/app/results/page.tsx:113:43
-Parsing ecmascript source code failed
-[0m [90m 111 |[39m [32mINDIVIDUAL QUESTION RESULTS[39m
- [90m 112 |[39m [32m----------------------------[39m
-[31m[1m>[22m[39m[90m 113 |[39m [32m${evaluation.individual_evaluations?.map((eval, i) => `[39m
- [90m     |[39m                                           [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
- [90m 114 |[39m [32mQuestion ${i + 1}[39m
- [90m 115 |[39m [32mScore: ${Math.round(eval.score)}%[39m
- [90m 116 |[39m [32mFeedback: ${eval.feedback}[39m[0m
-
-'eval' and 'arguments' cannot be used as a binding identifier in strict mode
-
-
- GET /results 500 in 40ms (compile: 28ms, render: 12ms)
- ✓ Compiled in 132ms
- GET /results 200 in 233ms (compile: 158ms, render: 74ms)
- GET /results 200 in 21ms (compile: 2ms, render: 19ms)
- GET /dashboard 200 in 641ms (compile: 627ms, render: 14ms)
- GET /dashboard 200 in 11ms (compile: 1135µs, render: 10ms)
- GET /interview-setup 200 in 99ms (compile: 63ms, render: 36ms)
- GET / 200 in 15ms (compile: 4ms, render: 11ms)
- GET /pricing 200 in 170ms (compile: 154ms, render: 16ms)
- GET /register 200 in 172ms (compile: 160ms, render: 12ms)
- GET /dashboard 200 in 163ms (compile: 12ms, render: 151ms)
- GET /dashboard 200 in 36ms (compile: 1980µs, render: 34ms)
- GET /interview-setup 200 in 26ms (compile: 6ms, render: 20ms)
- GET / 200 in 11ms (compile: 3ms, render: 8ms)
- GET /about 200 in 272ms (compile: 255ms, render: 17ms)
- GET /about 200 in 21ms (compile: 4ms, render: 17ms)
- GET /about 200 in 26ms (compile: 5ms, render: 21ms)
- GET /pricing 200 in 14ms (compile: 3ms, render: 11ms)
- GET /about 200 in 22ms (compile: 4ms, render: 19ms)
- GET / 200 in 22ms (compile: 6ms, render: 16ms)
- GET /pricing 200 in 31ms (compile: 8ms, render: 23ms)
- GET /about 200 in 24ms (compile: 6ms, render: 18ms)
- GET / 200 in 19ms (compile: 4ms, render: 15ms)
- ✓ Compiled in 144ms
+ ✓ Ready in 464ms
+ GET / 200 in 1389ms (compile: 1273ms, render: 116ms)
+ GET /login 200 in 270ms (compile: 249ms, render: 22ms)
+ GET /register 200 in 189ms (compile: 175ms, render: 14ms)
+ GET /dashboard 200 in 610ms (compile: 592ms, render: 18ms)
+ GET /settings 200 in 210ms (compile: 193ms, render: 17ms)
+ GET / 200 in 34ms (compile: 3ms, render: 32ms)
+ GET /register 200 in 23ms (compile: 7ms, render: 16ms)
 [?25h
