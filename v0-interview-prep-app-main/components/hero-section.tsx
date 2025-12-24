@@ -1,16 +1,27 @@
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Sparkles, BrainCircuit, Target } from 'lucide-react';
 import { useScrollFadeIn } from '@/hooks/use-scroll-fade-in';
 import { useParallax } from '@/hooks/use-parallax';
+import { useAuth } from '@/context/AuthContext';
 
 export default function HeroSection() {
   const fadeInRef = useScrollFadeIn();
   const { ref: parallaxRef1, offset: offset1 } = useParallax(0.5);
   const { ref: parallaxRef2, offset: offset2 } = useParallax(-0.3);
   const { ref: parallaxRef3, offset: offset3 } = useParallax(0.2);
+  const router = useRouter();
+  const { isAuthenticated, loading } = useAuth();
+
+  const handleStartPracticing = () => {
+    if (isAuthenticated) {
+      router.push('/interview-setup');
+    } else {
+      router.push('/login');
+    }
+  };
 
   return (
     <section className="relative min-h-[700px] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-20 overflow-hidden">
@@ -69,15 +80,15 @@ export default function HeroSection() {
 
         {/* CTA with visual elements */}
         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
-          <Link href="/interview-setup">
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90 transition-all hover:scale-105 hover:shadow-2xl hover:shadow-primary/50 px-8 py-6 text-lg rounded-xl group"
-            >
-              Start Practicing Now
-              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </Link>
+          <Button
+            onClick={handleStartPracticing}
+            disabled={loading}
+            size="lg"
+            className="bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90 transition-all hover:scale-105 hover:shadow-2xl hover:shadow-primary/50 px-8 py-6 text-lg rounded-xl group"
+          >
+            Start Practicing Now
+            <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+          </Button>
         </div>
 
         {/* Stats with cards */}

@@ -1,11 +1,21 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { Sparkles } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { Sparkles, User, LogOut } from 'lucide-react';
 
 export default function Navigation() {
+  const { isAuthenticated, user, logout, loading } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
+
   return (
     <nav className="border-b border-border/50 bg-background/80 backdrop-blur-xl sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-20">
@@ -31,11 +41,48 @@ export default function Navigation() {
           <div className="mx-2">
             <ThemeToggle />
           </div>
-          <Link href="/interview-setup">
-            <Button size="sm" className="bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90 hover:shadow-lg hover:shadow-primary/30 transition-all hover:scale-105 rounded-lg">
-              Get Started
-            </Button>
-          </Link>
+          
+          {!loading && (
+            <>
+              {isAuthenticated ? (
+                <>
+                  <Link href="/dashboard">
+                    <Button variant="ghost" size="sm" className="hover:bg-primary/10 hover:text-primary transition-colors">
+                      <User className="w-4 h-4 mr-2" />
+                      {user?.name || 'Dashboard'}
+                    </Button>
+                  </Link>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleLogout}
+                    className="hover:bg-destructive/10 hover:text-destructive transition-colors"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </Button>
+                  <Link href="/interview-setup">
+                    <Button size="sm" className="bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90 hover:shadow-lg hover:shadow-primary/30 transition-all hover:scale-105 rounded-lg">
+                      Get Started
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/login">
+                    <Button variant="ghost" size="sm" className="hover:bg-primary/10 hover:text-primary transition-colors">
+                      Login
+                    </Button>
+                  </Link>
+                  <Link href="/register">
+                    <Button size="sm" className="bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90 hover:shadow-lg hover:shadow-primary/30 transition-all hover:scale-105 rounded-lg">
+                      Sign Up
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </>
+          )}
         </div>
       </div>
     </nav>

@@ -16,12 +16,60 @@ import {
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+const TOKEN_KEY = 'prepwise_auth_token';
+
+interface User {
+  id: number;
+  email: string;
+  name: string;
+  created_at: string;
+}
+
+interface TokenResponse {
+  access_token: string;
+  token_type: string;
+}
 
 class PrepWiseAPIClient {
   private baseURL: string;
 
   constructor(baseURL: string = API_BASE_URL) {
     this.baseURL = baseURL;
+  }
+
+  /**
+   * Get stored authentication token
+   */
+  getToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(TOKEN_KEY);
+  }
+
+  /**
+   * Store authentication token
+   */
+  private setToken(token: string): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(TOKEN_KEY, token);
+  }
+
+  /**
+   * Remove authentication token
+   */
+  logout(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(TOKEN_KEY);
+  }
+
+  /**
+   * Get authorization header if token exists
+   */
+  private getAuthHeaders(): Record<string, string> {
+    const token = this.getToken();
+    if (token) {
+      return { Authorization: `Bearer ${token}` };
+    }
+    return {};
   }
 
   /**
@@ -37,6 +85,7 @@ class PrepWiseAPIClient {
         ...options,
         headers: {
           'Content-Type': 'application/json',
+          ...this.getAuthHeaders(),
           ...options.headers,
         },
       });
@@ -143,6 +192,81 @@ class PrepWiseAPIClient {
     return this.fetch('/ai/health', {
       method: 'GET',
     });
+  }
+
+  /**
+   * Register a new user
+   */
+  async register(email: string, name: string, password: string): Promise<User> {
+    const response = await fetch(`${this.baseURL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, name, password }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        detail: response.statusText,
+      }));
+      throw new Error(error.detail || 'Registration failed');
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Login with email and password
+   */
+  async login(email: string, password: string): Promise<void> {
+    const response = await fetch(`${this.baseURL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        detail: response.statusText,
+      }));
+      throw new Error(error.detail || 'Login failed');
+    }
+
+    const data: TokenResponse = await response.json();
+    this.setToken(data.access_token);
+  }
+
+  /**
+   * Get current authenticated user
+   */
+  async getCurrentUser(): Promise<User> {
+    const token = this.getToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${this.baseURL}/auth/me`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        this.logout();
+      }
+      const error = await response.json().catch(() => ({
+        detail: response.statusText,
+      }));
+      throw new Error(error.detail || 'Failed to get user');
+    }
+
+    return await response.json();
   }
 }
 

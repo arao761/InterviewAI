@@ -39,15 +39,18 @@ class DifficultyLevel(str, enum.Enum):
     HARD = "hard"
 
 
-# ====== USER MODEL (Optional for MVP) ======
+# ====== USER MODEL ======
 class User(Base):
     """User model for authentication and profile management."""
     __tablename__ = "users"
     
+    # Basic user information
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
     name = Column(String(255), nullable=False)
-    hashed_password = Column(String(255), nullable=True)  # Optional for MVP
+    hashed_password = Column(String(255), nullable=False)
+    
+    # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     

@@ -4,25 +4,34 @@ Authentication utilities for user management.
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from app.core.config import settings
-import warnings
-
-# Suppress bcrypt version warning (known issue with passlib + bcrypt 4.0+)
-warnings.filterwarnings("ignore", message=".*trapped.*error reading bcrypt version.*")
-
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against its hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        # Handle both string and bytes
+        if isinstance(hashed_password, str):
+            hashed_password = hashed_password.encode('utf-8')
+        if isinstance(plain_password, str):
+            plain_password = plain_password.encode('utf-8')
+        return bcrypt.checkpw(plain_password, hashed_password)
+    except Exception:
+        return False
 
 
 def get_password_hash(password: str) -> str:
     """Hash a plain password."""
-    return pwd_context.hash(password)
+    # Bcrypt has a 72-byte limit, truncate if necessary
+    password_bytes = password.encode('utf-8')
+    if len(password_bytes) > 72:
+        password_bytes = password_bytes[:72]
+    
+    # Generate salt and hash
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    return hashed.decode('utf-8')
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:

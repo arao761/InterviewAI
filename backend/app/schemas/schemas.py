@@ -42,10 +42,49 @@ class UserCreate(UserBase):
     password: Optional[str] = None
 
 
+class UserProfileUpdate(BaseModel):
+    """User profile update schema."""
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    bio: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    github_url: Optional[str] = None
+    portfolio_url: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    target_role: Optional[str] = None
+    target_company: Optional[str] = None
+    experience_level: Optional[str] = None
+    current_position: Optional[str] = None
+    location: Optional[str] = None
+    skills: Optional[List[str]] = None
+    preferred_interview_types: Optional[List[str]] = None
+    interview_preferences: Optional[Dict[str, Any]] = None
+
+
 class UserResponse(UserBase):
-    """User response schema."""
+    """User response schema with full profile."""
     id: int
+    phone: Optional[str] = None
+    bio: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    github_url: Optional[str] = None
+    portfolio_url: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    target_role: Optional[str] = None
+    target_company: Optional[str] = None
+    experience_level: Optional[str] = None
+    current_position: Optional[str] = None
+    location: Optional[str] = None
+    skills: Optional[List[str]] = None
+    preferred_interview_types: Optional[List[str]] = None
+    interview_preferences: Optional[Dict[str, Any]] = None
+    total_sessions: int = 0
+    total_questions_answered: int = 0
+    average_score: Optional[float] = None
+    last_session_date: Optional[datetime] = None
     created_at: datetime
+    updated_at: Optional[datetime] = None
+    last_login: Optional[datetime] = None
     
     class Config:
         from_attributes = True
