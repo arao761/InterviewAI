@@ -49,7 +49,7 @@ export default function InterviewSettingsForm({
                 <div className="text-3xl font-bold">{duration}</div>
                 <div className="text-sm text-muted-foreground mt-2">minutes</div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  {duration === '15' ? '~3-4 questions' : duration === '30' ? '~5-6 questions' : '~10-12 questions'}
+                  {duration === '15' ? 'Quick interview' : duration === '30' ? 'Standard interview' : 'In-depth interview'}
                 </div>
               </Card>
             ))}

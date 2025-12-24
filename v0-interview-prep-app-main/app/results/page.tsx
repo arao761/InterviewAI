@@ -110,12 +110,12 @@ ${evaluation.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || 'N/A
 
 INDIVIDUAL QUESTION RESULTS
 ----------------------------
-${evaluation.individual_evaluations?.map((eval, i) => `
+${evaluation.individual_evaluations?.map((evalItem, i) => `
 Question ${i + 1}
-Score: ${Math.round(eval.score)}%
-Feedback: ${eval.feedback}
-Strengths: ${eval.strengths?.join(', ') || 'N/A'}
-Areas to Improve: ${eval.weaknesses?.join(', ') || 'N/A'}
+Score: ${Math.round(evalItem.score)}%
+Feedback: ${evalItem.feedback}
+Strengths: ${evalItem.strengths?.join(', ') || 'N/A'}
+Areas to Improve: ${evalItem.weaknesses?.join(', ') || 'N/A'}
 `).join('\n') || 'N/A'}
     `.trim();
 

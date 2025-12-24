@@ -71,3 +71,26 @@ Parsing ecmascript source code failed
 
 
  GET /results 500 in 114ms (compile: 73ms, render: 41ms)
+ ⨯ ./v0-interview-prep-app-main/app/results/page.tsx:113:43
+Parsing ecmascript source code failed
+[0m [90m 111 |[39m [32mINDIVIDUAL QUESTION RESULTS[39m
+ [90m 112 |[39m [32m----------------------------[39m
+[31m[1m>[22m[39m[90m 113 |[39m [32m${evaluation.individual_evaluations?.map((eval, i) => `[39m
+ [90m     |[39m                                           [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 114 |[39m [32mQuestion ${i + 1}[39m
+ [90m 115 |[39m [32mScore: ${Math.round(eval.score)}%[39m
+ [90m 116 |[39m [32mFeedback: ${eval.feedback}[39m[0m
+
+'eval' and 'arguments' cannot be used as a binding identifier in strict mode
+
+
+ GET /results 500 in 40ms (compile: 28ms, render: 12ms)
+ ✓ Compiled in 132ms
+ GET /results 200 in 233ms (compile: 158ms, render: 74ms)
+ GET /results 200 in 21ms (compile: 2ms, render: 19ms)
+ GET /dashboard 200 in 641ms (compile: 627ms, render: 14ms)
+ GET /dashboard 200 in 11ms (compile: 1135µs, render: 10ms)
+ GET /interview-setup 200 in 99ms (compile: 63ms, render: 36ms)
+ GET / 200 in 15ms (compile: 4ms, render: 11ms)
+ GET /pricing 200 in 170ms (compile: 154ms, render: 16ms)
+ GET /register 200 in 172ms (compile: 160ms, render: 12ms)
