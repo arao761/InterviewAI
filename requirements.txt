@@ -1,0 +1,6 @@
+# Root requirements.txt for Render deployment
+# NOTE: This file is NOT needed if using render.yaml
+# render.yaml handles the build process instead
+
+# For manual builds without render.yaml, use:
+# pip install -e ./prepwise-ai && pip install -r backend/requirements.txt
