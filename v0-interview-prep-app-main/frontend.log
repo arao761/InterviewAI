@@ -108,3 +108,4 @@ Parsing ecmascript source code failed
  GET /about 200 in 24ms (compile: 6ms, render: 18ms)
  GET / 200 in 19ms (compile: 4ms, render: 15ms)
  ✓ Compiled in 144ms
+[?25h
