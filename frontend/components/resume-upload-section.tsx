@@ -11,7 +11,7 @@ export default function ResumeUploadSection({ onBack }: { onBack: () => void }) 
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
-    e.stopPropagation();
+    e.stopPropagation();  
     if (e.type === 'dragenter' || e.type === 'dragover') {
       setDragActive(true);
     } else if (e.type === 'dragleave') {
