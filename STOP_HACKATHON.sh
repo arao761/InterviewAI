@@ -13,9 +13,9 @@ if [ -f "backend/backend.pid" ]; then
 fi
 
 # Kill frontend
-if [ -f "v0-interview-prep-app-main/frontend.pid" ]; then
-    kill $(cat v0-interview-prep-app-main/frontend.pid) 2>/dev/null
-    rm v0-interview-prep-app-main/frontend.pid
+if [ -f "frontend/frontend.pid" ]; then
+    kill $(cat frontend/frontend.pid) 2>/dev/null
+    rm frontend/frontend.pid
     echo "✓ Frontend stopped"
 fi
 

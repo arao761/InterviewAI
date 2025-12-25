@@ -61,7 +61,7 @@ if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null 2>&1; then
     echo -e "${YELLOW}⚠️  Frontend already running on port 3000${NC}"
 else
     echo -e "${BLUE}Starting Frontend...${NC}"
-    cd "$SCRIPT_DIR/v0-interview-prep-app-main"
+    cd "$SCRIPT_DIR/frontend"
 
     # Install dependencies if needed
     if [ ! -d "node_modules" ]; then
@@ -91,7 +91,7 @@ echo -e "Redis:     ${GREEN}Running (cache enabled)${NC}"
 echo ""
 echo "Logs:"
 echo "  Backend:  backend/backend.log"
-echo "  Frontend: v0-interview-prep-app-main/frontend.log"
+echo "  Frontend: frontend/frontend.log"
 echo ""
 echo "Performance Features:"
 echo "  ⚡ Parallel interview evaluation (83% faster)"
