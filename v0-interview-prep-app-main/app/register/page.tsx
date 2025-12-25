@@ -74,7 +74,8 @@ export default function RegisterPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              placeholder="John Doe"
+              placeholder="Enter your name"
+              autoComplete="name"
               className="w-full px-3 py-2 border rounded-md bg-background"
             />
           </div>
@@ -89,7 +90,8 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder="you@example.com"
+              placeholder="Enter your email"
+              autoComplete="email"
               className="w-full px-3 py-2 border rounded-md bg-background"
             />
           </div>
@@ -105,7 +107,8 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               maxLength={72}
-              placeholder="••••••••"
+              placeholder="Enter your password"
+              autoComplete="new-password"
               className="w-full px-3 py-2 border rounded-md bg-background"
             />
           </div>
@@ -121,7 +124,8 @@ export default function RegisterPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               maxLength={72}
-              placeholder="••••••••"
+              placeholder="Confirm your password"
+              autoComplete="new-password"
               className="w-full px-3 py-2 border rounded-md bg-background"
             />
           </div>
