@@ -35,15 +35,15 @@ fi
 source venv/bin/activate
 echo -e "${GREEN}✓ Virtual environment activated${NC}"
 
-# Step 2: Install PrepWise AI package (editable mode)
-echo -e "\n${BLUE}Step 2: Installing PrepWise AI package...${NC}"
-cd "$SCRIPT_DIR/prepwise-ai"
+# Step 2: Install AI Engine package (editable mode)
+echo -e "\n${BLUE}Step 2: Installing AI Engine package...${NC}"
+cd "$SCRIPT_DIR/ai-engine"
 pip install --upgrade pip
 pip install -e .
 if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✓ PrepWise AI installed successfully${NC}"
+    echo -e "${GREEN}✓ AI Engine installed successfully${NC}"
 else
-    echo -e "${RED}✗ Failed to install PrepWise AI${NC}"
+    echo -e "${RED}✗ Failed to install AI Engine${NC}"
     exit 1
 fi
 
@@ -99,7 +99,7 @@ fi
 
 # Step 6: Run tests
 echo -e "\n${BLUE}Step 6: Running tests...${NC}"
-cd "$SCRIPT_DIR/prepwise-ai"
+cd "$SCRIPT_DIR/ai-engine"
 python -m pytest tests/ -v --tb=short
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ All tests passed${NC}"

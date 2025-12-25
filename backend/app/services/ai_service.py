@@ -1,7 +1,7 @@
 """
 AI Service Integration for PrepWise Backend.
 
-This service integrates the prepwise-ai module into the backend,
+This service integrates the ai-engine module into the backend,
 providing AI-powered features like resume parsing, question generation,
 and response evaluation.
 """
@@ -21,8 +21,8 @@ try:
     from src.resume_parser.schemas import ParsedResume
     from src.question_generator.schemas import QuestionSet
 except ImportError as e:
-    print(f"ERROR: Cannot import PrepWiseAPI. Make sure prepwise-ai is installed.")
-    print(f"Run: cd backend && pip install -e ../prepwise-ai")
+    print(f"ERROR: Cannot import PrepWiseAPI. Make sure ai-engine is installed.")
+    print(f"Run: cd backend && pip install -e ../ai-engine")
     raise ImportError(f"PrepWise AI not installed: {e}")
 
 from app.core.config import settings
