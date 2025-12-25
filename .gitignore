@@ -64,16 +64,6 @@ backend/data/
 alembic/versions/*.py
 !alembic/versions/__init__.py
 
-# Audio/Media Files (test files, generated audio)
-*.mp3
-*.wav
-*.webm
-*.m4a
-*.ogg
-voice-api/voice/tests/test_audio_samples/*.mp3
-voice-api/voice/tests/test_audio_samples/*.wav
-voice-api/voice/tests/test_audio_samples/*.webm
-
 # Resume/Document Uploads
 *.pdf
 *.docx
