@@ -60,7 +60,7 @@ To stop all services:
 ```
 ├── backend/                    # FastAPI REST API
 ├── ai-engine/                 # AI/NLP processing engine
-├── v0-interview-prep-app-main/ # Next.js frontend
+├── frontend/ # Next.js frontend
 └── SETUP_PROJECT.sh           # Initial setup script
 ```
 
