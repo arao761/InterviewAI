@@ -288,10 +288,22 @@ class PrepWiseAPIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({
-        detail: response.statusText,
-      }));
-      throw new Error(error.detail || 'Failed to create checkout session');
+      let error;
+      try {
+        error = await response.json();
+      } catch {
+        error = { detail: response.statusText || 'Unknown error' };
+      }
+      
+      // Provide more helpful error messages
+      const errorMessage = error.detail || error.message || 'Failed to create checkout session';
+      
+      // Check for specific Stripe configuration errors
+      if (errorMessage.includes('not configured') || errorMessage.includes('Stripe is not configured')) {
+        throw new Error('Stripe payment is not configured. Please add your Stripe API keys to the backend .env file and restart the server.');
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return await response.json();
@@ -319,6 +331,33 @@ class PrepWiseAPIClient {
         detail: response.statusText,
       }));
       throw new Error(error.detail || 'Failed to get subscription');
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Get checkout session details
+   */
+  async getCheckoutSession(sessionId: string): Promise<any> {
+    const token = this.getToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${this.baseURL}/payments/checkout-session/${sessionId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        detail: response.statusText,
+      }));
+      throw new Error(error.detail || 'Failed to get checkout session');
     }
 
     return await response.json();

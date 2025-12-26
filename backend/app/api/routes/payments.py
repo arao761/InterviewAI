@@ -170,13 +170,30 @@ async def stripe_webhook(
         if event_type == "checkout.session.completed":
             # Payment successful, subscription created
             session = event_data
-            user_id = int(session["metadata"]["user_id"])
-            plan = session["metadata"]["plan"]
+            
+            # Safely extract metadata
+            metadata = session.get("metadata", {})
+            user_id = metadata.get("user_id")
+            plan = metadata.get("plan")
+            
+            if not user_id or not plan:
+                logger.error(f"Missing metadata in checkout.session.completed: {session}")
+                return {"status": "error", "message": "Missing required metadata"}
+            
+            try:
+                user_id = int(user_id)
+            except (ValueError, TypeError):
+                logger.error(f"Invalid user_id in metadata: {user_id}")
+                return {"status": "error", "message": "Invalid user_id"}
             
             user = db.query(User).filter(User.id == user_id).first()
-            if user:
-                subscription_id = session.get("subscription")
-                if subscription_id:
+            if not user:
+                logger.error(f"User not found for checkout session: {user_id}")
+                return {"status": "error", "message": "User not found"}
+            
+            subscription_id = session.get("subscription")
+            if subscription_id:
+                try:
                     # Get subscription details from Stripe
                     subscription = stripe.Subscription.retrieve(subscription_id)
                     
@@ -196,6 +213,12 @@ async def stripe_webhook(
                     
                     db.commit()
                     logger.info(f"Updated subscription for user {user_id}: {plan}")
+                except stripe.error.StripeError as e:
+                    logger.error(f"Stripe error retrieving subscription: {e}")
+                    db.rollback()
+                    return {"status": "error", "message": f"Stripe error: {str(e)}"}
+            else:
+                logger.warning(f"No subscription ID in checkout session: {session.get('id')}")
         
         elif event_type == "customer.subscription.updated":
             # Subscription updated (e.g., plan change, renewal)
@@ -228,15 +251,33 @@ async def stripe_webhook(
         elif event_type == "invoice.payment_succeeded":
             # Payment succeeded - record payment
             invoice = event_data
-            customer_id = invoice["customer"]
+            customer_id = invoice.get("customer")
+            
+            if not customer_id:
+                logger.error(f"Missing customer ID in invoice: {invoice.get('id')}")
+                return {"status": "error", "message": "Missing customer ID"}
             
             user = db.query(User).filter(User.stripe_customer_id == customer_id).first()
-            if user:
+            if not user:
+                logger.warning(f"User not found for customer: {customer_id}")
+                return {"status": "warning", "message": "User not found"}
+            
+            # Check if payment already exists to avoid duplicates
+            existing_payment = db.query(Payment).filter(
+                Payment.stripe_invoice_id == invoice["id"]
+            ).first()
+            
+            if existing_payment:
+                logger.info(f"Payment already recorded for invoice: {invoice['id']}")
+                return {"status": "success", "message": "Payment already recorded"}
+            
+            try:
+                amount_paid = invoice.get("amount_paid", 0) / 100  # Convert from cents
                 payment = Payment(
                     user_id=user.id,
                     stripe_invoice_id=invoice["id"],
-                    amount=invoice["amount_paid"] / 100,  # Convert from cents
-                    currency=invoice["currency"],
+                    amount=amount_paid,
+                    currency=invoice.get("currency", "usd"),
                     status="succeeded",
                     subscription_plan=user.subscription_plan,
                     billing_period_start=datetime.fromtimestamp(
@@ -248,7 +289,23 @@ async def stripe_webhook(
                 )
                 db.add(payment)
                 db.commit()
-                logger.info(f"Recorded payment for user {user.id}")
+                logger.info(f"Recorded payment for user {user.id}: ${amount_paid}")
+            except Exception as e:
+                logger.error(f"Error recording payment: {e}")
+                db.rollback()
+                return {"status": "error", "message": f"Error recording payment: {str(e)}"}
+        
+        elif event_type == "invoice.payment_failed":
+            # Payment failed - update subscription status
+            invoice = event_data
+            customer_id = invoice.get("customer")
+            
+            if customer_id:
+                user = db.query(User).filter(User.stripe_customer_id == customer_id).first()
+                if user:
+                    user.subscription_status = "past_due"
+                    db.commit()
+                    logger.warning(f"Payment failed for user {user.id}, subscription set to past_due")
         
         return {"status": "success"}
         
@@ -263,20 +320,40 @@ async def stripe_webhook(
 @router.get("/subscription", response_model=SubscriptionResponse)
 async def get_subscription(
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """
     Get current user's subscription information.
     
     Requires: User authentication
+    
+    If user has a Stripe subscription, fetches latest status from Stripe
+    to ensure data is up-to-date.
     """
+    # If user has a Stripe subscription ID, fetch latest status from Stripe
+    cancel_at_period_end = False
+    if current_user.stripe_subscription_id and settings.STRIPE_SECRET_KEY:
+        try:
+            subscription = stripe.Subscription.retrieve(current_user.stripe_subscription_id)
+            cancel_at_period_end = subscription.cancel_at_period_end
+            
+            # Update local database if status changed
+            if subscription.status != current_user.subscription_status:
+                current_user.subscription_status = subscription.status
+                db.commit()
+                logger.info(f"Updated subscription status for user {current_user.id}: {subscription.status}")
+        except stripe.error.StripeError as e:
+            logger.warning(f"Could not fetch subscription from Stripe: {e}")
+            # Continue with database values
+    
     return SubscriptionResponse(
         plan=current_user.subscription_plan,
         status=current_user.subscription_status,
         current_period_start=current_user.subscription_start_date,
         current_period_end=current_user.subscription_end_date,
         trial_end=current_user.trial_end_date,
-        cancel_at_period_end=False,  # Can be enhanced to check Stripe
-        is_active=current_user.subscription_status == "active",
+        cancel_at_period_end=cancel_at_period_end,
+        is_active=current_user.subscription_status == "active" or current_user.subscription_status == "trialing",
     )
 
 
@@ -289,6 +366,9 @@ async def cancel_subscription(
     Cancel user's subscription.
     
     Requires: User authentication
+    
+    Cancels the subscription at the end of the current billing period,
+    allowing the user to continue using the service until then.
     """
     if not current_user.stripe_subscription_id:
         raise HTTPException(
@@ -296,30 +376,110 @@ async def cancel_subscription(
             detail="No active subscription found"
         )
     
+    # Check if already canceled
+    if current_user.subscription_status == "canceled":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Subscription is already canceled"
+        )
+    
     try:
-        # Cancel subscription at period end
+        # Cancel subscription at period end (not immediately)
         subscription = stripe.Subscription.modify(
             current_user.stripe_subscription_id,
             cancel_at_period_end=True,
         )
         
-        current_user.subscription_status = "canceled"
+        # Update status - subscription is still active until period end
+        # The webhook will update it to "canceled" when period ends
+        current_user.subscription_status = subscription.status
         db.commit()
         
-        logger.info(f"Canceled subscription for user {current_user.id}")
+        logger.info(f"Scheduled subscription cancellation for user {current_user.id}")
+        
+        cancel_at = datetime.fromtimestamp(
+            subscription.current_period_end, tz=timezone.utc
+        )
         
         return {
             "message": "Subscription will be canceled at the end of the billing period",
-            "cancel_at": datetime.fromtimestamp(
-                subscription.current_period_end, tz=timezone.utc
-            ).isoformat(),
+            "cancel_at": cancel_at.isoformat(),
+            "cancel_at_formatted": cancel_at.strftime("%B %d, %Y"),
+            "current_period_end": cancel_at.isoformat(),
         }
         
     except stripe.error.StripeError as e:
         logger.error(f"Stripe error canceling subscription: {e}")
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to cancel subscription: {str(e)}"
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error canceling subscription: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred while canceling subscription"
+        )
+
+
+@router.get("/checkout-session/{session_id}")
+async def get_checkout_session(
+    session_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get checkout session details from Stripe.
+    
+    Requires: User authentication
+    """
+    if not settings.STRIPE_SECRET_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Stripe is not configured"
+        )
+    
+    try:
+        # Retrieve session from Stripe
+        session = stripe.checkout.Session.retrieve(
+            session_id,
+            expand=['line_items', 'payment_intent', 'customer']
+        )
+        
+        # Verify the session belongs to the current user
+        if session.metadata and session.metadata.get('user_id'):
+            if int(session.metadata['user_id']) != current_user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="This session does not belong to you"
+                )
+        
+        # Return session details
+        return {
+            "id": session.id,
+            "status": session.status,
+            "payment_status": session.payment_status,
+            "customer_details": {
+                "email": session.customer_details.email if session.customer_details else None,
+                "name": session.customer_details.name if session.customer_details else None,
+            } if session.customer_details else None,
+            "amount_total": session.amount_total / 100 if session.amount_total else None,
+            "currency": session.currency,
+            "created": session.created,
+        }
+        
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error retrieving session: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to retrieve session: {str(e)}"
+        )
+    except Exception as e:
+        logger.error(f"Error retrieving checkout session: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve checkout session"
         )
 
 

@@ -89,6 +89,15 @@ export default function HeroSection() {
             Start Practicing Now
             <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
           </Button>
+          <Button
+            onClick={() => router.push('/pricing')}
+            disabled={loading}
+            size="lg"
+            variant="outline"
+            className="border-2 border-primary/30 hover:border-primary/50 hover:bg-primary/10 transition-all hover:scale-105 px-8 py-6 text-lg rounded-xl"
+          >
+            View Pricing
+          </Button>
         </div>
 
         {/* Stats with cards */}

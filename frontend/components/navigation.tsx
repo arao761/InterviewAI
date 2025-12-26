@@ -38,6 +38,11 @@ export default function Navigation() {
               About
             </Button>
           </Link>
+          <Link href="/pricing">
+            <Button variant="ghost" size="sm" className="hover:bg-primary/10 hover:text-primary transition-colors">
+              Pricing
+            </Button>
+          </Link>
           <div className="mx-2">
             <ThemeToggle />
           </div>

@@ -44,14 +44,28 @@ export default function PricingPage() {
     // Create checkout session
     setProcessingPlan(planKey);
     try {
-      const { checkout_url } = await apiClient.createCheckoutSession(
+      console.log('Creating checkout session for plan:', planKey);
+      const response = await apiClient.createCheckoutSession(
         planKey as 'starter' | 'professional'
       );
-      // Redirect to Stripe Checkout
-      window.location.href = checkout_url;
+      console.log('Checkout session created:', response);
+      
+      if (response.checkout_url) {
+        // Redirect to Stripe Checkout
+        window.location.href = response.checkout_url;
+      } else {
+        throw new Error('No checkout URL received from server');
+      }
     } catch (err: any) {
-      setError(err.message || 'Failed to start checkout process');
+      console.error('Checkout error:', err);
+      const errorMessage = err.message || err.detail || 'Failed to start checkout process';
+      setError(errorMessage);
       setProcessingPlan(null);
+      
+      // Show more detailed error if Stripe is not configured
+      if (errorMessage.includes('Stripe is not configured') || errorMessage.includes('not configured')) {
+        setError('Stripe payment is not configured. Please contact support or check your Stripe API keys.');
+      }
     }
   };
 
