@@ -6,18 +6,23 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 
+# Fix Render's postgres:// URL to postgresql:// for SQLAlchemy 2.0 compatibility
+database_url = settings.DATABASE_URL
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
 # Create database engine with different settings for SQLite vs PostgreSQL
-if settings.DATABASE_URL.startswith("sqlite"):
+if database_url.startswith("sqlite"):
     # SQLite configuration
     engine = create_engine(
-        settings.DATABASE_URL,
+        database_url,
         connect_args={"check_same_thread": False},  # Needed for SQLite
         echo=settings.DEBUG,
     )
 else:
     # PostgreSQL configuration
     engine = create_engine(
-        settings.DATABASE_URL,
+        database_url,
         pool_pre_ping=True,
         echo=settings.DEBUG,
         pool_size=5,
