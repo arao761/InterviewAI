@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { CheckCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiClient } from '@/lib/api/client';
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -114,6 +114,27 @@ export default function PaymentSuccessPage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background text-foreground">
+        <Navigation />
+        <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <Card className="p-8 text-center">
+            <div className="py-12">
+              <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
+              <p className="text-muted-foreground">Loading...</p>
+            </div>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    }>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }
 
