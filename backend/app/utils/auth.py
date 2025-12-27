@@ -16,8 +16,21 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
             hashed_password = hashed_password.encode('utf-8')
         if isinstance(plain_password, str):
             plain_password = plain_password.encode('utf-8')
+        
+        # Check if hash looks like bcrypt (starts with $2b$ or $2a$ or $2y$)
+        if isinstance(hashed_password, bytes):
+            hash_str = hashed_password.decode('utf-8', errors='ignore')
+        else:
+            hash_str = str(hashed_password)
+            
+        if not (hash_str.startswith('$2b$') or hash_str.startswith('$2a$') or hash_str.startswith('$2y$')):
+            # Not a valid bcrypt hash
+            return False
+            
         return bcrypt.checkpw(plain_password, hashed_password)
-    except Exception:
+    except Exception as e:
+        import logging
+        logging.error(f"Password verification error: {e}")
         return False
 
 

@@ -26,8 +26,11 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
         # Debug logging
         logger.info(f"Registration attempt - Email: {user_data.email}, Password length: {len(user_data.password)} chars, {len(user_data.password.encode('utf-8'))} bytes")
 
-        # Check if user already exists
-        existing_user = db.query(User).filter(User.email == user_data.email).first()
+        # Normalize email to lowercase for consistency
+        email_lower = user_data.email.lower().strip()
+        
+        # Check if user already exists (case-insensitive)
+        existing_user = db.query(User).filter(User.email.ilike(email_lower)).first()
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -43,10 +46,10 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
                 detail=f"Password is too long ({password_bytes} bytes). Maximum is 72 bytes."
             )
 
-        # Create new user with hashed password
+        # Create new user with hashed password (store email in lowercase)
         hashed_password = get_password_hash(user_data.password)
         new_user = User(
-            email=user_data.email,
+            email=email_lower,
             name=user_data.name,
             hashed_password=hashed_password
         )
@@ -78,17 +81,34 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
     - Returns JWT access token
     """
     try:
-        # Find user by email
-        user = db.query(User).filter(User.email == credentials.email).first()
-        if not user or not user.hashed_password:
+        # Normalize email to lowercase for case-insensitive matching
+        email_lower = credentials.email.lower().strip()
+        
+        # Find user by email (case-insensitive)
+        user = db.query(User).filter(User.email.ilike(email_lower)).first()
+        
+        if not user:
+            logger.warning(f"Login attempt failed - User not found: {email_lower}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        if not user.hashed_password:
+            logger.warning(f"Login attempt failed - No password hash for user: {user.email}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect email or password",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Verify password
-        if not verify_password(credentials.password, user.hashed_password):
+        # Verify password with detailed logging
+        logger.info(f"Attempting password verification for user: {user.email}")
+        password_valid = verify_password(credentials.password, user.hashed_password)
+        
+        if not password_valid:
+            logger.warning(f"Login attempt failed - Invalid password for user: {user.email}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect email or password",

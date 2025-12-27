@@ -220,23 +220,38 @@ class PrepWiseAPIClient {
    * Login with email and password
    */
   async login(email: string, password: string): Promise<void> {
-    const response = await fetch(`${this.baseURL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    const url = `${this.baseURL}/auth/login`;
+    console.log('🔐 Login attempt:', { email, url });
+    
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({
-        detail: response.statusText,
-      }));
-      throw new Error(error.detail || 'Login failed');
+      console.log('📡 Login response status:', response.status, response.statusText);
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({
+          detail: response.statusText,
+        }));
+        console.error('❌ Login error:', error);
+        throw new Error(error.detail || 'Login failed');
+      }
+
+      const data: TokenResponse = await response.json();
+      console.log('✅ Login successful, token received');
+      this.setToken(data.access_token);
+    } catch (error: any) {
+      console.error('❌ Login exception:', error);
+      if (error.message) {
+        throw error;
+      }
+      throw new Error(error.message || 'Failed to connect to server. Make sure the backend is running.');
     }
-
-    const data: TokenResponse = await response.json();
-    this.setToken(data.access_token);
   }
 
   /**
