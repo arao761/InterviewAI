@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import DashboardHeader from '@/components/dashboard/dashboard-header';
 import QuickStats from '@/components/dashboard/quick-stats';
@@ -9,56 +9,108 @@ import InterviewHistory from '@/components/dashboard/interview-history';
 import SkillAnalysis from '@/components/dashboard/skill-analysis';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import apiClient from '@/lib/api/client';
 
 export default function Dashboard() {
   const [filter, setFilter] = useState('all');
+  const [stats, setStats] = useState({
+    totalInterviews: 0,
+    averageScore: 0,
+    bestScore: null as number | null,
+    hoursSpent: 0,
+  });
+  const [interviews, setInterviews] = useState<Array<{
+    id: number;
+    type: string;
+    company: string;
+    date: string;
+    score: number;
+    duration: string;
+    status: string;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data
-  const interviews = [
-    {
-      id: 1,
-      type: 'Behavioral',
-      company: 'Google',
-      date: '2025-11-10',
-      score: 82,
-      duration: '28m',
-      status: 'completed',
-    },
-    {
-      id: 2,
-      type: 'Technical',
-      company: 'Meta',
-      date: '2025-11-08',
-      score: 75,
-      duration: '32m',
-      status: 'completed',
-    },
-    {
-      id: 3,
-      type: 'Case Study',
-      company: 'McKinsey',
-      date: '2025-11-05',
-      score: 88,
-      duration: '35m',
-      status: 'completed',
-    },
-    {
-      id: 4,
-      type: 'Behavioral',
-      company: 'Amazon',
-      date: '2025-11-02',
-      score: 79,
-      duration: '25m',
-      status: 'completed',
-    },
-  ];
+  useEffect(() => {
+    async function fetchDashboardData() {
+      try {
+        setLoading(true);
+        setError(null);
 
-  const stats = {
-    totalInterviews: 12,
-    averageScore: 81,
-    bestScore: 92,
-    hoursSpent: 8.5,
-  };
+        // Fetch dashboard statistics and interview history in parallel
+        const [statsData, historyData] = await Promise.all([
+          apiClient.getDashboardStats(),
+          apiClient.getInterviewHistory(),
+        ]);
+
+        // Update stats
+        setStats({
+          totalInterviews: statsData.total_interviews,
+          averageScore: Math.round(statsData.average_score),
+          bestScore: statsData.best_score ? Math.round(statsData.best_score) : null,
+          hoursSpent: statsData.hours_spent,
+        });
+
+        // Transform interview history to match component format
+        const transformedInterviews = historyData.interviews.map((interview) => ({
+          id: interview.id,
+          type: interview.interview_type 
+            ? interview.interview_type.charAt(0).toUpperCase() + interview.interview_type.slice(1)
+            : 'Interview',
+          company: interview.technical_domain || 'General',
+          date: interview.date,
+          score: interview.score ? Math.round(interview.score) : 0,
+          duration: interview.duration_minutes 
+            ? `${Math.round(interview.duration_minutes)}m`
+            : 'N/A',
+          status: interview.status,
+        }));
+
+        setInterviews(transformedInterviews);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+        // Set empty data on error
+        setStats({
+          totalInterviews: 0,
+          averageScore: 0,
+          bestScore: null,
+          hoursSpent: 0,
+        });
+        setInterviews([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <DashboardHeader />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex items-center justify-center h-64">
+            <p className="text-muted-foreground">Loading dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <DashboardHeader />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex items-center justify-center h-64">
+            <p className="text-destructive">Error: {error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -88,10 +140,10 @@ export default function Dashboard() {
         {/* Charts Section */}
         <div className="grid lg:grid-cols-3 gap-8 mb-12">
           <div className="lg:col-span-2">
-            <ProgressChart />
+            <ProgressChart interviews={interviews} />
           </div>
           <div>
-            <SkillAnalysis />
+            <SkillAnalysis interviews={interviews} />
           </div>
         </div>
 

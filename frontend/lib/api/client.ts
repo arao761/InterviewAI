@@ -389,6 +389,75 @@ class PrepWiseAPIClient {
 
     return await response.json();
   }
+
+  /**
+   * Get dashboard statistics
+   */
+  async getDashboardStats(): Promise<{
+    total_interviews: number;
+    average_score: number;
+    best_score: number | null;
+    hours_spent: number;
+  }> {
+    const token = this.getToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${this.baseURL}/dashboard/stats`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        detail: response.statusText,
+      }));
+      throw new Error(error.detail || 'Failed to get dashboard statistics');
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Get interview history
+   */
+  async getInterviewHistory(): Promise<{
+    interviews: Array<{
+      id: number;
+      interview_type: string | null;
+      technical_domain: string | null;
+      date: string;
+      score: number | null;
+      duration_minutes: number | null;
+      status: string;
+    }>;
+  }> {
+    const token = this.getToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${this.baseURL}/dashboard/history`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        detail: response.statusText,
+      }));
+      throw new Error(error.detail || 'Failed to get interview history');
+    }
+
+    return await response.json();
+  }
 }
 
 // Export singleton instance
