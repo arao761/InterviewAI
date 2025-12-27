@@ -223,6 +223,9 @@ class PrepWiseAPIClient {
     const url = `${this.baseURL}/auth/login`;
     console.log('🔐 Login attempt:', { email, url });
     
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
     try {
       const response = await fetch(url, {
         method: 'POST',
@@ -230,8 +233,10 @@ class PrepWiseAPIClient {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
       console.log('📡 Login response status:', response.status, response.statusText);
 
       if (!response.ok) {
@@ -246,7 +251,11 @@ class PrepWiseAPIClient {
       console.log('✅ Login successful, token received');
       this.setToken(data.access_token);
     } catch (error: any) {
+      clearTimeout(timeoutId);
       console.error('❌ Login exception:', error);
+      if (error.name === 'AbortError') {
+        throw new Error('Login request timed out. Please check your connection and try again.');
+      }
       if (error.message) {
         throw error;
       }
