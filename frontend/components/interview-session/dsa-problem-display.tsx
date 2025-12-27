@@ -1,8 +1,7 @@
 'use client';
 
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Lightbulb, Code, Clock } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
 import { useState } from 'react';
 
 interface DSAProblem {
@@ -56,169 +55,112 @@ export default function DSAProblemDisplay({
   };
 
   return (
-    <div className="max-w-4xl space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <span className="text-sm font-semibold text-primary">
-            Question {questionNumber} of {totalQuestions}
-          </span>
-          <div className="flex items-center gap-3 mt-2">
-            <h2 className="text-2xl font-bold">{problem.title}</h2>
-            <Badge className={getDifficultyColor(problem.difficulty)}>
-              {problem.difficulty.toUpperCase()}
-            </Badge>
-            <Badge variant="outline" className="border-border">
-              {problem.topic}
-            </Badge>
-          </div>
-        </div>
-        {problem.expected_complexity && (
-          <div className="text-right text-sm text-muted-foreground">
-            <div className="flex items-center gap-4">
-              {problem.expected_complexity.time && (
-                <div>
-                  <span className="font-semibold">Time:</span> {problem.expected_complexity.time}
-                </div>
-              )}
-              {problem.expected_complexity.space && (
-                <div>
-                  <span className="font-semibold">Space:</span> {problem.expected_complexity.space}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+    <div className="space-y-6">
+      {/* Header - LeetCode style */}
+      <div className="flex items-center gap-3 mb-6">
+        <h1 className="text-2xl font-semibold">{questionNumber}. {problem.title}</h1>
+        <Badge className={getDifficultyColor(problem.difficulty)}>
+          {problem.difficulty.charAt(0).toUpperCase() + problem.difficulty.slice(1)}
+        </Badge>
       </div>
 
-      {/* Problem Statement */}
-      <Card className="bg-card border-border p-6">
-        <div className="flex gap-4">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Code className="w-5 h-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold mb-3">Problem Statement</h3>
-            <p className="text-foreground whitespace-pre-wrap leading-relaxed">
-              {problem.problem_statement}
-            </p>
-          </div>
-        </div>
-      </Card>
+      {/* Problem Statement - LeetCode style */}
+      <div className="mb-6">
+        <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+          {problem.problem_statement}
+        </p>
+      </div>
 
-      {/* Examples */}
+      {/* Examples - LeetCode style */}
       {problem.examples && problem.examples.length > 0 && (
-        <Card className="bg-card border-border p-6">
-          <h3 className="text-lg font-semibold mb-4">Examples</h3>
-          <div className="space-y-4">
-            {problem.examples.map((example, idx) => (
-              <div key={idx} className="bg-muted/50 rounded-lg p-4 border border-border">
-                <div className="space-y-2">
-                  <div>
-                    <span className="text-sm font-semibold text-muted-foreground">Input: </span>
-                    <code className="text-sm bg-background px-2 py-1 rounded">
-                      {example.input}
-                    </code>
-                  </div>
-                  <div>
-                    <span className="text-sm font-semibold text-muted-foreground">Output: </span>
-                    <code className="text-sm bg-background px-2 py-1 rounded">
-                      {example.output}
-                    </code>
-                  </div>
-                  {example.explanation && (
-                    <div className="mt-2">
-                      <span className="text-sm font-semibold text-muted-foreground">Explanation: </span>
-                      <span className="text-sm text-foreground">{example.explanation}</span>
-                    </div>
-                  )}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-3">Example {problem.examples.length > 1 ? '1' : ''}:</h3>
+          {problem.examples.map((example, idx) => (
+            <div key={idx} className="mb-4">
+              <div className="space-y-2 mb-2">
+                <div>
+                  <strong>Input:</strong> <code className="bg-muted px-2 py-1 rounded text-sm">{example.input}</code>
                 </div>
+                <div>
+                  <strong>Output:</strong> <code className="bg-muted px-2 py-1 rounded text-sm">{example.output}</code>
+                </div>
+                {example.explanation && (
+                  <div>
+                    <strong>Explanation:</strong> <span className="text-foreground">{example.explanation}</span>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        </Card>
+            </div>
+          ))}
+        </div>
       )}
 
-      {/* Constraints */}
+      {/* Constraints - LeetCode style */}
       {problem.constraints && problem.constraints.length > 0 && (
-        <Card className="bg-card border-border p-6">
-          <h3 className="text-lg font-semibold mb-4">Constraints</h3>
-          <ul className="list-disc list-inside space-y-2 text-sm">
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-3">Constraints:</h3>
+          <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
             {problem.constraints.map((constraint, idx) => (
-              <li key={idx} className="text-muted-foreground">
-                {constraint}
+              <li key={idx}>
+                <code className="text-foreground">{constraint}</code>
               </li>
             ))}
           </ul>
-        </Card>
+        </div>
       )}
 
-      {/* Function Signatures */}
+      {/* Follow-up (if complexity info available) */}
+      {problem.expected_complexity && (
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-3">Follow-up:</h3>
+          <p className="text-sm text-muted-foreground">
+            Can you come up with an algorithm that is less than <code className="bg-muted px-1 rounded">O(n²)</code> time complexity?
+          </p>
+          {problem.expected_complexity.time && problem.expected_complexity.space && (
+            <p className="text-sm text-muted-foreground mt-2">
+              <strong>Expected:</strong> Time: <code>{problem.expected_complexity.time}</code>, Space: <code>{problem.expected_complexity.space}</code>
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Function Signatures - Compact */}
       {problem.function_signatures && (
-        <Card className="bg-card border-border p-6">
-          <h3 className="text-lg font-semibold mb-4">Function Signatures</h3>
-          <div className="space-y-3">
-            {problem.function_signatures.python && (
-              <div>
-                <span className="text-sm font-semibold text-muted-foreground">Python: </span>
-                <code className="text-sm bg-muted px-2 py-1 rounded block mt-1">
-                  {problem.function_signatures.python}
-                </code>
-              </div>
-            )}
+        <div className="mb-6 p-4 bg-muted/30 rounded-lg border border-border">
+          <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Function Signature:</h3>
+          <div className="space-y-2">
             {problem.function_signatures.javascript && (
-              <div>
-                <span className="text-sm font-semibold text-muted-foreground">JavaScript: </span>
-                <code className="text-sm bg-muted px-2 py-1 rounded block mt-1">
-                  {problem.function_signatures.javascript}
-                </code>
-              </div>
+              <code className="text-sm bg-background px-3 py-2 rounded block font-mono">
+                {problem.function_signatures.javascript}
+              </code>
             )}
-            {problem.function_signatures.java && (
-              <div>
-                <span className="text-sm font-semibold text-muted-foreground">Java: </span>
-                <code className="text-sm bg-muted px-2 py-1 rounded block mt-1">
-                  {problem.function_signatures.java}
-                </code>
-              </div>
-            )}
-            {problem.function_signatures.cpp && (
-              <div>
-                <span className="text-sm font-semibold text-muted-foreground">C++: </span>
-                <code className="text-sm bg-muted px-2 py-1 rounded block mt-1">
-                  {problem.function_signatures.cpp}
-                </code>
-              </div>
+            {problem.function_signatures.python && !problem.function_signatures.javascript && (
+              <code className="text-sm bg-background px-3 py-2 rounded block font-mono">
+                {problem.function_signatures.python}
+              </code>
             )}
           </div>
-        </Card>
+        </div>
       )}
 
-      {/* Hints */}
+      {/* Hints - Compact */}
       {problem.hints && problem.hints.length > 0 && (
-        <Card className="bg-card border-border p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Lightbulb className="w-5 h-5 text-primary" />
-              Hints
-            </h3>
-            <button
-              onClick={() => setShowHints(!showHints)}
-              className="text-sm text-primary hover:underline"
-            >
-              {showHints ? 'Hide' : 'Show'} Hints
-            </button>
-          </div>
+        <div className="mb-6">
+          <button
+            onClick={() => setShowHints(!showHints)}
+            className="flex items-center gap-2 text-sm text-primary hover:underline mb-2"
+          >
+            <Lightbulb className="w-4 h-4" />
+            {showHints ? 'Hide' : 'Show'} Hints
+          </button>
           {showHints && (
-            <ul className="list-disc list-inside space-y-2 text-sm">
+            <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
               {problem.hints.map((hint, idx) => (
-                <li key={idx} className="text-muted-foreground">
-                  {hint}
-                </li>
+                <li key={idx}>{hint}</li>
               ))}
             </ul>
           )}
-        </Card>
+        </div>
       )}
     </div>
   );

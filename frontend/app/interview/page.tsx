@@ -355,6 +355,40 @@ export default function InterviewSession() {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Interview Control Button - Shrunk and moved to header when DSA problem is shown */}
+          {isTechnicalInterview && dsaProblem && (
+            <div className="flex items-center gap-2">
+              {!isCallActive && !isConnecting ? (
+                <Button
+                  onClick={handleStartCall}
+                  size="sm"
+                  className="rounded-full w-12 h-12 flex items-center justify-center bg-green-600 hover:bg-green-700 text-white"
+                  title="Start Interview"
+                >
+                  <Phone className="w-5 h-5" />
+                </Button>
+              ) : isConnecting ? (
+                <Button
+                  disabled
+                  size="sm"
+                  className="rounded-full w-12 h-12 flex items-center justify-center bg-blue-600 text-white"
+                  title="Connecting..."
+                >
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleEndCall}
+                  size="sm"
+                  className="rounded-full w-12 h-12 flex items-center justify-center bg-red-600 hover:bg-red-700 text-white animate-pulse"
+                  title="End Call"
+                >
+                  <PhoneOff className="w-5 h-5" />
+                </Button>
+              )}
+            </div>
+          )}
+
           {/* Connection Status */}
           <div className="flex items-center gap-2 text-sm">
             {isConnecting ? (
@@ -380,90 +414,109 @@ export default function InterviewSession() {
       </div>
 
       <div className="flex h-[calc(100vh-73px)]">
-        {/* Main Section - Call Controls & Code Editor */}
+        {/* Main Section - DSA Problem & Code Editor */}
         <div className="flex-1 flex flex-col">
-          {/* Call Controls - Center of screen when no code editor */}
-          <div className={`${isTechnicalInterview ? 'p-8' : 'flex-1 flex items-center justify-center'}`}>
-            <div className="text-center space-y-8">
-              {/* AI Speaking Indicator */}
-              {aiSpeaking && (
-                <div className="flex items-center justify-center gap-2 text-blue-500">
-                  <Volume2 className="w-5 h-5 animate-pulse" />
-                  <span className="font-medium">AI is speaking...</span>
-                </div>
-              )}
-
-              {/* Main Call Button */}
-              <div className="flex justify-center">
-                {!isCallActive && !isConnecting ? (
-                  <Button
-                    onClick={handleStartCall}
-                    size="lg"
-                    className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    <Phone className="w-10 h-10 mb-2" />
-                    Start Interview
-                  </Button>
-                ) : isConnecting ? (
-                  <Button
-                    disabled
-                    size="lg"
-                    className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-blue-600 text-white"
-                  >
-                    <Loader2 className="w-10 h-10 mb-2 animate-spin" />
-                    Connecting...
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleEndCall}
-                    size="lg"
-                    className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-red-600 hover:bg-red-700 text-white animate-pulse"
-                  >
-                    <PhoneOff className="w-10 h-10 mb-2" />
-                    End Call
-                  </Button>
-                )}
-              </div>
-
-              {/* Instructions */}
-              <div className="text-sm text-muted-foreground max-w-md mx-auto">
-                {!isCallActive && !isConnecting ? (
-                  <p>Click the button above to start your voice interview with the AI interviewer. Make sure your microphone is enabled.</p>
-                ) : isConnecting ? (
-                  <p>Connecting to AI interviewer... Please allow microphone access if prompted.</p>
-                ) : (
-                  <p>Your interview is in progress. Speak naturally and the AI will guide you through the interview questions.</p>
-                )}
-              </div>
-
-              {/* Error Display */}
-              {error && (
-                <div className="text-red-500 text-sm bg-red-500/10 p-4 rounded-lg max-w-md mx-auto">
-                  {error}
-                </div>
-              )}
-
-              {/* Complete Interview Button */}
-              {isCallActive && (
-                <Button
-                  onClick={handleCompleteInterview}
-                  variant="outline"
-                  className="mt-4"
-                >
-                  Complete Interview
-                </Button>
-              )}
-            </div>
-          </div>
-
           {/* DSA Problem Display - shown for coding questions */}
-          {isTechnicalInterview && dsaProblem && (
-            <div className="flex-1 p-6 overflow-y-auto border-t border-border bg-background">
-              <DSAProblemDisplay
-                problem={dsaProblem}
-                questionNumber={currentQuestionIndex + 1}
-                totalQuestions={sessionData?.questions?.length || 1}
-              />
+          {isTechnicalInterview && dsaProblem ? (
+            <div className="flex-1 overflow-y-auto bg-background">
+              <div className="max-w-4xl mx-auto p-6">
+                <DSAProblemDisplay
+                  problem={dsaProblem}
+                  questionNumber={currentQuestionIndex + 1}
+                  totalQuestions={sessionData?.questions?.length || 1}
+                />
+              </div>
+            </div>
+          ) : (
+            /* Call Controls - Center of screen when no DSA problem */
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center space-y-8">
+                {/* AI Speaking Indicator */}
+                {aiSpeaking && (
+                  <div className="flex items-center justify-center gap-2 text-blue-500">
+                    <Volume2 className="w-5 h-5 animate-pulse" />
+                    <span className="font-medium">AI is speaking...</span>
+                  </div>
+                )}
+
+                {/* Main Call Button */}
+                <div className="flex justify-center">
+                  {!isCallActive && !isConnecting ? (
+                    <Button
+                      onClick={handleStartCall}
+                      size="lg"
+                      className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <Phone className="w-10 h-10 mb-2" />
+                      Start Interview
+                    </Button>
+                  ) : isConnecting ? (
+                    <Button
+                      disabled
+                      size="lg"
+                      className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-blue-600 text-white"
+                    >
+                      <Loader2 className="w-10 h-10 mb-2 animate-spin" />
+                      Connecting...
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleEndCall}
+                      size="lg"
+                      className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-red-600 hover:bg-red-700 text-white animate-pulse"
+                    >
+                      <PhoneOff className="w-10 h-10 mb-2" />
+                      End Call
+                    </Button>
+                  )}
+                </div>
+
+                {/* Instructions */}
+                <div className="text-sm text-muted-foreground max-w-md mx-auto">
+                  {!isCallActive && !isConnecting ? (
+                    <p>Click the button above to start your voice interview with the AI interviewer. Make sure your microphone is enabled.</p>
+                  ) : isConnecting ? (
+                    <p>Connecting to AI interviewer... Please allow microphone access if prompted.</p>
+                  ) : (
+                    <p>Your interview is in progress. Speak naturally and the AI will guide you through the interview questions.</p>
+                  )}
+                </div>
+
+                {/* Error Display */}
+                {error && (
+                  <div className="text-red-500 text-sm bg-red-500/10 p-4 rounded-lg max-w-md mx-auto">
+                    {error}
+                  </div>
+                )}
+
+                {/* Complete Interview Button */}
+                {isCallActive && (
+                  <Button
+                    onClick={handleCompleteInterview}
+                    variant="outline"
+                    className="mt-4"
+                  >
+                    Complete Interview
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* Show message if technical interview but no DSA problem found (for debugging) */}
+          {isTechnicalInterview && !dsaProblem && currentQuestion && (
+            <div className="flex-1 p-6 overflow-y-auto border-t border-border">
+              <div className="bg-muted/50 border border-border rounded-lg p-4">
+                <p className="text-sm text-muted-foreground">
+                  Technical interview question loaded. If this should be a coding question, check the browser console for debugging info.
+                </p>
+                <details className="mt-2">
+                  <summary className="text-xs text-muted-foreground cursor-pointer">Question data (debug)</summary>
+                  <pre className="text-xs mt-2 bg-background p-2 rounded overflow-auto">
+                    {JSON.stringify(currentQuestion, null, 2)}
+                  </pre>
+                </details>
+              </div>
             </div>
           )}
           
