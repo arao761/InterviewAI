@@ -21,10 +21,12 @@ except Exception as e:
 # this is the Alembic Config object
 config = context.config
 
-# Fix Render's postgres:// URL to postgresql:// for SQLAlchemy 2.0 compatibility
+# Fix Render's postgres:// URL to postgresql+psycopg:// for SQLAlchemy 2.0 + psycopg3
 database_url = settings.DATABASE_URL
 if database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
+    database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
+elif database_url.startswith("postgresql://"):
+    database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
 
 # Set the SQLAlchemy URL from our settings
 config.set_main_option("sqlalchemy.url", database_url)

@@ -6,10 +6,12 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 
-# Fix Render's postgres:// URL to postgresql:// for SQLAlchemy 2.0 compatibility
+# Fix Render's postgres:// URL to postgresql+psycopg:// for SQLAlchemy 2.0 + psycopg3
 database_url = settings.DATABASE_URL
 if database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
+    database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
+elif database_url.startswith("postgresql://"):
+    database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
 
 # Create database engine with different settings for SQLite vs PostgreSQL
 if database_url.startswith("sqlite"):
