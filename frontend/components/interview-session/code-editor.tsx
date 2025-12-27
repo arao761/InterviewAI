@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import React from 'react';
 import Editor from '@monaco-editor/react';
 import { Button } from '@/components/ui/button';
 import { RotateCcw } from 'lucide-react';
@@ -35,11 +36,27 @@ export default function CodeEditor({
   initialCode?: string;
 }) {
   const [language, setLanguage] = useState('javascript');
-  const [code, setCode] = useState(initialCode || DEFAULT_CODE[language]);
+  const [code, setCode] = useState(
+    initialCode || DEFAULT_CODE[language]
+  );
+  
+  // Update code when initialCode changes (for DSA problems)
+  React.useEffect(() => {
+    if (initialCode) {
+      setCode(initialCode);
+      onCodeChange(initialCode, language);
+    }
+  }, [initialCode]);
 
   const handleLanguageChange = (newLanguage: string) => {
     setLanguage(newLanguage);
-    const newCode = DEFAULT_CODE[newLanguage] || '';
+    // If we have initial code (from DSA problem), try to get signature for new language
+    // Otherwise use default template
+    let newCode = DEFAULT_CODE[newLanguage] || '';
+    
+    // If initialCode exists, it might be a DSA function signature
+    // We'll let the parent component handle updating initialCode when language changes
+    // For now, use default template
     setCode(newCode);
     onCodeChange(newCode, newLanguage);
   };
@@ -51,9 +68,10 @@ export default function CodeEditor({
   };
 
   const handleReset = () => {
-    const defaultCode = DEFAULT_CODE[language] || '';
-    setCode(defaultCode);
-    onCodeChange(defaultCode, language);
+    // Reset to initial code if provided, otherwise use default
+    const resetCode = initialCode || DEFAULT_CODE[language] || '';
+    setCode(resetCode);
+    onCodeChange(resetCode, language);
   };
 
   return (

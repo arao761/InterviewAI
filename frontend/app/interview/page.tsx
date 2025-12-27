@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Volume2, Wifi, WifiOff, Phone, PhoneOff } from 'lucide-react';
 import TranscriptPanel from '@/components/interview-session/transcript-panel';
 import TimerDisplay from '@/components/interview-session/timer-display';
+import DSAProblemDisplay from '@/components/interview-session/dsa-problem-display';
 import { VapiInterviewer } from '@/lib/vapi/vapi-interviewer';
 
 // Dynamic import for CodeEditor to avoid SSR issues with Monaco
@@ -35,6 +36,7 @@ export default function InterviewSession() {
   const [sessionData, setSessionData] = useState<InterviewSessionData | null>(null);
   const [code, setCode] = useState('');
   const [codeLanguage, setCodeLanguage] = useState('javascript');
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   // VAPI state
   const [isCallActive, setIsCallActive] = useState(false);
@@ -49,10 +51,51 @@ export default function InterviewSession() {
 
   // Check if this is a technical interview
   const isTechnicalInterview = sessionData?.formData?.interviewType === 'technical';
+  
+  // Get current question
+  const currentQuestion = sessionData?.questions?.[currentQuestionIndex];
+  const isCodingQuestion = currentQuestion?.type === 'coding' || currentQuestion?.question_type === 'coding';
+  const dsaProblem = currentQuestion?.dsa_data;
 
   const handleCodeChange = (newCode: string, language: string) => {
     setCode(newCode);
     setCodeLanguage(language);
+  };
+  
+  // Get initial code from DSA problem function signature for a specific language
+  const getInitialCode = (lang: string = codeLanguage) => {
+    if (dsaProblem?.function_signatures) {
+      // Try to get signature for the requested language
+      let sig = dsaProblem.function_signatures[lang];
+      
+      // Fallback to other languages if requested one not available
+      if (!sig) {
+        sig = dsaProblem.function_signatures.javascript ||
+              dsaProblem.function_signatures.python ||
+              dsaProblem.function_signatures.java ||
+              dsaProblem.function_signatures.cpp;
+      }
+      
+      if (sig) {
+        // Create function body template based on language
+        if (lang === 'python') {
+          return `${sig}\n    pass\n`;
+        } else if (lang === 'javascript' || lang === 'typescript') {
+          return `${sig}\n    \n}\n`;
+        } else if (lang === 'java') {
+          return `${sig}\n        \n    }\n}\n`;
+        } else if (lang === 'cpp' || lang === 'c') {
+          return `${sig}\n    \n}\n`;
+        } else if (lang === 'go') {
+          return `${sig}\n    \n}\n`;
+        } else if (lang === 'rust') {
+          return `${sig}\n    \n}\n`;
+        }
+        // Default: just return the signature
+        return sig;
+      }
+    }
+    return '';
   };
 
   // Initialize VAPI interviewer
@@ -389,13 +432,27 @@ export default function InterviewSession() {
             </div>
           </div>
 
-          {/* Code Editor - shown for technical interviews */}
-          {isTechnicalInterview && (
+          {/* DSA Problem Display - shown for coding questions */}
+          {isCodingQuestion && dsaProblem && (
+            <div className="flex-1 p-6 overflow-y-auto border-t border-border">
+              <DSAProblemDisplay
+                problem={dsaProblem}
+                questionNumber={currentQuestionIndex + 1}
+                totalQuestions={sessionData?.questions?.length || 1}
+              />
+            </div>
+          )}
+
+          {/* Code Editor - shown for technical/coding interviews */}
+          {(isTechnicalInterview || isCodingQuestion) && (
             <div className="flex-1 p-4 pt-0 min-h-[400px] border-t border-border">
               <div className="h-full">
                 <div className="text-sm font-medium mb-2 text-muted-foreground">Code Editor</div>
                 <div className="h-[calc(100%-24px)]">
-                  <CodeEditor onCodeChange={handleCodeChange} />
+                  <CodeEditor 
+                    onCodeChange={handleCodeChange}
+                    initialCode={isCodingQuestion ? getInitialCode(codeLanguage) : ''}
+                  />
                 </div>
               </div>
             </div>
