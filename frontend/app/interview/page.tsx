@@ -54,8 +54,32 @@ export default function InterviewSession() {
   
   // Get current question
   const currentQuestion = sessionData?.questions?.[currentQuestionIndex];
-  const isCodingQuestion = currentQuestion?.type === 'coding' || currentQuestion?.question_type === 'coding';
-  const dsaProblem = currentQuestion?.dsa_data;
+  
+  // Check if it's a coding question - multiple ways to detect
+  const isCodingQuestion = 
+    currentQuestion?.type === 'coding' || 
+    currentQuestion?.question_type === 'coding' ||
+    currentQuestion?.dsa_data !== undefined ||
+    (isTechnicalInterview && currentQuestion?.category?.toLowerCase().includes('coding')) ||
+    (isTechnicalInterview && currentQuestion?.category?.toLowerCase().includes('algorithm')) ||
+    (isTechnicalInterview && currentQuestion?.category?.toLowerCase().includes('data structure'));
+  
+  // Get DSA problem data - check multiple possible locations
+  // The dsa_data might be nested in the question object
+  const dsaProblem = currentQuestion?.dsa_data || 
+                     (currentQuestion && Object.keys(currentQuestion).includes('title') && Object.keys(currentQuestion).includes('problem_statement') ? currentQuestion : null);
+  
+  // Debug logging
+  useEffect(() => {
+    if (currentQuestion && isTechnicalInterview) {
+      console.log('🔍 Current question:', currentQuestion);
+      console.log('🔍 Question keys:', Object.keys(currentQuestion || {}));
+      console.log('🔍 Is coding question:', isCodingQuestion);
+      console.log('🔍 DSA problem:', dsaProblem);
+      console.log('🔍 Is technical interview:', isTechnicalInterview);
+      console.log('🔍 All questions:', sessionData?.questions);
+    }
+  }, [currentQuestion, isCodingQuestion, dsaProblem, isTechnicalInterview, sessionData]);
 
   const handleCodeChange = (newCode: string, language: string) => {
     setCode(newCode);
@@ -433,13 +457,30 @@ export default function InterviewSession() {
           </div>
 
           {/* DSA Problem Display - shown for coding questions */}
-          {isCodingQuestion && dsaProblem && (
-            <div className="flex-1 p-6 overflow-y-auto border-t border-border">
+          {isTechnicalInterview && dsaProblem && (
+            <div className="flex-1 p-6 overflow-y-auto border-t border-border bg-background">
               <DSAProblemDisplay
                 problem={dsaProblem}
                 questionNumber={currentQuestionIndex + 1}
                 totalQuestions={sessionData?.questions?.length || 1}
               />
+            </div>
+          )}
+          
+          {/* Show message if technical interview but no DSA problem found (for debugging) */}
+          {isTechnicalInterview && !dsaProblem && currentQuestion && (
+            <div className="flex-1 p-6 overflow-y-auto border-t border-border">
+              <div className="bg-muted/50 border border-border rounded-lg p-4">
+                <p className="text-sm text-muted-foreground">
+                  Technical interview question loaded. If this should be a coding question, check the browser console for debugging info.
+                </p>
+                <details className="mt-2">
+                  <summary className="text-xs text-muted-foreground cursor-pointer">Question data (debug)</summary>
+                  <pre className="text-xs mt-2 bg-background p-2 rounded overflow-auto">
+                    {JSON.stringify(currentQuestion, null, 2)}
+                  </pre>
+                </details>
+              </div>
             </div>
           )}
 
