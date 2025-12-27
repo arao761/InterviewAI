@@ -29,13 +29,18 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
         # Normalize email to lowercase for consistency
         email_lower = user_data.email.lower().strip()
         
+        logger.info(f"Registration attempt for email: {email_lower}")
+        
         # Check if user already exists (case-insensitive)
         existing_user = db.query(User).filter(User.email.ilike(email_lower)).first()
         if existing_user:
+            logger.warning(f"Registration failed - Email already exists: {existing_user.email} (ID: {existing_user.id})")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already registered"
             )
+        
+        logger.info(f"No existing user found for: {email_lower}, proceeding with registration")
 
         # Validate password length in bytes
         password_bytes = len(user_data.password.encode('utf-8'))
