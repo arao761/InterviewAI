@@ -18,9 +18,11 @@ class EmailService:
         # Email configuration from environment variables
         self.smtp_host = getattr(settings, 'SMTP_HOST', 'smtp.gmail.com')
         self.smtp_port = getattr(settings, 'SMTP_PORT', 587)
-        self.smtp_user = getattr(settings, 'SMTP_USER', '')
-        self.smtp_password = getattr(settings, 'SMTP_PASSWORD', '')
-        self.from_email = getattr(settings, 'FROM_EMAIL', self.smtp_user)
+        self.smtp_user = getattr(settings, 'SMTP_USER', '').strip()
+        # Strip password to remove any whitespace/newlines that might cause auth issues
+        smtp_password_raw = getattr(settings, 'SMTP_PASSWORD', '')
+        self.smtp_password = smtp_password_raw.strip().replace(' ', '') if smtp_password_raw else ''
+        self.from_email = getattr(settings, 'FROM_EMAIL', self.smtp_user).strip()
         self.frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
         
     def generate_verification_token(self) -> str:
@@ -115,11 +117,16 @@ class EmailService:
             msg.attach(MIMEText(text_body, 'plain'))
             msg.attach(MIMEText(html_body, 'html'))
             
-            # Send email
+            # Send email with explicit envelope to ensure it goes to the user, not the sender
             with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
                 server.starttls()
                 server.login(self.smtp_user, self.smtp_password)
-                server.send_message(msg)
+                # Use sendmail with explicit envelope to ensure recipient is correct
+                server.sendmail(
+                    from_addr=self.from_email,  # Envelope sender (Interview AI)
+                    to_addrs=[email],  # Envelope recipient (user who registered)
+                    msg=msg.as_string()
+                )
             
             logger.info(f"Verification email sent to {email}")
             return True
@@ -172,10 +179,16 @@ class EmailService:
             
             msg.attach(MIMEText(html_body, 'html'))
             
+            # Send email with explicit envelope to ensure it goes to the user, not the sender
             with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
                 server.starttls()
                 server.login(self.smtp_user, self.smtp_password)
-                server.send_message(msg)
+                # Use sendmail with explicit envelope to ensure recipient is correct
+                server.sendmail(
+                    from_addr=self.from_email,  # Envelope sender (Interview AI)
+                    to_addrs=[email],  # Envelope recipient (user who requested reset)
+                    msg=msg.as_string()
+                )
             
             logger.info(f"Password reset email sent to {email}")
             return True

@@ -56,35 +56,21 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
         # Create new user with hashed password (store email in lowercase)
         hashed_password = get_password_hash(user_data.password)
         
-        # Generate verification token
-        email_service = get_email_service()
-        verification_token = email_service.generate_verification_token()
-        token_expires = datetime.now(timezone.utc) + timedelta(hours=24)
-        
+        # Create new user - email verified by default (no verification required)
         new_user = User(
             email=email_lower,
             name=user_data.name,
             hashed_password=hashed_password,
-            email_verified=False,
-            verification_token=verification_token,
-            verification_token_expires=token_expires
+            email_verified=True,  # Auto-verify, no email verification needed
+            verification_token=None,
+            verification_token_expires=None
         )
 
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
 
-        # Send verification email
-        email_sent = email_service.send_verification_email(
-            email=email_lower,
-            name=user_data.name,
-            token=verification_token
-        )
-        
-        if not email_sent:
-            logger.warning(f"Verification email could not be sent to {email_lower}, but user was created. Token: {verification_token}")
-
-        logger.info(f"New user registered: {new_user.email} (email_verified=False)")
+        logger.info(f"New user registered: {new_user.email} (email_verified=True)")
         return new_user
 
     except HTTPException:
@@ -217,7 +203,7 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
 @router.post("/verify-email")
 async def verify_email(request: VerifyEmailRequest, db: Session = Depends(get_db)):
     """
-    Verify user email with verification token.
+    Verify user email with verification token (legacy endpoint - emails are auto-verified now).
     
     Args:
         request: Request body containing token
@@ -249,14 +235,7 @@ async def verify_email(request: VerifyEmailRequest, db: Session = Depends(get_db
                 detail="Verification token has expired. Please request a new one."
             )
         
-        # Check if already verified
-        if user.email_verified:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email is already verified"
-            )
-        
-        # Verify the email
+        # Mark as verified (for backwards compatibility with old tokens)
         user.email_verified = True
         user.verification_token = None
         user.verification_token_expires = None
@@ -276,71 +255,16 @@ async def verify_email(request: VerifyEmailRequest, db: Session = Depends(get_db
         )
 
 
-@router.post("/resend-verification")
-async def resend_verification_email(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Resend verification email to the current user.
-    
-    Requires: Valid JWT token in Authorization header
-    """
-    try:
-        if current_user.email_verified:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email is already verified"
-            )
-        
-        # Generate new verification token
-        email_service = get_email_service()
-        verification_token = email_service.generate_verification_token()
-        token_expires = datetime.now(timezone.utc) + timedelta(hours=24)
-        
-        # Update user with new token
-        current_user.verification_token = verification_token
-        current_user.verification_token_expires = token_expires
-        db.commit()
-        
-        # Send verification email
-        email_sent = email_service.send_verification_email(
-            email=current_user.email,
-            name=current_user.name,
-            token=verification_token
-        )
-        
-        if not email_sent:
-            logger.warning(f"Verification email could not be sent to {current_user.email}")
-            return {
-                "message": "Verification email could not be sent. Please check your email configuration.",
-                "token": verification_token  # Return token for development
-            }
-        
-        logger.info(f"Verification email resent to {current_user.email}")
-        return {"message": "Verification email sent successfully"}
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Resend verification error: {e}")
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to resend verification email"
-        )
-
-
 @router.post("/forgot-password")
 async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
     """
-    Send password reset email to user.
+    Generate password reset token for user (no email sent).
     
     Args:
         request: Request body containing email
         
     Returns:
-        Success message (always returns success for security)
+        Reset token (for development/testing purposes)
     """
     try:
         email_lower = request.email.lower().strip()
@@ -348,14 +272,15 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
         # Find user by email
         user = db.query(User).filter(User.email.ilike(email_lower)).first()
         
-        # Always return success message (don't reveal if email exists)
         if not user:
-            logger.warning(f"Password reset requested for non-existent email: {email_lower}")
-            return {"message": "If an account with that email exists, a password reset link has been sent."}
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
         
         # Generate reset token
         email_service = get_email_service()
-        reset_token = email_service.generate_verification_token()  # Reuse token generation method
+        reset_token = email_service.generate_verification_token()
         token_expires = datetime.now(timezone.utc) + timedelta(hours=1)  # 1 hour expiry
         
         # Update user with reset token
@@ -363,29 +288,22 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
         user.reset_token_expires = token_expires
         db.commit()
         
-        # Send password reset email
-        email_sent = email_service.send_password_reset_email(
-            email=user.email,
-            name=user.name,
-            token=reset_token
-        )
+        logger.info(f"Password reset token generated for {user.email}")
+        # Return token directly (no email sent)
+        return {
+            "message": "Password reset token generated",
+            "token": reset_token
+        }
         
-        if not email_sent:
-            logger.warning(f"Password reset email could not be sent to {user.email}")
-            # Still return success for security
-            return {
-                "message": "If an account with that email exists, a password reset link has been sent.",
-                "token": reset_token  # Return token for development only
-            }
-        
-        logger.info(f"Password reset email sent to {user.email}")
-        return {"message": "If an account with that email exists, a password reset link has been sent."}
-        
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Forgot password error: {e}")
         db.rollback()
-        # Always return success for security
-        return {"message": "If an account with that email exists, a password reset link has been sent."}
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate reset token"
+        )
 
 
 @router.post("/reset-password")
