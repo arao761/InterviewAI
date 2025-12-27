@@ -41,6 +41,19 @@ export default function DSAProblemDisplay({
 }: DSAProblemDisplayProps) {
   const [showHints, setShowHints] = useState(false);
 
+  // Validate problem data
+  if (!problem || !problem.title || !problem.problem_statement) {
+    console.error('Invalid DSA problem data:', problem);
+    return (
+      <div className="p-6 bg-red-500/10 border border-red-500 rounded-lg">
+        <p className="text-red-500 font-semibold">Error: Invalid problem data</p>
+        <p className="text-sm text-muted-foreground mt-2">
+          The coding problem could not be loaded. Please try refreshing the page.
+        </p>
+      </div>
+    );
+  }
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty.toLowerCase()) {
       case 'easy':

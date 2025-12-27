@@ -67,7 +67,18 @@ export default function InterviewSession() {
   // Get DSA problem data - check multiple possible locations
   // The dsa_data might be nested in the question object
   const dsaProblem = currentQuestion?.dsa_data || 
-                     (currentQuestion && Object.keys(currentQuestion).includes('title') && Object.keys(currentQuestion).includes('problem_statement') ? currentQuestion : null);
+                     (currentQuestion && 
+                      currentQuestion.title && 
+                      currentQuestion.problem_statement ? 
+                      currentQuestion : null);
+  
+  // Validate dsaProblem has required fields before using it
+  const isValidDSAProblem = dsaProblem && 
+                            typeof dsaProblem === 'object' &&
+                            dsaProblem.title && 
+                            dsaProblem.problem_statement &&
+                            dsaProblem.difficulty &&
+                            dsaProblem.topic;
   
   // Debug logging
   useEffect(() => {
@@ -417,7 +428,7 @@ export default function InterviewSession() {
         {/* Main Section - DSA Problem & Code Editor */}
         <div className="flex-1 flex flex-col">
           {/* DSA Problem Display - shown for coding questions */}
-          {isTechnicalInterview && dsaProblem ? (
+          {isTechnicalInterview && isValidDSAProblem ? (
             <div className="flex-1 overflow-y-auto bg-background">
               <div className="max-w-4xl mx-auto p-6">
                 <DSAProblemDisplay
@@ -545,7 +556,7 @@ export default function InterviewSession() {
                 <div className="h-[calc(100%-24px)]">
                   <CodeEditor 
                     onCodeChange={handleCodeChange}
-                    initialCode={isCodingQuestion ? getInitialCode(codeLanguage) : ''}
+                    initialCode={isCodingQuestion && isValidDSAProblem ? getInitialCode(codeLanguage) : ''}
                   />
                 </div>
               </div>
