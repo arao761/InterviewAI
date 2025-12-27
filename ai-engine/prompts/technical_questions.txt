@@ -1,0 +1,33 @@
+Generate {count} technical interview questions for a {level} {role} position.
+
+Focus areas: {focus_areas}
+
+Requirements:
+- Questions should be appropriate for {level} level candidates
+- Cover topics: {focus_areas}
+- Include a mix of theoretical and practical questions
+- Questions should test problem-solving abilities
+
+For each question, provide:
+1. question: The question text
+2. difficulty: easy/medium/hard
+3. category: Topic area (e.g., "algorithms", "databases", "system design")
+4. skills_tested: Array of skills being evaluated
+5. duration: Expected time to answer in minutes
+6. follow_ups: Array of 2-3 follow-up questions (optional)
+7. hints: Array of hints if the candidate is stuck (optional)
+
+Return ONLY a valid JSON array of question objects. No additional text or markdown.
+
+Example format:
+[
+  {{
+    "question": "How would you implement a LRU cache?",
+    "difficulty": "medium",
+    "category": "data structures",
+    "skills_tested": ["data structures", "algorithms", "problem solving"],
+    "duration": 10,
+    "follow_ups": ["What's the time complexity?", "How would you handle thread safety?"],
+    "hints": ["Consider using a hash map and doubly linked list"]
+  }}
+]

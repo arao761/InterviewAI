@@ -67,7 +67,8 @@ alembic/versions/*.py
 # Resume/Document Uploads
 *.pdf
 *.docx
-*.txt
+uploads/**/*.txt
+backend/uploads/**/*.txt
 test_resume.txt
 backend/uploads/
 

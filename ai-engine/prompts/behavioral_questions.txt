@@ -1,0 +1,31 @@
+Generate {count} behavioral interview questions for a {level} {role} position.
+
+Requirements:
+- Use the STAR method (Situation, Task, Action, Result)
+- Questions should assess soft skills and past experiences
+- Appropriate for {level} level candidates
+- Focus on: teamwork, leadership, problem-solving, communication, adaptability
+
+For each question, provide:
+1. question: The behavioral question using STAR format
+2. difficulty: easy/medium/hard
+3. category: The competency being assessed (e.g., "leadership", "teamwork", "conflict resolution")
+4. skills_tested: Array of skills being evaluated
+5. duration: Expected time to answer in minutes (typically 5-10 minutes for STAR responses)
+6. follow_ups: Array of 2-3 follow-up questions
+7. sample_answer_points: Key points a good answer should cover (optional)
+
+Return ONLY a valid JSON array of question objects. No additional text or markdown.
+
+Example format:
+[
+  {{
+    "question": "Tell me about a time when you had to work with a difficult team member. How did you handle the situation?",
+    "difficulty": "medium",
+    "category": "teamwork",
+    "skills_tested": ["communication", "conflict resolution", "emotional intelligence"],
+    "duration": 7,
+    "follow_ups": ["What was the outcome?", "What would you do differently?", "How did this experience change your approach?"],
+    "sample_answer_points": ["Specific situation described", "Actions taken to address the issue", "Measurable positive outcome"]
+  }}
+]
