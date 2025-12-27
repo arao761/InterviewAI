@@ -201,6 +201,9 @@ class PrepWiseAPIClient {
     const url = `${this.baseURL}/auth/register`;
     console.log('📝 Registration attempt:', { email, name, url });
     
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
     try {
       const response = await fetch(url, {
         method: 'POST',
@@ -208,8 +211,10 @@ class PrepWiseAPIClient {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, name, password }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
       console.log('📡 Registration response status:', response.status, response.statusText);
 
       if (!response.ok) {
@@ -224,8 +229,15 @@ class PrepWiseAPIClient {
       console.log('✅ Registration successful:', data);
       return data;
     } catch (error: any) {
+      clearTimeout(timeoutId);
       console.error('❌ Registration exception:', error);
-      throw error;
+      if (error.name === 'AbortError') {
+        throw new Error('Registration request timed out. Please check your connection and make sure the backend server is running at ' + this.baseURL);
+      }
+      if (error.message) {
+        throw error;
+      }
+      throw new Error(error.message || `Failed to connect to server at ${this.baseURL}. Make sure the backend is running.`);
     }
   }
 
@@ -237,7 +249,7 @@ class PrepWiseAPIClient {
     console.log('🔐 Login attempt:', { email, url });
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
     
     try {
       const response = await fetch(url, {
@@ -267,12 +279,12 @@ class PrepWiseAPIClient {
       clearTimeout(timeoutId);
       console.error('❌ Login exception:', error);
       if (error.name === 'AbortError') {
-        throw new Error('Login request timed out. Please check your connection and try again.');
+        throw new Error('Login request timed out. Please check your connection and make sure the backend server is running at ' + this.baseURL);
       }
       if (error.message) {
         throw error;
       }
-      throw new Error(error.message || 'Failed to connect to server. Make sure the backend is running.');
+      throw new Error(error.message || `Failed to connect to server at ${this.baseURL}. Make sure the backend is running.`);
     }
   }
 
