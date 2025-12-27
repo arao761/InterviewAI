@@ -11,9 +11,11 @@ import SkillAnalysis from '@/components/dashboard/skill-analysis';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import apiClient from '@/lib/api/client';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Dashboard() {
   const router = useRouter();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [filter, setFilter] = useState('all');
   const [stats, setStats] = useState({
     totalInterviews: 0,
@@ -35,10 +37,24 @@ export default function Dashboard() {
   const [authError, setAuthError] = useState(false);
 
   useEffect(() => {
+    // Wait for auth to finish loading
+    if (authLoading) {
+      return;
+    }
+
+    // If not authenticated, don't try to fetch data
+    if (!isAuthenticated) {
+      setAuthError(true);
+      setLoading(false);
+      setError('Please log in to view your dashboard');
+      return;
+    }
+
     async function fetchDashboardData() {
       try {
         setLoading(true);
         setError(null);
+        setAuthError(false);
 
         // Fetch dashboard statistics and interview history separately to handle partial failures
         let statsData = null;
@@ -148,15 +164,72 @@ export default function Dashboard() {
     }
 
     fetchDashboardData();
-  }, []);
+  }, [isAuthenticated, authLoading]);
 
-  if (loading) {
+  // Show loading while checking authentication
+  if (authLoading || (loading && isAuthenticated)) {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <DashboardHeader />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex items-center justify-center h-64">
             <p className="text-muted-foreground">Loading dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated, show login prompt
+  if (!isAuthenticated || authError) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <DashboardHeader />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* Header with Action */}
+          <div className="flex justify-between items-center mb-12">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
+              <p className="text-muted-foreground">Track your interview preparation progress</p>
+            </div>
+
+            <Link href="/interview-setup">
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                <Plus className="w-4 h-4 mr-2" />
+                New Interview
+              </Button>
+            </Link>
+          </div>
+
+          {/* Authentication Required Message */}
+          <div className="mb-8 p-6 bg-primary/10 border border-primary/20 rounded-lg">
+            <p className="text-primary font-semibold mb-2 text-lg">Authentication Required</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Please log in to view your dashboard statistics and interview history.
+            </p>
+            <div className="flex gap-3">
+              <Link href="/login">
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                  Log In
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button variant="outline" className="border-border hover:bg-card">
+                  Sign Up
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Quick Stats - Show zeros */}
+          <div className="mb-12">
+            <QuickStats stats={stats} />
+          </div>
+
+          {/* Interview History - Show empty state */}
+          <div>
+            <InterviewHistory interviews={[]} />
           </div>
         </div>
       </div>
