@@ -64,6 +64,10 @@ class User(Base):
     verification_token = Column(String(255), nullable=True, unique=True, index=True)
     verification_token_expires = Column(DateTime(timezone=True), nullable=True)
     
+    # Password reset
+    reset_token = Column(String(255), nullable=True, unique=True, index=True)
+    reset_token_expires = Column(DateTime(timezone=True), nullable=True)
+    
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
