@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import DashboardHeader from '@/components/dashboard/dashboard-header';
 import QuickStats from '@/components/dashboard/quick-stats';
@@ -12,6 +13,7 @@ import { Plus } from 'lucide-react';
 import apiClient from '@/lib/api/client';
 
 export default function Dashboard() {
+  const router = useRouter();
   const [filter, setFilter] = useState('all');
   const [stats, setStats] = useState({
     totalInterviews: 0,
@@ -30,6 +32,7 @@ export default function Dashboard() {
   }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState(false);
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -44,9 +47,21 @@ export default function Dashboard() {
 
         try {
           statsData = await apiClient.getDashboardStats();
-        } catch (err) {
+        } catch (err: any) {
           console.error('Error fetching stats:', err);
-          errors.push('Failed to load statistics');
+          const errorMessage = err?.message || 'Failed to load statistics';
+          
+          // Check if it's an authentication error
+          if (errorMessage.includes('Invalid or expired token') || 
+              errorMessage.includes('Not authenticated') ||
+              errorMessage.includes('401')) {
+            setAuthError(true);
+            apiClient.logout();
+            errors.push('Please log in to view your dashboard');
+          } else {
+            errors.push('Failed to load statistics');
+          }
+          
           // Use default empty stats
           statsData = {
             total_interviews: 0,
@@ -58,9 +73,25 @@ export default function Dashboard() {
 
         try {
           historyData = await apiClient.getInterviewHistory();
-        } catch (err) {
+        } catch (err: any) {
           console.error('Error fetching history:', err);
-          errors.push('Failed to load interview history');
+          const errorMessage = err?.message || 'Failed to load interview history';
+          
+          // Check if it's an authentication error
+          if (errorMessage.includes('Invalid or expired token') || 
+              errorMessage.includes('Not authenticated') ||
+              errorMessage.includes('401')) {
+            if (!authError) {
+              setAuthError(true);
+              apiClient.logout();
+            }
+            if (!errors.some(e => e.includes('log in'))) {
+              errors.push('Please log in to view your dashboard');
+            }
+          } else {
+            errors.push('Failed to load interview history');
+          }
+          
           // Use default empty history
           historyData = { interviews: [] };
         }
@@ -155,9 +186,26 @@ export default function Dashboard() {
 
           {/* Error Message */}
           <div className="mb-8 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-            <p className="text-destructive font-semibold mb-2">Unable to load dashboard data</p>
+            <p className="text-destructive font-semibold mb-2">
+              {authError ? 'Authentication Required' : 'Unable to load dashboard data'}
+            </p>
             <p className="text-sm text-muted-foreground">{error}</p>
-            <p className="text-sm text-muted-foreground mt-2">You can still start a new interview using the button above.</p>
+            {authError ? (
+              <div className="mt-4 flex gap-3">
+                <Link href="/login">
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                    Log In
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button variant="outline" className="border-border hover:bg-card">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground mt-2">You can still start a new interview using the button above.</p>
+            )}
           </div>
 
           {/* Quick Stats - Show zeros even on error */}
