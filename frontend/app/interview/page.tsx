@@ -515,7 +515,7 @@ export default function InterviewSession() {
           )}
           
           {/* Show message if technical interview but no DSA problem found (for debugging) */}
-          {isTechnicalInterview && !dsaProblem && currentQuestion && (
+          {isTechnicalInterview && !isValidDSAProblem && currentQuestion && (
             <div className="flex-1 p-6 overflow-y-auto border-t border-border">
               <div className="bg-muted/50 border border-border rounded-lg p-4">
                 <p className="text-sm text-muted-foreground">
