@@ -105,10 +105,14 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
 
         # Verify password with detailed logging
         logger.info(f"Attempting password verification for user: {user.email}")
+        logger.info(f"Password length received: {len(credentials.password)} chars, {len(credentials.password.encode('utf-8'))} bytes")
+        logger.info(f"Stored hash starts with: {user.hashed_password[:20] if user.hashed_password else 'None'}...")
         password_valid = verify_password(credentials.password, user.hashed_password)
+        logger.info(f"Password verification result: {password_valid}")
         
         if not password_valid:
             logger.warning(f"Login attempt failed - Invalid password for user: {user.email}")
+            logger.warning(f"Received password: '{credentials.password}' (length: {len(credentials.password)})")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect email or password",
