@@ -30,11 +30,17 @@ class TokenData(BaseModel):
     email: Optional[str] = None
 
 
+class VerifyEmailRequest(BaseModel):
+    """Schema for email verification request."""
+    token: str
+
+
 class UserResponse(BaseModel):
     """Schema for user response (without password)."""
     id: int
     email: str
     name: str
+    email_verified: bool = False
     created_at: datetime
     updated_at: Optional[datetime] = None
 

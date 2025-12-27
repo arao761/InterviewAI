@@ -41,10 +41,10 @@ export default function RegisterPage() {
 
     try {
       await register(email, name, password);
-      router.push('/dashboard');
+      // Show success message and redirect to verification notice
+      router.push('/verify-email-pending?email=' + encodeURIComponent(email));
     } catch (err: any) {
       setError(err.message || 'Registration failed');
-    } finally {
       setLoading(false);
     }
   };

@@ -1,7 +1,7 @@
 """
 Database models for PrepWise application.
 """
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Float, JSON, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Float, JSON, Enum as SQLEnum, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -58,6 +58,11 @@ class User(Base):
     subscription_start_date = Column(DateTime(timezone=True), nullable=True)
     subscription_end_date = Column(DateTime(timezone=True), nullable=True)
     trial_end_date = Column(DateTime(timezone=True), nullable=True)
+    
+    # Email verification
+    email_verified = Column(Boolean, default=False, nullable=True, server_default='0')
+    verification_token = Column(String(255), nullable=True, unique=True, index=True)
+    verification_token_expires = Column(DateTime(timezone=True), nullable=True)
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())

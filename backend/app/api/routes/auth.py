@@ -6,9 +6,11 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.models import User
-from app.schemas.auth_schemas import UserRegister, UserLogin, Token, UserResponse
+from app.schemas.auth_schemas import UserRegister, UserLogin, Token, UserResponse, VerifyEmailRequest
 from app.utils.auth import verify_password, get_password_hash, create_access_token, decode_access_token
 from app.core.logging import logger
+from app.services.email_service import get_email_service
+from datetime import datetime, timedelta, timezone
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 security = HTTPBearer()
@@ -53,17 +55,36 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
 
         # Create new user with hashed password (store email in lowercase)
         hashed_password = get_password_hash(user_data.password)
+        
+        # Generate verification token
+        email_service = get_email_service()
+        verification_token = email_service.generate_verification_token()
+        token_expires = datetime.now(timezone.utc) + timedelta(hours=24)
+        
         new_user = User(
             email=email_lower,
             name=user_data.name,
-            hashed_password=hashed_password
+            hashed_password=hashed_password,
+            email_verified=False,
+            verification_token=verification_token,
+            verification_token_expires=token_expires
         )
 
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
 
-        logger.info(f"New user registered: {new_user.email}")
+        # Send verification email
+        email_sent = email_service.send_verification_email(
+            email=email_lower,
+            name=user_data.name,
+            token=verification_token
+        )
+        
+        if not email_sent:
+            logger.warning(f"Verification email could not be sent to {email_lower}, but user was created. Token: {verification_token}")
+
+        logger.info(f"New user registered: {new_user.email} (email_verified=False)")
         return new_user
 
     except HTTPException:
@@ -191,5 +212,122 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
     Requires: Valid JWT token in Authorization header
     """
     return current_user
+
+
+@router.post("/verify-email")
+async def verify_email(request: VerifyEmailRequest, db: Session = Depends(get_db)):
+    """
+    Verify user email with verification token.
+    
+    Args:
+        request: Request body containing token
+        
+    Returns:
+        Success message
+    """
+    try:
+        token = request.token
+        if not token:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Verification token is required"
+            )
+        
+        # Find user by verification token
+        user = db.query(User).filter(User.verification_token == token).first()
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired verification token"
+            )
+        
+        # Check if token is expired
+        if user.verification_token_expires and user.verification_token_expires < datetime.now(timezone.utc):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Verification token has expired. Please request a new one."
+            )
+        
+        # Check if already verified
+        if user.email_verified:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email is already verified"
+            )
+        
+        # Verify the email
+        user.email_verified = True
+        user.verification_token = None
+        user.verification_token_expires = None
+        db.commit()
+        
+        logger.info(f"Email verified for user: {user.email}")
+        return {"message": "Email verified successfully", "email_verified": True}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Email verification error: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Email verification failed"
+        )
+
+
+@router.post("/resend-verification")
+async def resend_verification_email(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Resend verification email to the current user.
+    
+    Requires: Valid JWT token in Authorization header
+    """
+    try:
+        if current_user.email_verified:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email is already verified"
+            )
+        
+        # Generate new verification token
+        email_service = get_email_service()
+        verification_token = email_service.generate_verification_token()
+        token_expires = datetime.now(timezone.utc) + timedelta(hours=24)
+        
+        # Update user with new token
+        current_user.verification_token = verification_token
+        current_user.verification_token_expires = token_expires
+        db.commit()
+        
+        # Send verification email
+        email_sent = email_service.send_verification_email(
+            email=current_user.email,
+            name=current_user.name,
+            token=verification_token
+        )
+        
+        if not email_sent:
+            logger.warning(f"Verification email could not be sent to {current_user.email}")
+            return {
+                "message": "Verification email could not be sent. Please check your email configuration.",
+                "token": verification_token  # Return token for development
+            }
+        
+        logger.info(f"Verification email resent to {current_user.email}")
+        return {"message": "Verification email sent successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Resend verification error: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to resend verification email"
+        )
 
 
