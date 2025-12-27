@@ -198,22 +198,35 @@ class PrepWiseAPIClient {
    * Register a new user
    */
   async register(email: string, name: string, password: string): Promise<User> {
-    const response = await fetch(`${this.baseURL}/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, name, password }),
-    });
+    const url = `${this.baseURL}/auth/register`;
+    console.log('📝 Registration attempt:', { email, name, url });
+    
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, name, password }),
+      });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({
-        detail: response.statusText,
-      }));
-      throw new Error(error.detail || 'Registration failed');
+      console.log('📡 Registration response status:', response.status, response.statusText);
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({
+          detail: response.statusText,
+        }));
+        console.error('❌ Registration error:', error);
+        throw new Error(error.detail || 'Registration failed');
+      }
+
+      const data = await response.json();
+      console.log('✅ Registration successful:', data);
+      return data;
+    } catch (error: any) {
+      console.error('❌ Registration exception:', error);
+      throw error;
     }
-
-    return await response.json();
   }
 
   /**
