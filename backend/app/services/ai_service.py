@@ -230,15 +230,22 @@ class AIService:
             coding_domains = ["coding", "algorithms", "data structures", "dsa", "leetcode", "competitive programming"]
             
             if interview_type == "technical" and num_technical > 0:
-                # Check if domain indicates coding/DSA
-                if domain and any(coding_domain in domain.lower() for coding_domain in coding_domains):
-                    use_dsa_questions = True
-                    logger.info("🎯 Detected coding/DSA domain - will generate DSA questions")
-                # Also check if it's a software engineering role (likely to need coding)
+                # For technical interviews, always use DSA questions by default
+                # This ensures coding questions are shown for technical interviews
+                use_dsa_questions = True
+                logger.info("🎯 Technical interview detected - will generate DSA coding questions")
+                
+                # Check if domain explicitly indicates non-coding (e.g., system design, architecture)
+                non_coding_domains = ["system design", "architecture", "infrastructure", "devops", "cloud"]
+                if domain and any(non_coding in domain.lower() for non_coding in non_coding_domains):
+                    use_dsa_questions = False
+                    logger.info("🎯 Non-coding domain detected - will use regular technical questions")
+                # Check if domain explicitly indicates coding/DSA (reinforce the decision)
+                elif domain and any(coding_domain in domain.lower() for coding_domain in coding_domains):
+                    logger.info("🎯 Coding/DSA domain confirmed - will generate DSA questions")
+                # Also check if it's a software engineering role (reinforce the decision)
                 elif "software" in target_role.lower() or "engineer" in target_role.lower():
-                    # For software engineering roles, use DSA questions for technical interviews
-                    use_dsa_questions = True
-                    logger.info("🎯 Software engineering role detected - will generate DSA questions")
+                    logger.info("🎯 Software engineering role confirmed - will generate DSA questions")
 
             # Convert resume_data to ParsedResume if possible
             resume_obj = None
