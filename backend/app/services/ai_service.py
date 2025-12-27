@@ -50,7 +50,7 @@ class AIService:
             logger.info("✅ PrepWise AI initialized successfully")
             
             # Initialize DSA generator
-            self.dsa_generator = DSAGenerator(self)
+            self.dsa_generator = DSAGenerator()
             logger.info("✅ DSA Generator initialized")
             
             # Verify API key is configured

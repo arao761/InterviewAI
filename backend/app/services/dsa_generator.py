@@ -5,7 +5,6 @@ Generates LeetCode-style coding problems using AI based on difficulty and topic.
 """
 import json
 from typing import Dict, List, Optional, Any
-from app.services.ai_service import AIService
 from app.core.logging import logger
 
 # Import LLM client from ai-engine
@@ -41,8 +40,7 @@ class DSAGenerator:
     
     ALL_TOPICS = CORE_DATA_STRUCTURES + ALGORITHMS_TECHNIQUES
     
-    def __init__(self, ai_service: AIService):
-        self.ai_service = ai_service
+    def __init__(self):
         # Initialize LLM client for direct question generation
         if LLMClient:
             self.llm_client = LLMClient()
