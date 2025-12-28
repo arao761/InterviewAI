@@ -10,7 +10,7 @@ export default function QuickStats({
   stats: {
     totalInterviews: number;
     averageScore: number;
-    bestScore: number;
+    bestScore: number | null;
     hoursSpent: number;
   };
 }) {
@@ -33,7 +33,7 @@ export default function QuickStats({
     },
     {
       label: 'Best Score',
-      value: `${stats.bestScore}%`,
+      value: stats.bestScore !== null ? `${stats.bestScore}%` : 'N/A',
       icon: Target,
       color: 'text-purple-500',
       bgColor: 'bg-purple-500/10',

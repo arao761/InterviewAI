@@ -31,7 +31,7 @@ interface TokenResponse {
 }
 
 class PrepWiseAPIClient {
-  private baseURL: string;
+  public baseURL: string;
 
   constructor(baseURL: string = API_BASE_URL) {
     this.baseURL = baseURL;
@@ -198,45 +198,94 @@ class PrepWiseAPIClient {
    * Register a new user
    */
   async register(email: string, name: string, password: string): Promise<User> {
-    const response = await fetch(`${this.baseURL}/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, name, password }),
-    });
+    const url = `${this.baseURL}/auth/register`;
+    console.log('📝 Registration attempt:', { email, name, url });
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, name, password }),
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({
-        detail: response.statusText,
-      }));
-      throw new Error(error.detail || 'Registration failed');
+      clearTimeout(timeoutId);
+      console.log('📡 Registration response status:', response.status, response.statusText);
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({
+          detail: response.statusText,
+        }));
+        console.error('❌ Registration error:', error);
+        throw new Error(error.detail || 'Registration failed');
+      }
+
+      const data = await response.json();
+      console.log('✅ Registration successful:', data);
+      return data;
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      console.error('❌ Registration exception:', error);
+      if (error.name === 'AbortError') {
+        throw new Error('Registration request timed out. Please check your connection and make sure the backend server is running at ' + this.baseURL);
+      }
+      if (error.message) {
+        throw error;
+      }
+      throw new Error(error.message || `Failed to connect to server at ${this.baseURL}. Make sure the backend is running.`);
     }
-
-    return await response.json();
   }
 
   /**
    * Login with email and password
    */
   async login(email: string, password: string): Promise<void> {
-    const response = await fetch(`${this.baseURL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    const url = `${this.baseURL}/auth/login`;
+    console.log('🔐 Login attempt:', { email, url });
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({
-        detail: response.statusText,
-      }));
-      throw new Error(error.detail || 'Login failed');
+      clearTimeout(timeoutId);
+      console.log('📡 Login response status:', response.status, response.statusText);
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({
+          detail: response.statusText,
+        }));
+        console.error('❌ Login error:', error);
+        throw new Error(error.detail || 'Login failed');
+      }
+
+      const data: TokenResponse = await response.json();
+      console.log('✅ Login successful, token received');
+      this.setToken(data.access_token);
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      console.error('❌ Login exception:', error);
+      if (error.name === 'AbortError') {
+        throw new Error('Login request timed out. Please check your connection and make sure the backend server is running at ' + this.baseURL);
+      }
+      if (error.message) {
+        throw error;
+      }
+      throw new Error(error.message || `Failed to connect to server at ${this.baseURL}. Make sure the backend is running.`);
     }
-
-    const data: TokenResponse = await response.json();
-    this.setToken(data.access_token);
   }
 
   /**
@@ -385,6 +434,75 @@ class PrepWiseAPIClient {
         detail: response.statusText,
       }));
       throw new Error(error.detail || 'Failed to cancel subscription');
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Get dashboard statistics
+   */
+  async getDashboardStats(): Promise<{
+    total_interviews: number;
+    average_score: number;
+    best_score: number | null;
+    hours_spent: number;
+  }> {
+    const token = this.getToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${this.baseURL}/dashboard/stats`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        detail: response.statusText,
+      }));
+      throw new Error(error.detail || 'Failed to get dashboard statistics');
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Get interview history
+   */
+  async getInterviewHistory(): Promise<{
+    interviews: Array<{
+      id: number;
+      interview_type: string | null;
+      technical_domain: string | null;
+      date: string;
+      score: number | null;
+      duration_minutes: number | null;
+      status: string;
+    }>;
+  }> {
+    const token = this.getToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${this.baseURL}/dashboard/history`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        detail: response.statusText,
+      }));
+      throw new Error(error.detail || 'Failed to get interview history');
     }
 
     return await response.json();

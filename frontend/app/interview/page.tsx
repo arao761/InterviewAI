@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Volume2, Wifi, WifiOff, Phone, PhoneOff } from 'lucide-react';
 import TranscriptPanel from '@/components/interview-session/transcript-panel';
 import TimerDisplay from '@/components/interview-session/timer-display';
+import DSAProblemDisplay from '@/components/interview-session/dsa-problem-display';
 import { VapiInterviewer } from '@/lib/vapi/vapi-interviewer';
 
 // Dynamic import for CodeEditor to avoid SSR issues with Monaco
@@ -35,6 +36,7 @@ export default function InterviewSession() {
   const [sessionData, setSessionData] = useState<InterviewSessionData | null>(null);
   const [code, setCode] = useState('');
   const [codeLanguage, setCodeLanguage] = useState('javascript');
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   // VAPI state
   const [isCallActive, setIsCallActive] = useState(false);
@@ -49,10 +51,86 @@ export default function InterviewSession() {
 
   // Check if this is a technical interview
   const isTechnicalInterview = sessionData?.formData?.interviewType === 'technical';
+  
+  // Get current question
+  const currentQuestion = sessionData?.questions?.[currentQuestionIndex];
+  
+  // Check if it's a coding question - multiple ways to detect
+  const isCodingQuestion = 
+    currentQuestion?.type === 'coding' || 
+    currentQuestion?.question_type === 'coding' ||
+    currentQuestion?.dsa_data !== undefined ||
+    (isTechnicalInterview && currentQuestion?.category?.toLowerCase().includes('coding')) ||
+    (isTechnicalInterview && currentQuestion?.category?.toLowerCase().includes('algorithm')) ||
+    (isTechnicalInterview && currentQuestion?.category?.toLowerCase().includes('data structure'));
+  
+  // Get DSA problem data - check multiple possible locations
+  // The dsa_data might be nested in the question object
+  const dsaProblem = currentQuestion?.dsa_data || 
+                     (currentQuestion && 
+                      currentQuestion.title && 
+                      currentQuestion.problem_statement ? 
+                      currentQuestion : null);
+  
+  // Validate dsaProblem has required fields before using it
+  const isValidDSAProblem = dsaProblem && 
+                            typeof dsaProblem === 'object' &&
+                            dsaProblem.title && 
+                            dsaProblem.problem_statement &&
+                            dsaProblem.difficulty &&
+                            dsaProblem.topic;
+  
+  // Debug logging
+  useEffect(() => {
+    if (currentQuestion && isTechnicalInterview) {
+      console.log('🔍 Current question:', currentQuestion);
+      console.log('🔍 Question keys:', Object.keys(currentQuestion || {}));
+      console.log('🔍 Is coding question:', isCodingQuestion);
+      console.log('🔍 DSA problem:', dsaProblem);
+      console.log('🔍 Is technical interview:', isTechnicalInterview);
+      console.log('🔍 All questions:', sessionData?.questions);
+    }
+  }, [currentQuestion, isCodingQuestion, dsaProblem, isTechnicalInterview, sessionData]);
 
   const handleCodeChange = (newCode: string, language: string) => {
     setCode(newCode);
     setCodeLanguage(language);
+  };
+  
+  // Get initial code from DSA problem function signature for a specific language
+  const getInitialCode = (lang: string = codeLanguage) => {
+    if (dsaProblem?.function_signatures) {
+      // Try to get signature for the requested language
+      let sig = dsaProblem.function_signatures[lang];
+      
+      // Fallback to other languages if requested one not available
+      if (!sig) {
+        sig = dsaProblem.function_signatures.javascript ||
+              dsaProblem.function_signatures.python ||
+              dsaProblem.function_signatures.java ||
+              dsaProblem.function_signatures.cpp;
+      }
+      
+      if (sig) {
+        // Create function body template based on language
+        if (lang === 'python') {
+          return `${sig}\n    pass\n`;
+        } else if (lang === 'javascript' || lang === 'typescript') {
+          return `${sig}\n    \n}\n`;
+        } else if (lang === 'java') {
+          return `${sig}\n        \n    }\n}\n`;
+        } else if (lang === 'cpp' || lang === 'c') {
+          return `${sig}\n    \n}\n`;
+        } else if (lang === 'go') {
+          return `${sig}\n    \n}\n`;
+        } else if (lang === 'rust') {
+          return `${sig}\n    \n}\n`;
+        }
+        // Default: just return the signature
+        return sig;
+      }
+    }
+    return '';
   };
 
   // Initialize VAPI interviewer
@@ -288,6 +366,40 @@ export default function InterviewSession() {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Interview Control Button - Shrunk and moved to header when DSA problem is shown */}
+          {isTechnicalInterview && dsaProblem && (
+            <div className="flex items-center gap-2">
+              {!isCallActive && !isConnecting ? (
+                <Button
+                  onClick={handleStartCall}
+                  size="sm"
+                  className="rounded-full w-12 h-12 flex items-center justify-center bg-green-600 hover:bg-green-700 text-white"
+                  title="Start Interview"
+                >
+                  <Phone className="w-5 h-5" />
+                </Button>
+              ) : isConnecting ? (
+                <Button
+                  disabled
+                  size="sm"
+                  className="rounded-full w-12 h-12 flex items-center justify-center bg-blue-600 text-white"
+                  title="Connecting..."
+                >
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleEndCall}
+                  size="sm"
+                  className="rounded-full w-12 h-12 flex items-center justify-center bg-red-600 hover:bg-red-700 text-white animate-pulse"
+                  title="End Call"
+                >
+                  <PhoneOff className="w-5 h-5" />
+                </Button>
+              )}
+            </div>
+          )}
+
           {/* Connection Status */}
           <div className="flex items-center gap-2 text-sm">
             {isConnecting ? (
@@ -313,89 +425,139 @@ export default function InterviewSession() {
       </div>
 
       <div className="flex h-[calc(100vh-73px)]">
-        {/* Main Section - Call Controls & Code Editor */}
+        {/* Main Section - DSA Problem & Code Editor */}
         <div className="flex-1 flex flex-col">
-          {/* Call Controls - Center of screen when no code editor */}
-          <div className={`${isTechnicalInterview ? 'p-8' : 'flex-1 flex items-center justify-center'}`}>
-            <div className="text-center space-y-8">
-              {/* AI Speaking Indicator */}
-              {aiSpeaking && (
-                <div className="flex items-center justify-center gap-2 text-blue-500">
-                  <Volume2 className="w-5 h-5 animate-pulse" />
-                  <span className="font-medium">AI is speaking...</span>
-                </div>
-              )}
-
-              {/* Main Call Button */}
-              <div className="flex justify-center">
-                {!isCallActive && !isConnecting ? (
-                  <Button
-                    onClick={handleStartCall}
-                    size="lg"
-                    className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    <Phone className="w-10 h-10 mb-2" />
-                    Start Interview
-                  </Button>
-                ) : isConnecting ? (
-                  <Button
-                    disabled
-                    size="lg"
-                    className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-blue-600 text-white"
-                  >
-                    <Loader2 className="w-10 h-10 mb-2 animate-spin" />
-                    Connecting...
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleEndCall}
-                    size="lg"
-                    className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-red-600 hover:bg-red-700 text-white animate-pulse"
-                  >
-                    <PhoneOff className="w-10 h-10 mb-2" />
-                    End Call
-                  </Button>
-                )}
+          {/* DSA Problem Display - shown for coding questions */}
+          {isTechnicalInterview && isValidDSAProblem ? (
+            <div className="flex-1 overflow-y-auto bg-background">
+              <div className="max-w-4xl mx-auto p-6">
+                <DSAProblemDisplay
+                  problem={dsaProblem}
+                  questionNumber={currentQuestionIndex + 1}
+                  totalQuestions={sessionData?.questions?.length || 1}
+                />
               </div>
-
-              {/* Instructions */}
-              <div className="text-sm text-muted-foreground max-w-md mx-auto">
-                {!isCallActive && !isConnecting ? (
-                  <p>Click the button above to start your voice interview with the AI interviewer. Make sure your microphone is enabled.</p>
-                ) : isConnecting ? (
-                  <p>Connecting to AI interviewer... Please allow microphone access if prompted.</p>
-                ) : (
-                  <p>Your interview is in progress. Speak naturally and the AI will guide you through the interview questions.</p>
-                )}
-              </div>
-
-              {/* Error Display */}
-              {error && (
-                <div className="text-red-500 text-sm bg-red-500/10 p-4 rounded-lg max-w-md mx-auto">
-                  {error}
-                </div>
-              )}
-
-              {/* Complete Interview Button */}
-              {isCallActive && (
-                <Button
-                  onClick={handleCompleteInterview}
-                  variant="outline"
-                  className="mt-4"
-                >
-                  Complete Interview
-                </Button>
-              )}
             </div>
-          </div>
+          ) : (
+            /* Call Controls - Center of screen when no DSA problem */
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center space-y-8">
+                {/* AI Speaking Indicator */}
+                {aiSpeaking && (
+                  <div className="flex items-center justify-center gap-2 text-blue-500">
+                    <Volume2 className="w-5 h-5 animate-pulse" />
+                    <span className="font-medium">AI is speaking...</span>
+                  </div>
+                )}
 
-          {/* Code Editor - shown for technical interviews */}
-          {isTechnicalInterview && (
+                {/* Main Call Button */}
+                <div className="flex justify-center">
+                  {!isCallActive && !isConnecting ? (
+                    <Button
+                      onClick={handleStartCall}
+                      size="lg"
+                      className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <Phone className="w-10 h-10 mb-2" />
+                      Start Interview
+                    </Button>
+                  ) : isConnecting ? (
+                    <Button
+                      disabled
+                      size="lg"
+                      className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-blue-600 text-white"
+                    >
+                      <Loader2 className="w-10 h-10 mb-2 animate-spin" />
+                      Connecting...
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleEndCall}
+                      size="lg"
+                      className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-red-600 hover:bg-red-700 text-white animate-pulse"
+                    >
+                      <PhoneOff className="w-10 h-10 mb-2" />
+                      End Call
+                    </Button>
+                  )}
+                </div>
+
+                {/* Instructions */}
+                <div className="text-sm text-muted-foreground max-w-md mx-auto">
+                  {!isCallActive && !isConnecting ? (
+                    <p>Click the button above to start your voice interview with the AI interviewer. Make sure your microphone is enabled.</p>
+                  ) : isConnecting ? (
+                    <p>Connecting to AI interviewer... Please allow microphone access if prompted.</p>
+                  ) : (
+                    <p>Your interview is in progress. Speak naturally and the AI will guide you through the interview questions.</p>
+                  )}
+                </div>
+
+                {/* Error Display */}
+                {error && (
+                  <div className="text-red-500 text-sm bg-red-500/10 p-4 rounded-lg max-w-md mx-auto">
+                    {error}
+                  </div>
+                )}
+
+                {/* Complete Interview Button */}
+                {isCallActive && (
+                  <Button
+                    onClick={handleCompleteInterview}
+                    variant="outline"
+                    className="mt-4"
+                  >
+                    Complete Interview
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* Show message if technical interview but no DSA problem found (for debugging) */}
+          {isTechnicalInterview && !isValidDSAProblem && currentQuestion && (
+            <div className="flex-1 p-6 overflow-y-auto border-t border-border">
+              <div className="bg-muted/50 border border-border rounded-lg p-4">
+                <p className="text-sm text-muted-foreground">
+                  Technical interview question loaded. If this should be a coding question, check the browser console for debugging info.
+                </p>
+                <details className="mt-2">
+                  <summary className="text-xs text-muted-foreground cursor-pointer">Question data (debug)</summary>
+                  <pre className="text-xs mt-2 bg-background p-2 rounded overflow-auto">
+                    {JSON.stringify(currentQuestion, null, 2)}
+                  </pre>
+                </details>
+              </div>
+            </div>
+          )}
+          
+          {/* Show message if technical interview but no DSA problem found (for debugging) */}
+          {isTechnicalInterview && !dsaProblem && currentQuestion && (
+            <div className="flex-1 p-6 overflow-y-auto border-t border-border">
+              <div className="bg-muted/50 border border-border rounded-lg p-4">
+                <p className="text-sm text-muted-foreground">
+                  Technical interview question loaded. If this should be a coding question, check the browser console for debugging info.
+                </p>
+                <details className="mt-2">
+                  <summary className="text-xs text-muted-foreground cursor-pointer">Question data (debug)</summary>
+                  <pre className="text-xs mt-2 bg-background p-2 rounded overflow-auto">
+                    {JSON.stringify(currentQuestion, null, 2)}
+                  </pre>
+                </details>
+              </div>
+            </div>
+          )}
+
+          {/* Code Editor - shown for technical/coding interviews */}
+          {(isTechnicalInterview || isCodingQuestion) && (
             <div className="flex-1 p-4 pt-0 min-h-[400px] border-t border-border">
               <div className="h-full">
                 <div className="text-sm font-medium mb-2 text-muted-foreground">Code Editor</div>
                 <div className="h-[calc(100%-24px)]">
-                  <CodeEditor onCodeChange={handleCodeChange} />
+                  <CodeEditor 
+                    onCodeChange={handleCodeChange}
+                    initialCode={isCodingQuestion && isValidDSAProblem ? getInitialCode(codeLanguage) : ''}
+                  />
                 </div>
               </div>
             </div>

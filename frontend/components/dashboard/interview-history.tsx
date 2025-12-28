@@ -53,31 +53,45 @@ export default function InterviewHistory({
             </tr>
           </thead>
           <tbody>
-            {interviews.map((interview) => (
-              <tr key={interview.id} className="border-b border-border hover:bg-muted/50 transition-colors">
-                <td className="px-6 py-4">
-                  <div>
-                    <p className="font-semibold text-foreground">{interview.type}</p>
-                    <p className="text-sm text-muted-foreground">{interview.company}</p>
-                  </div>
+            {interviews.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
+                  <p>No interviews completed yet.</p>
+                  <p className="text-sm mt-2">Start your first interview to see your history here!</p>
                 </td>
-                <td className="px-6 py-4 text-sm text-muted-foreground">
-                  {new Date(interview.date).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </td>
-                <td className="px-6 py-4 text-sm text-muted-foreground">{interview.duration}</td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-semibold ${getScoreBadgeColor(
-                      interview.score
-                    )}`}
-                  >
-                    {interview.score}%
-                  </span>
-                </td>
+              </tr>
+            ) : (
+              interviews.map((interview) => (
+                <tr key={interview.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div>
+                      <p className="font-semibold text-foreground">{interview.type}</p>
+                      <p className="text-sm text-muted-foreground">{interview.company}</p>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">
+                    {new Date(interview.date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">{interview.duration}</td>
+                  <td className="px-6 py-4">
+                    {interview.score > 0 ? (
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-semibold ${getScoreBadgeColor(
+                          interview.score
+                        )}`}
+                      >
+                        {interview.score}%
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 rounded-full text-sm font-semibold text-muted-foreground">
+                        N/A
+                      </span>
+                    )}
+                  </td>
                 <td className="px-6 py-4 flex justify-end gap-2">
                   <Button variant="ghost" size="sm" className="hover:bg-muted">
                     <Eye className="w-4 h-4" />
@@ -89,8 +103,9 @@ export default function InterviewHistory({
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </td>
-              </tr>
-            ))}
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

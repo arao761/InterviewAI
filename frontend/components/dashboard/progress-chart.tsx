@@ -1,16 +1,48 @@
 'use client';
 
+import { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-export default function ProgressChart() {
-  const data = [
-    { date: 'Oct 22', score: 70 },
-    { date: 'Oct 29', score: 73 },
-    { date: 'Nov 5', score: 78 },
-    { date: 'Nov 12', score: 81 },
-    { date: 'Nov 15', score: 82 },
-  ];
+export default function ProgressChart({
+  interviews = [],
+}: {
+  interviews?: Array<{
+    id: number;
+    date: string;
+    score: number;
+  }>;
+}) {
+  const data = useMemo(() => {
+    if (interviews.length === 0) {
+      return [];
+    }
+
+    // Sort interviews by date and format for chart
+    const sortedInterviews = [...interviews]
+      .filter((i) => i.score > 0)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .map((interview) => {
+        const date = new Date(interview.date);
+        return {
+          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          score: interview.score,
+        };
+      });
+
+    return sortedInterviews;
+  }, [interviews]);
+
+  if (data.length === 0) {
+    return (
+      <Card className="bg-card border-border p-6">
+        <h3 className="text-xl font-bold mb-6">Performance Trend</h3>
+        <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+          <p>No interview data available yet. Complete your first interview to see your progress!</p>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-card border-border p-6">

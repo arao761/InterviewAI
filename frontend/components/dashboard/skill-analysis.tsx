@@ -1,13 +1,30 @@
+'use client';
+
 import { Card } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-export default function SkillAnalysis() {
-  const skills = [
-    { name: 'Clarity', value: 85 },
-    { name: 'Confidence', value: 72 },
-    { name: 'Structure', value: 80 },
-    { name: 'Engagement', value: 88 },
-  ];
+export default function SkillAnalysis({
+  interviews = [],
+}: {
+  interviews?: Array<{
+    id: number;
+    score: number;
+  }>;
+}) {
+  // For now, show empty state since we don't have skill breakdown data
+  // This can be enhanced later when we add skill-specific feedback to the backend
+  const skills: Array<{ name: string; value: number }> = [];
+
+  if (skills.length === 0) {
+    return (
+      <Card className="bg-card border-border p-6">
+        <h3 className="text-xl font-bold mb-6">Skill Breakdown</h3>
+        <div className="flex items-center justify-center h-[250px] text-muted-foreground">
+          <p className="text-sm">Skill analysis coming soon</p>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-card border-border p-6">

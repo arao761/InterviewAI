@@ -27,6 +27,7 @@ except ImportError as e:
 
 from app.core.config import settings
 from app.core.logging import logger
+from app.services.dsa_generator import DSAGenerator
 
 
 class AIService:
@@ -47,6 +48,10 @@ class AIService:
         try:
             self.ai = PrepWiseAPI()
             logger.info("✅ PrepWise AI initialized successfully")
+            
+            # Initialize DSA generator
+            self.dsa_generator = DSAGenerator()
+            logger.info("✅ DSA Generator initialized")
             
             # Verify API key is configured
             openai_key = os.getenv("OPENAI_API_KEY")
@@ -219,6 +224,29 @@ class AIService:
 
             logger.info(f"📊 Question split - Technical: {num_technical}, Behavioral: {num_behavioral}")
 
+            # Check if we need DSA coding questions
+            # DSA questions are for technical interviews focused on coding/algorithms
+            use_dsa_questions = False
+            coding_domains = ["coding", "algorithms", "data structures", "dsa", "leetcode", "competitive programming"]
+            
+            if interview_type == "technical" and num_technical > 0:
+                # For technical interviews, always use DSA questions by default
+                # This ensures coding questions are shown for technical interviews
+                use_dsa_questions = True
+                logger.info("🎯 Technical interview detected - will generate DSA coding questions")
+                
+                # Check if domain explicitly indicates non-coding (e.g., system design, architecture)
+                non_coding_domains = ["system design", "architecture", "infrastructure", "devops", "cloud"]
+                if domain and any(non_coding in domain.lower() for non_coding in non_coding_domains):
+                    use_dsa_questions = False
+                    logger.info("🎯 Non-coding domain detected - will use regular technical questions")
+                # Check if domain explicitly indicates coding/DSA (reinforce the decision)
+                elif domain and any(coding_domain in domain.lower() for coding_domain in coding_domains):
+                    logger.info("🎯 Coding/DSA domain confirmed - will generate DSA questions")
+                # Also check if it's a software engineering role (reinforce the decision)
+                elif "software" in target_role.lower() or "engineer" in target_role.lower():
+                    logger.info("🎯 Software engineering role confirmed - will generate DSA questions")
+
             # Convert resume_data to ParsedResume if possible
             resume_obj = None
             try:
@@ -228,67 +256,108 @@ class AIService:
             except Exception as e:
                 logger.warning(f"⚠️  Could not convert to ParsedResume (will use dict): {e}")
 
-            # Generate questions using PrepWise AI
-            focus_areas = []
-            if domain:
-                focus_areas = [domain]
-            
-            # Extract skills as focus areas if available
-            if resume_data and "skills" in resume_data:
-                if isinstance(resume_data["skills"], dict) and "technical" in resume_data["skills"]:
-                    skills = resume_data["skills"]["technical"]
-                    if isinstance(skills, list):
-                        focus_areas.extend(skills[:3])  # Top 3 skills
-                elif isinstance(resume_data["skills"], list):
-                    focus_areas.extend(resume_data["skills"][:3])
-
-            logger.info(f"🔍 Focus areas: {focus_areas}")
-
-            # Final validation before calling PrepWise API
-            logger.info(f"🔧 Final params - Role: {target_role}, Level: {experience_level} (type: {type(experience_level).__name__})")
-
-            # Ensure experience_level is a valid string
-            if not isinstance(experience_level, str) or experience_level not in VALID_LEVELS:
-                logger.error(f"❌ Invalid experience_level before API call: {experience_level}")
-                experience_level = "intermediate"
-                logger.info(f"✅ Forced experience_level to 'intermediate'")
-            
-            # Map frontend level to question generator level
-            mapped_level = LEVEL_MAPPING.get(experience_level, "mid")
-            logger.info(f"🔄 Mapped {experience_level} → {mapped_level} for question generator")
-
-            # Call PrepWise API with validated parameters
-            try:
-                question_set = self.ai.generate_questions(
-                    target_role=target_role,
-                    experience_level=mapped_level,
-                    num_technical=num_technical,
-                    num_behavioral=num_behavioral,
-                    focus_areas=focus_areas if focus_areas else None,
-                    resume_data=resume_obj,
-                    target_company=company
-                )
-            except Exception as api_error:
-                logger.error(f"❌ PrepWise API error: {str(api_error)}")
-                # If API call fails, try with minimal parameters
-                logger.info(f"🔄 Retrying with minimal parameters...")
-                question_set = self.ai.generate_questions(
-                    target_role="Software Engineer",
-                    experience_level=mapped_level,
-                    num_technical=num_technical,
-                    num_behavioral=num_behavioral,
-                    focus_areas=None,
-                    resume_data=None,
-                    target_company=None
-                )
-
-            # Convert questions to dicts
+            # Generate questions
             questions = []
-            for q in question_set.questions:
-                question_dict = q.model_dump()
-                # Ensure required fields for frontend
-                question_dict["id"] = question_dict.get("question", "")[:50]  # Generate simple ID
-                questions.append(question_dict)
+            
+            # Generate DSA coding questions if needed
+            if use_dsa_questions and num_technical > 0:
+                logger.info(f"💻 Generating {num_technical} DSA coding question(s)")
+                
+                # Map experience level to difficulty
+                difficulty_map = {
+                    "beginner": "easy",
+                    "intermediate": "medium",
+                    "advanced": "hard"
+                }
+                difficulty = difficulty_map.get(experience_level, "medium")
+                
+                # Generate DSA questions
+                dsa_questions = await self.dsa_generator.generate_dsa_question(
+                    difficulty=difficulty,
+                    topic=None,  # Let AI choose topic
+                    num_questions=num_technical
+                )
+                
+                # Convert DSA questions to standard format
+                for dsa_q in dsa_questions:
+                    question_dict = {
+                        "id": dsa_q.get("title", "dsa_question")[:50],
+                        "question": dsa_q.get("problem_statement", ""),
+                        "type": "coding",  # Mark as coding question
+                        "difficulty": dsa_q.get("difficulty", difficulty),
+                        "category": dsa_q.get("topic", "Data Structures & Algorithms"),
+                        "dsa_data": dsa_q,  # Store full DSA data
+                        "question_type": "coding"  # For frontend
+                    }
+                    questions.append(question_dict)
+                
+                logger.info(f"✅ Generated {len(dsa_questions)} DSA question(s)")
+            
+            # Generate regular technical/behavioral questions if needed
+            if not use_dsa_questions or num_behavioral > 0:
+                # Generate questions using PrepWise AI
+                focus_areas = []
+                if domain:
+                    focus_areas = [domain]
+                
+                # Extract skills as focus areas if available
+                if resume_data and "skills" in resume_data:
+                    if isinstance(resume_data["skills"], dict) and "technical" in resume_data["skills"]:
+                        skills = resume_data["skills"]["technical"]
+                        if isinstance(skills, list):
+                            focus_areas.extend(skills[:3])  # Top 3 skills
+                    elif isinstance(resume_data["skills"], list):
+                        focus_areas.extend(resume_data["skills"][:3])
+
+                logger.info(f"🔍 Focus areas: {focus_areas}")
+
+                # Final validation before calling PrepWise API
+                logger.info(f"🔧 Final params - Role: {target_role}, Level: {experience_level} (type: {type(experience_level).__name__})")
+
+                # Ensure experience_level is a valid string
+                if not isinstance(experience_level, str) or experience_level not in VALID_LEVELS:
+                    logger.error(f"❌ Invalid experience_level before API call: {experience_level}")
+                    experience_level = "intermediate"
+                    logger.info(f"✅ Forced experience_level to 'intermediate'")
+                
+                # Map frontend level to question generator level
+                mapped_level = LEVEL_MAPPING.get(experience_level, "mid")
+                logger.info(f"🔄 Mapped {experience_level} → {mapped_level} for question generator")
+
+                # Adjust technical count if we already generated DSA questions
+                remaining_technical = 0 if use_dsa_questions else num_technical
+
+                # Call PrepWise API with validated parameters
+                try:
+                    question_set = self.ai.generate_questions(
+                        target_role=target_role,
+                        experience_level=mapped_level,
+                        num_technical=remaining_technical,
+                        num_behavioral=num_behavioral,
+                        focus_areas=focus_areas if focus_areas else None,
+                        resume_data=resume_obj,
+                        target_company=company
+                    )
+                except Exception as api_error:
+                    logger.error(f"❌ PrepWise API error: {str(api_error)}")
+                    # If API call fails, try with minimal parameters
+                    logger.info(f"🔄 Retrying with minimal parameters...")
+                    question_set = self.ai.generate_questions(
+                        target_role="Software Engineer",
+                        experience_level=mapped_level,
+                        num_technical=remaining_technical,
+                        num_behavioral=num_behavioral,
+                        focus_areas=None,
+                        resume_data=None,
+                        target_company=None
+                    )
+
+                # Convert questions to dicts
+                for q in question_set.questions:
+                    question_dict = q.model_dump()
+                    # Ensure required fields for frontend
+                    question_dict["id"] = question_dict.get("question", "")[:50]  # Generate simple ID
+                    questions.append(question_dict)
 
             logger.info(f"✅ Generated {len(questions)} questions successfully")
             

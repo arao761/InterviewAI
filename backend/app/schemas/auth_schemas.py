@@ -30,13 +30,30 @@ class TokenData(BaseModel):
     email: Optional[str] = None
 
 
+class VerifyEmailRequest(BaseModel):
+    """Schema for email verification request."""
+    token: str
+
+
 class UserResponse(BaseModel):
     """Schema for user response (without password)."""
     id: int
     email: str
     name: str
+    email_verified: bool = False
     created_at: datetime
     updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+
+
+class ForgotPasswordRequest(BaseModel):
+    """Schema for forgot password request."""
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    """Schema for reset password request."""
+    token: str
+    new_password: str = Field(..., min_length=8, max_length=100)

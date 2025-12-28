@@ -54,6 +54,14 @@ class Settings(BaseSettings):
     STRIPE_PRICE_STARTER: str = ""  # Stripe Price ID for Starter plan
     STRIPE_PRICE_PROFESSIONAL: str = ""  # Stripe Price ID for Professional plan
 
+    # Email Configuration
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""  # Your email address
+    SMTP_PASSWORD: str = ""  # Your email password or app password
+    FROM_EMAIL: str = ""  # Sender email (defaults to SMTP_USER)
+    FRONTEND_URL: str = "http://localhost:3000"  # Frontend URL for verification links
+
     @property
     def cors_origins_list(self) -> List[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
