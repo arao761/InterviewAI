@@ -65,17 +65,50 @@ export default function InterviewSession() {
     (isTechnicalInterview && currentQuestion?.category?.toLowerCase().includes('data structure'));
   
   // Get DSA problem data - check multiple possible locations
-  // The dsa_data might be nested in the question object
-  const dsaProblem = currentQuestion?.dsa_data || 
-                     (currentQuestion && 
-                      currentQuestion.title && 
-                      currentQuestion.problem_statement ? 
-                      currentQuestion : null);
+  // The dsa_data should contain the full DSA problem object with title, problem_statement, etc.
+  let dsaProblem = null;
+  
+  if (currentQuestion) {
+    // Priority 1: Check dsa_data field (this is where backend stores the full DSA problem)
+    if (currentQuestion.dsa_data && 
+        typeof currentQuestion.dsa_data === 'object' &&
+        currentQuestion.dsa_data.title &&
+        currentQuestion.dsa_data.problem_statement) {
+      dsaProblem = currentQuestion.dsa_data;
+    }
+    // Priority 2: Check other possible nested locations
+    else if (currentQuestion.problem && 
+             typeof currentQuestion.problem === 'object' &&
+             currentQuestion.problem.title &&
+             currentQuestion.problem.problem_statement) {
+      dsaProblem = currentQuestion.problem;
+    }
+    else if (currentQuestion.dsa_problem && 
+             typeof currentQuestion.dsa_problem === 'object' &&
+             currentQuestion.dsa_problem.title &&
+             currentQuestion.dsa_problem.problem_statement) {
+      dsaProblem = currentQuestion.dsa_problem;
+    }
+    // Priority 3: Check if the question itself is a DSA problem
+    // (but exclude if it's just a text question with "question debug shortcut")
+    else if (currentQuestion.title && 
+             currentQuestion.problem_statement && 
+             currentQuestion.title !== 'question debug shortcut' &&
+             currentQuestion.title !== currentQuestion.text &&
+             currentQuestion.title !== currentQuestion.question &&
+             !currentQuestion.title.toLowerCase().includes('debug')) {
+      dsaProblem = currentQuestion;
+    }
+  }
   
   // Validate dsaProblem has required fields before using it
+  // Make sure it's not just a text question with "question debug shortcut"
   const isValidDSAProblem = dsaProblem && 
                             typeof dsaProblem === 'object' &&
                             dsaProblem.title && 
+                            dsaProblem.title !== 'question debug shortcut' &&
+                            dsaProblem.title !== 'question' &&
+                            !dsaProblem.title.toLowerCase().includes('debug') &&
                             dsaProblem.problem_statement &&
                             dsaProblem.difficulty &&
                             dsaProblem.topic;
