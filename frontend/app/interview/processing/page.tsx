@@ -106,6 +106,11 @@ export default function ProcessingPage() {
       });
 
       // Call API with timeout
+      console.log('Calling evaluateInterview API with:', {
+        qaPairsCount: qaPairs.length,
+        interviewType
+      });
+
       const evaluationPromise = apiClient.evaluateInterview({
         questions_and_responses: qaPairs.map(pair => ({
           question: pair.question,
@@ -118,14 +123,34 @@ export default function ProcessingPage() {
 
       const response = await Promise.race([evaluationPromise, timeoutPromise]) as any;
 
+      console.log('Evaluation API response:', response);
+
       setProgress(80);
 
-      // Check response
-      if (!response.success || !response.report) {
-        throw new Error(response.error || 'Evaluation failed - invalid response from server');
+      // Check response structure
+      if (!response) {
+        throw new Error('No response received from evaluation API');
+      }
+
+      // Handle error response
+      if (response.success === false) {
+        console.error('Evaluation API returned error:', response);
+        throw new Error(response.error || response.detail || 'Evaluation failed - invalid response from server');
+      }
+
+      // Check if response has report
+      if (!response.report) {
+        console.error('Response missing report field:', response);
+        throw new Error('Evaluation failed - response missing report data');
       }
 
       const evaluation: InterviewEvaluationReport = response.report;
+
+      // Validate evaluation data
+      if (!evaluation.overall_score && evaluation.overall_score !== 0) {
+        console.error('Invalid evaluation data:', evaluation);
+        throw new Error('Evaluation failed - invalid evaluation data received');
+      }
 
       console.log('Evaluation completed:', {
         overallScore: evaluation.overall_score,
@@ -137,6 +162,8 @@ export default function ProcessingPage() {
       setProgress(90);
 
       sessionStorage.setItem('interviewEvaluation', JSON.stringify(evaluation));
+      // Clear the processing attempt flag since we succeeded
+      sessionStorage.removeItem('processingAttempted');
 
       setProgress(100);
       setStage('Complete!');
@@ -148,11 +175,22 @@ export default function ProcessingPage() {
 
     } catch (err) {
       console.error('Evaluation error:', err);
+      console.error('Error details:', {
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+        retryCount,
+        hasStartedEvaluation: hasStartedEvaluation.current
+      });
 
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
 
-      // Retry logic
-      if (retryCount < MAX_RETRIES) {
+      // Retry logic - only retry on network errors or timeouts
+      const isRetryableError = errorMessage.includes('timeout') || 
+                               errorMessage.includes('Network') || 
+                               errorMessage.includes('Failed to fetch') ||
+                               errorMessage.includes('connection');
+
+      if (isRetryableError && retryCount < MAX_RETRIES) {
         console.log(`Retrying... (${retryCount + 1}/${MAX_RETRIES})`);
         setRetryCount(prev => prev + 1);
 
@@ -162,7 +200,10 @@ export default function ProcessingPage() {
           evaluateInterview();
         }, 1000 * Math.pow(2, retryCount));
       } else {
+        // Don't retry on validation or data errors
+        console.error('Final error after retries:', errorMessage);
         setError(errorMessage);
+        hasStartedEvaluation.current = false; // Allow manual retry
       }
     }
   };
