@@ -48,8 +48,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await apiClient.login(email, password);
     // Try to get user data, but don't block if it fails
     try {
-      const userData = await apiClient.getCurrentUser();
-      setUser(userData);
+    const userData = await apiClient.getCurrentUser();
+    setUser(userData);
     } catch (error) {
       console.warn('Could not fetch user data immediately after login, will retry on next page load');
       // Set a minimal user object so login can proceed

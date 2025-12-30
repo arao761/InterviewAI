@@ -60,9 +60,12 @@ app = FastAPI(
 )
 
 # Configure CORS
+# In production, allow all origins if CORS_ORIGINS is not set or is empty
+# Otherwise use the configured origins
+cors_origins = settings.cors_origins_list if settings.cors_origins_list else ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

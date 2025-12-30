@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     LOG_FORMAT: str = "json"
 
     # CORS
-    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:8080"
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:8080,https://interview-ai-umber-six.vercel.app"
 
     # AI/NLP Configuration
     OPENAI_API_KEY: str = ""
