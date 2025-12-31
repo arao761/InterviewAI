@@ -64,11 +64,12 @@ export default function InterviewSession() {
     (isTechnicalInterview && currentQuestion?.category?.toLowerCase().includes('algorithm')) ||
     (isTechnicalInterview && currentQuestion?.category?.toLowerCase().includes('data structure'));
   
-  // Get DSA problem data - check multiple possible locations
+  // Get DSA problem data - ONLY for technical interviews
   // The dsa_data should contain the full DSA problem object with title, problem_statement, etc.
   let dsaProblem = null;
   
-  if (currentQuestion) {
+  // Only extract DSA problem data in technical interviews
+  if (isTechnicalInterview && currentQuestion) {
     // Priority 1: Check dsa_data field (this is where backend stores the full DSA problem)
     if (currentQuestion.dsa_data && 
         typeof currentQuestion.dsa_data === 'object' &&
@@ -103,7 +104,9 @@ export default function InterviewSession() {
   
   // Validate dsaProblem has required fields before using it
   // Make sure it's not just a text question with "question debug shortcut"
-  const isValidDSAProblem = dsaProblem && 
+  // Only validate for technical interviews
+  const isValidDSAProblem = isTechnicalInterview &&
+                            dsaProblem && 
                             typeof dsaProblem === 'object' &&
                             dsaProblem.title && 
                             dsaProblem.title !== 'question debug shortcut' &&
