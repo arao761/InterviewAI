@@ -17,19 +17,25 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setStatusMessage('');
     setLoading(true);
 
     try {
-      await login(email, password);
+      await login(email, password, (status) => {
+        setStatusMessage(status);
+      });
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed');
+      setStatusMessage('');
     } finally {
       setLoading(false);
+      setStatusMessage('');
     }
   };
 
@@ -44,6 +50,15 @@ export default function LoginPage() {
         {error && (
           <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded mb-6">
             {error}
+          </div>
+        )}
+
+        {statusMessage && !error && (
+          <div className="bg-blue-500/10 border border-blue-500 text-blue-500 px-4 py-3 rounded mb-6">
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>{statusMessage}</span>
+            </div>
           </div>
         )}
 
@@ -89,7 +104,7 @@ export default function LoginPage() {
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
+                {statusMessage || 'Signing in...'}
               </>
             ) : (
               'Sign In'
