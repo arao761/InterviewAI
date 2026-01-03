@@ -29,6 +29,7 @@ export default function InterviewSetup() {
     yearsOfExperience: '',
     difficulty: '',
     duration: '30',
+    numberOfQuestions: '5',
     focusAreas: [] as string[],
   });
 
@@ -42,8 +43,8 @@ export default function InterviewSetup() {
     if (data.experience && data.experience.length > 0) {
       setFormData(prev => ({
         ...prev,
-        jobTitle: data.experience[0].title || prev.jobTitle,
-        company: data.experience[0].company || prev.company,
+        jobTitle: data.experience?.[0]?.title || prev.jobTitle,
+        company: data.experience?.[0]?.company || prev.company,
       }));
     }
   };

@@ -218,7 +218,7 @@ export default function ProcessingPage() {
     <EvaluationLoading
       progress={progress}
       stage={stage}
-      error={error}
+      error={error || undefined}
       onRetry={handleRetry}
     />
   );
