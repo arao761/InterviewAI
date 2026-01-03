@@ -27,19 +27,41 @@ export default function ResultsPage() {
     const savedResults = sessionStorage.getItem('interviewResults');
 
     if (savedEvaluation) {
-      setEvaluation(JSON.parse(savedEvaluation));
+      try {
+        const parsed = JSON.parse(savedEvaluation);
+        setEvaluation(parsed);
+        console.log('Loaded evaluation from sessionStorage:', parsed);
+      } catch (e) {
+        console.error('Failed to parse evaluation:', e);
+      }
     }
 
     if (savedResults) {
-      const results = JSON.parse(savedResults);
-      setSessionData(results.sessionData);
+      try {
+        const results = JSON.parse(savedResults);
+        setSessionData(results.sessionData);
+        console.log('Loaded results from sessionStorage');
+      } catch (e) {
+        console.error('Failed to parse results:', e);
+      }
     }
 
-    // If no evaluation but have results, redirect to processing
+    // If no evaluation but have results, check if we're stuck in a loop
     if (!savedEvaluation && savedResults) {
-      console.log('No evaluation found, redirecting to processing...');
-      router.push('/interview/processing');
-      return;
+      // Check if we've already tried processing (prevent infinite loop)
+      const processingAttempted = sessionStorage.getItem('processingAttempted');
+      if (!processingAttempted) {
+        console.log('No evaluation found, redirecting to processing...');
+        sessionStorage.setItem('processingAttempted', 'true');
+        router.push('/interview/processing');
+        return;
+      } else {
+        // Already tried processing, show error instead of looping
+        console.error('Evaluation failed after processing attempt');
+        sessionStorage.removeItem('processingAttempted');
+        router.push('/interview-setup');
+        return;
+      }
     }
 
     // If no results at all, redirect to setup

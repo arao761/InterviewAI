@@ -51,7 +51,7 @@ export default function PricingPage() {
       console.log('Checkout session created:', response);
       
       if (response.checkout_url) {
-        // Redirect to Stripe Checkout
+      // Redirect to Stripe Checkout
         window.location.href = response.checkout_url;
       } else {
         throw new Error('No checkout URL received from server');

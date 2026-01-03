@@ -41,7 +41,7 @@ export default function DSAProblemDisplay({
 }: DSAProblemDisplayProps) {
   const [showHints, setShowHints] = useState(false);
 
-  // Validate problem data
+  // Validate problem data - check for "question debug shortcut" which indicates wrong data
   if (!problem || !problem.title || !problem.problem_statement) {
     console.error('Invalid DSA problem data:', problem);
     return (
@@ -49,6 +49,19 @@ export default function DSAProblemDisplay({
         <p className="text-red-500 font-semibold">Error: Invalid problem data</p>
         <p className="text-sm text-muted-foreground mt-2">
           The coding problem could not be loaded. Please try refreshing the page.
+        </p>
+      </div>
+    );
+  }
+
+  // Filter out debug shortcuts - if title is "question debug shortcut", it's not valid
+  if (problem.title === 'question debug shortcut' || problem.title?.toLowerCase().includes('debug')) {
+    console.error('DSA problem has debug shortcut as title:', problem);
+    return (
+      <div className="p-6 bg-yellow-500/10 border border-yellow-500 rounded-lg">
+        <p className="text-yellow-500 font-semibold">Problem data not available</p>
+        <p className="text-sm text-muted-foreground mt-2">
+          The coding problem data is not properly formatted. Please check the question structure.
         </p>
       </div>
     );

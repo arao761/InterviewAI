@@ -62,36 +62,36 @@ export default function InterviewHistory({
               </tr>
             ) : (
               interviews.map((interview) => (
-                <tr key={interview.id} className="border-b border-border hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-semibold text-foreground">{interview.type}</p>
-                      <p className="text-sm text-muted-foreground">{interview.company}</p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {new Date(interview.date).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">{interview.duration}</td>
-                  <td className="px-6 py-4">
+              <tr key={interview.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                <td className="px-6 py-4">
+                  <div>
+                    <p className="font-semibold text-foreground">{interview.type}</p>
+                    <p className="text-sm text-muted-foreground">{interview.company}</p>
+                  </div>
+                </td>
+                <td className="px-6 py-4 text-sm text-muted-foreground">
+                  {new Date(interview.date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </td>
+                <td className="px-6 py-4 text-sm text-muted-foreground">{interview.duration}</td>
+                <td className="px-6 py-4">
                     {interview.score > 0 ? (
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-semibold ${getScoreBadgeColor(
-                          interview.score
-                        )}`}
-                      >
-                        {interview.score}%
-                      </span>
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-semibold ${getScoreBadgeColor(
+                      interview.score
+                    )}`}
+                  >
+                    {interview.score}%
+                  </span>
                     ) : (
                       <span className="px-3 py-1 rounded-full text-sm font-semibold text-muted-foreground">
                         N/A
                       </span>
                     )}
-                  </td>
+                </td>
                 <td className="px-6 py-4 flex justify-end gap-2">
                   <Button variant="ghost" size="sm" className="hover:bg-muted">
                     <Eye className="w-4 h-4" />
@@ -103,7 +103,7 @@ export default function InterviewHistory({
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </td>
-                </tr>
+              </tr>
               ))
             )}
           </tbody>

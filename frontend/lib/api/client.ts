@@ -249,7 +249,8 @@ class PrepWiseAPIClient {
     console.log('🔐 Login attempt:', { email, url });
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    // Increased timeout to 60 seconds to handle Render cold starts
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
     
     try {
       const response = await fetch(url, {
@@ -279,12 +280,13 @@ class PrepWiseAPIClient {
       clearTimeout(timeoutId);
       console.error('❌ Login exception:', error);
       if (error.name === 'AbortError') {
-        throw new Error('Login request timed out. Please check your connection and make sure the backend server is running at ' + this.baseURL);
+        // Render free tier services can take up to 50 seconds to wake up from sleep
+        throw new Error('Login request timed out. The backend server may be waking up (this can take up to 60 seconds on free tier). Please try again in a moment.');
       }
       if (error.message) {
         throw error;
       }
-      throw new Error(error.message || `Failed to connect to server at ${this.baseURL}. Make sure the backend is running.`);
+      throw new Error(error.message || `Failed to connect to server at ${this.baseURL}. The backend may be starting up - please try again.`);
     }
   }
 

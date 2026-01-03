@@ -64,33 +64,126 @@ export default function InterviewSession() {
     (isTechnicalInterview && currentQuestion?.category?.toLowerCase().includes('algorithm')) ||
     (isTechnicalInterview && currentQuestion?.category?.toLowerCase().includes('data structure'));
   
-  // Get DSA problem data - check multiple possible locations
-  // The dsa_data might be nested in the question object
-  const dsaProblem = currentQuestion?.dsa_data || 
-                     (currentQuestion && 
-                      currentQuestion.title && 
-                      currentQuestion.problem_statement ? 
-                      currentQuestion : null);
+  // Get DSA problem data - ONLY for technical interviews
+  // The dsa_data should contain the full DSA problem object with title, problem_statement, etc.
+  let dsaProblem = null;
+  
+  // Helper function to parse JSON string if needed
+  const parseIfString = (data: any): any => {
+    if (typeof data === 'string') {
+      try {
+        return JSON.parse(data);
+      } catch (e) {
+        return null;
+      }
+    }
+    return data;
+  };
+  
+  // Only extract DSA problem data in technical interviews
+  if (isTechnicalInterview && currentQuestion) {
+    // Priority 1: Check dsa_data field (this is where backend stores the full DSA problem)
+    if (currentQuestion.dsa_data) {
+      const parsedData = parseIfString(currentQuestion.dsa_data);
+      if (parsedData && typeof parsedData === 'object') {
+        // Also parse problem_statement if it's a string
+        if (parsedData.problem_statement && typeof parsedData.problem_statement === 'string') {
+          const parsedStatement = parseIfString(parsedData.problem_statement);
+          if (parsedStatement && typeof parsedStatement === 'object') {
+            // If problem_statement was a JSON object, merge it
+            parsedData.problem_statement = parsedStatement.problem_statement || parsedStatement;
+          }
+        }
+        if (parsedData.title &&
+            parsedData.problem_statement &&
+            parsedData.title !== 'question debug shortcut' &&
+            !parsedData.title.toLowerCase().includes('debug')) {
+          dsaProblem = parsedData;
+        }
+      }
+    }
+    // Priority 2: Check other possible nested locations
+    if (!dsaProblem && currentQuestion.problem) {
+      const parsedData = parseIfString(currentQuestion.problem);
+      if (parsedData && 
+          typeof parsedData === 'object' &&
+          parsedData.title &&
+          parsedData.problem_statement &&
+          parsedData.title !== 'question debug shortcut' &&
+          !parsedData.title.toLowerCase().includes('debug')) {
+        dsaProblem = parsedData;
+      }
+    }
+    if (!dsaProblem && currentQuestion.dsa_problem) {
+      const parsedData = parseIfString(currentQuestion.dsa_problem);
+      if (parsedData && 
+          typeof parsedData === 'object' &&
+          parsedData.title &&
+          parsedData.problem_statement &&
+          parsedData.title !== 'question debug shortcut' &&
+          !parsedData.title.toLowerCase().includes('debug')) {
+        dsaProblem = parsedData;
+      }
+    }
+    // Priority 3: Check if the question itself is a DSA problem
+    // (but exclude if it's just a text question with "question debug shortcut")
+    if (!dsaProblem && 
+        currentQuestion.title && 
+        currentQuestion.problem_statement && 
+        currentQuestion.title !== 'question debug shortcut' &&
+        currentQuestion.title !== currentQuestion.text &&
+        currentQuestion.title !== currentQuestion.question &&
+        !currentQuestion.title.toLowerCase().includes('debug')) {
+      dsaProblem = currentQuestion;
+    }
+  }
   
   // Validate dsaProblem has required fields before using it
-  const isValidDSAProblem = dsaProblem && 
+  // Make sure it's not just a text question with "question debug shortcut"
+  // Only validate for technical interviews
+  // Note: difficulty and topic are optional - only title and problem_statement are required
+  const isValidDSAProblem = isTechnicalInterview &&
+                            dsaProblem && 
                             typeof dsaProblem === 'object' &&
                             dsaProblem.title && 
+                            typeof dsaProblem.title === 'string' &&
+                            dsaProblem.title.trim().length > 0 &&
+                            dsaProblem.title !== 'question debug shortcut' &&
+                            dsaProblem.title !== 'question' &&
+                            !dsaProblem.title.toLowerCase().includes('debug') &&
                             dsaProblem.problem_statement &&
-                            dsaProblem.difficulty &&
-                            dsaProblem.topic;
+                            typeof dsaProblem.problem_statement === 'string' &&
+                            dsaProblem.problem_statement.trim().length > 0;
   
-  // Debug logging
+  // Debug logging - only when DSA problem extraction fails
   useEffect(() => {
-    if (currentQuestion && isTechnicalInterview) {
-      console.log('🔍 Current question:', currentQuestion);
-      console.log('🔍 Question keys:', Object.keys(currentQuestion || {}));
-      console.log('🔍 Is coding question:', isCodingQuestion);
-      console.log('🔍 DSA problem:', dsaProblem);
-      console.log('🔍 Is technical interview:', isTechnicalInterview);
-      console.log('🔍 All questions:', sessionData?.questions);
+    if (currentQuestion && isTechnicalInterview && !isValidDSAProblem) {
+      console.log('🔍 DSA Problem Extraction Debug:', {
+        hasCurrentQuestion: !!currentQuestion,
+        isTechnicalInterview,
+        hasDsaData: !!currentQuestion.dsa_data,
+        dsaDataType: typeof currentQuestion.dsa_data,
+        dsaDataSample: currentQuestion.dsa_data ? 
+          (typeof currentQuestion.dsa_data === 'string' ? 
+            currentQuestion.dsa_data.substring(0, 200) : 
+            JSON.stringify(currentQuestion.dsa_data).substring(0, 200)) : 
+          null,
+        extractedDsaProblem: dsaProblem ? {
+          hasTitle: !!dsaProblem.title,
+          title: dsaProblem.title,
+          hasProblemStatement: !!dsaProblem.problem_statement,
+        } : null,
+        isValidDSAProblem,
+        questionType: currentQuestion.type || currentQuestion.question_type,
+      });
+    } else if (currentQuestion && isTechnicalInterview && isValidDSAProblem) {
+      console.log('✅ DSA Problem successfully extracted:', {
+        title: dsaProblem?.title,
+        hasExamples: !!(dsaProblem?.examples && dsaProblem.examples.length > 0),
+        hasConstraints: !!(dsaProblem?.constraints && dsaProblem.constraints.length > 0),
+      });
     }
-  }, [currentQuestion, isCodingQuestion, dsaProblem, isTechnicalInterview, sessionData]);
+  }, [currentQuestion, isTechnicalInterview, dsaProblem, isValidDSAProblem]);
 
   const handleCodeChange = (newCode: string, language: string) => {
     setCode(newCode);
@@ -441,106 +534,91 @@ export default function InterviewSession() {
           ) : (
             /* Call Controls - Center of screen when no DSA problem */
             <div className="flex-1 flex items-center justify-center">
-              <div className="text-center space-y-8">
-                {/* AI Speaking Indicator */}
-                {aiSpeaking && (
-                  <div className="flex items-center justify-center gap-2 text-blue-500">
-                    <Volume2 className="w-5 h-5 animate-pulse" />
-                    <span className="font-medium">AI is speaking...</span>
-                  </div>
-                )}
-
-                {/* Main Call Button */}
-                <div className="flex justify-center">
-                  {!isCallActive && !isConnecting ? (
-                    <Button
-                      onClick={handleStartCall}
-                      size="lg"
-                      className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      <Phone className="w-10 h-10 mb-2" />
-                      Start Interview
-                    </Button>
-                  ) : isConnecting ? (
-                    <Button
-                      disabled
-                      size="lg"
-                      className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-blue-600 text-white"
-                    >
-                      <Loader2 className="w-10 h-10 mb-2 animate-spin" />
-                      Connecting...
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={handleEndCall}
-                      size="lg"
-                      className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-red-600 hover:bg-red-700 text-white animate-pulse"
-                    >
-                      <PhoneOff className="w-10 h-10 mb-2" />
-                      End Call
-                    </Button>
-                  )}
+            <div className="text-center space-y-8">
+              {/* AI Speaking Indicator */}
+              {aiSpeaking && (
+                <div className="flex items-center justify-center gap-2 text-blue-500">
+                  <Volume2 className="w-5 h-5 animate-pulse" />
+                  <span className="font-medium">AI is speaking...</span>
                 </div>
+              )}
 
-                {/* Instructions */}
-                <div className="text-sm text-muted-foreground max-w-md mx-auto">
-                  {!isCallActive && !isConnecting ? (
-                    <p>Click the button above to start your voice interview with the AI interviewer. Make sure your microphone is enabled.</p>
-                  ) : isConnecting ? (
-                    <p>Connecting to AI interviewer... Please allow microphone access if prompted.</p>
-                  ) : (
-                    <p>Your interview is in progress. Speak naturally and the AI will guide you through the interview questions.</p>
-                  )}
-                </div>
-
-                {/* Error Display */}
-                {error && (
-                  <div className="text-red-500 text-sm bg-red-500/10 p-4 rounded-lg max-w-md mx-auto">
-                    {error}
-                  </div>
-                )}
-
-                {/* Complete Interview Button */}
-                {isCallActive && (
+              {/* Main Call Button */}
+              <div className="flex justify-center">
+                {!isCallActive && !isConnecting ? (
                   <Button
-                    onClick={handleCompleteInterview}
-                    variant="outline"
-                    className="mt-4"
+                    onClick={handleStartCall}
+                    size="lg"
+                    className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-green-600 hover:bg-green-700 text-white"
                   >
-                    Complete Interview
+                    <Phone className="w-10 h-10 mb-2" />
+                    Start Interview
+                  </Button>
+                ) : isConnecting ? (
+                  <Button
+                    disabled
+                    size="lg"
+                    className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-blue-600 text-white"
+                  >
+                    <Loader2 className="w-10 h-10 mb-2 animate-spin" />
+                    Connecting...
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleEndCall}
+                    size="lg"
+                    className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-red-600 hover:bg-red-700 text-white animate-pulse"
+                  >
+                    <PhoneOff className="w-10 h-10 mb-2" />
+                    End Call
                   </Button>
                 )}
               </div>
-            </div>
-          )}
-          
-          {/* Show message if technical interview but no DSA problem found (for debugging) */}
-          {isTechnicalInterview && !isValidDSAProblem && currentQuestion && (
-            <div className="flex-1 p-6 overflow-y-auto border-t border-border">
-              <div className="bg-muted/50 border border-border rounded-lg p-4">
-                <p className="text-sm text-muted-foreground">
-                  Technical interview question loaded. If this should be a coding question, check the browser console for debugging info.
-                </p>
-                <details className="mt-2">
-                  <summary className="text-xs text-muted-foreground cursor-pointer">Question data (debug)</summary>
-                  <pre className="text-xs mt-2 bg-background p-2 rounded overflow-auto">
-                    {JSON.stringify(currentQuestion, null, 2)}
-                  </pre>
-                </details>
+
+              {/* Instructions */}
+              <div className="text-sm text-muted-foreground max-w-md mx-auto">
+                {!isCallActive && !isConnecting ? (
+                  <p>Click the button above to start your voice interview with the AI interviewer. Make sure your microphone is enabled.</p>
+                ) : isConnecting ? (
+                  <p>Connecting to AI interviewer... Please allow microphone access if prompted.</p>
+                ) : (
+                  <p>Your interview is in progress. Speak naturally and the AI will guide you through the interview questions.</p>
+                )}
               </div>
+
+              {/* Error Display */}
+              {error && (
+                <div className="text-red-500 text-sm bg-red-500/10 p-4 rounded-lg max-w-md mx-auto">
+                  {error}
+                </div>
+              )}
+
+              {/* Complete Interview Button */}
+              {isCallActive && (
+                <Button
+                  onClick={handleCompleteInterview}
+                  variant="outline"
+                  className="mt-4"
+                >
+                  Complete Interview
+                </Button>
+              )}
             </div>
+          </div>
           )}
           
-          {/* Show message if technical interview but no DSA problem found (for debugging) */}
-          {isTechnicalInterview && !dsaProblem && currentQuestion && (
+          {/* Show debug message ONLY if technical interview, no valid DSA problem, AND we've checked all possible locations */}
+          {isTechnicalInterview && !isValidDSAProblem && currentQuestion && !dsaProblem && (
             <div className="flex-1 p-6 overflow-y-auto border-t border-border">
               <div className="bg-muted/50 border border-border rounded-lg p-4">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground mb-2">
                   Technical interview question loaded. If this should be a coding question, check the browser console for debugging info.
                 </p>
                 <details className="mt-2">
-                  <summary className="text-xs text-muted-foreground cursor-pointer">Question data (debug)</summary>
-                  <pre className="text-xs mt-2 bg-background p-2 rounded overflow-auto">
+                  <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
+                    Question data (debug)
+                  </summary>
+                  <pre className="text-xs mt-2 bg-background p-2 rounded overflow-auto max-h-96 border border-border">
                     {JSON.stringify(currentQuestion, null, 2)}
                   </pre>
                 </details>
