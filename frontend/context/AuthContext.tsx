@@ -13,8 +13,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, name: string, password: string) => Promise<void>;
+  login: (email: string, password: string, statusCallback?: (status: string) => void) => Promise<void>;
+  register: (email: string, name: string, password: string, statusCallback?: (status: string) => void) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -44,8 +44,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    await apiClient.login(email, password);
+  const login = async (email: string, password: string, statusCallback?: (status: string) => void) => {
+    await apiClient.login(email, password, statusCallback);
     // Try to get user data, but don't block if it fails
     try {
     const userData = await apiClient.getCurrentUser();
@@ -57,10 +57,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (email: string, name: string, password: string) => {
-    await apiClient.register(email, name, password);
-    // Auto-login after registration
-    await login(email, password);
+  const register = async (email: string, name: string, password: string, statusCallback?: (status: string) => void) => {
+    await apiClient.register(email, name, password, statusCallback);
+    // Auto-login after registration (login will also wake up backend if needed)
+    await login(email, password, statusCallback);
   };
 
   const logout = () => {
