@@ -48,18 +48,18 @@ class AIService:
         try:
             self.ai = PrepWiseAPI()
             logger.info("✅ PrepWise AI initialized successfully")
-            
+
             # Initialize DSA generator
             self.dsa_generator = DSAGenerator()
             logger.info("✅ DSA Generator initialized")
-            
+
             # Verify API key is configured
             openai_key = os.getenv("OPENAI_API_KEY")
             if not openai_key or openai_key == "your-openai-api-key-here":
                 logger.warning("⚠️  OPENAI_API_KEY not properly configured in .env")
             else:
                 logger.info(f"✅ OpenAI API key configured (ends with: ...{openai_key[-4:]})")
-                
+
         except Exception as e:
             logger.error(f"❌ Failed to initialize PrepWise AI: {e}")
             raise RuntimeError(f"PrepWise AI initialization failed: {e}")
@@ -228,13 +228,13 @@ class AIService:
             # DSA questions are for technical interviews focused on coding/algorithms
             use_dsa_questions = False
             coding_domains = ["coding", "algorithms", "data structures", "dsa", "leetcode", "competitive programming"]
-            
+
             if interview_type == "technical" and num_technical > 0:
                 # For technical interviews, always use DSA questions by default
                 # This ensures coding questions are shown for technical interviews
                 use_dsa_questions = True
                 logger.info("🎯 Technical interview detected - will generate DSA coding questions")
-                
+
                 # Check if domain explicitly indicates non-coding (e.g., system design, architecture)
                 non_coding_domains = ["system design", "architecture", "infrastructure", "devops", "cloud"]
                 if domain and any(non_coding in domain.lower() for non_coding in non_coding_domains):
@@ -258,11 +258,11 @@ class AIService:
 
             # Generate questions
             questions = []
-            
+
             # Generate DSA coding questions if needed
             if use_dsa_questions and num_technical > 0:
                 logger.info(f"💻 Generating {num_technical} DSA coding question(s)")
-                
+
                 # Map experience level to difficulty
                 difficulty_map = {
                     "beginner": "easy",
@@ -270,14 +270,14 @@ class AIService:
                     "advanced": "hard"
                 }
                 difficulty = difficulty_map.get(experience_level, "medium")
-                
+
                 # Generate DSA questions
                 dsa_questions = await self.dsa_generator.generate_dsa_question(
                     difficulty=difficulty,
                     topic=None,  # Let AI choose topic
                     num_questions=num_technical
                 )
-                
+
                 # Convert DSA questions to standard format
                 for dsa_q in dsa_questions:
                     question_dict = {
@@ -290,16 +290,16 @@ class AIService:
                         "question_type": "coding"  # For frontend
                     }
                     questions.append(question_dict)
-                
+
                 logger.info(f"✅ Generated {len(dsa_questions)} DSA question(s)")
-            
+
             # Generate regular technical/behavioral questions if needed
             if not use_dsa_questions or num_behavioral > 0:
                 # Generate questions using PrepWise AI
                 focus_areas = []
                 if domain:
                     focus_areas = [domain]
-                
+
                 # Extract skills as focus areas if available
                 if resume_data and "skills" in resume_data:
                     if isinstance(resume_data["skills"], dict) and "technical" in resume_data["skills"]:
@@ -319,7 +319,7 @@ class AIService:
                     logger.error(f"❌ Invalid experience_level before API call: {experience_level}")
                     experience_level = "intermediate"
                     logger.info(f"✅ Forced experience_level to 'intermediate'")
-                
+
                 # Map frontend level to question generator level
                 mapped_level = LEVEL_MAPPING.get(experience_level, "mid")
                 logger.info(f"🔄 Mapped {experience_level} → {mapped_level} for question generator")
@@ -360,7 +360,7 @@ class AIService:
                     questions.append(question_dict)
 
             logger.info(f"✅ Generated {len(questions)} questions successfully")
-            
+
             # Log first question for verification
             if questions:
                 logger.info(f"📝 Sample question: {questions[0].get('question', '')[:100]}...")
