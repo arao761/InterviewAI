@@ -29,7 +29,7 @@ export default function AboutPage() {
       title: 'Backend Developer',
       bio: 'AI researcher focusing on language models in the healthcare sector',
       education: 'BSCS and DS Minor @UVA',
-      image: 'https://avatars.dicebear.com/api/avataaars/pranav.svg?scale=80',
+      image: '/team/PranavVaddepalli.jpg',
       gradient: 'from-accent to-secondary',
     },
     {
