@@ -250,6 +250,9 @@ export class VapiInterviewer {
 
       this.vapi.on('error', (error: any) => {
         console.error('VAPI error:', error);
+        console.error('Error type:', typeof error);
+        console.error('Error keys:', error ? Object.keys(error) : 'null/undefined');
+        console.error('Error stringified:', JSON.stringify(error, null, 2));
         this.callbacks.onError?.(error instanceof Error ? error : new Error(String(error.message || error)));
       });
 
