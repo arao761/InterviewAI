@@ -121,6 +121,28 @@ export class VapiInterviewer {
     }
     prompt += `\n`;
 
+    // Add company-specific context for Oracle Global Industries
+    if (ctx.company?.toLowerCase().includes('oracle')) {
+      prompt += `## Company Context: Oracle Global Industries\n`;
+      prompt += `Oracle Global Industries focuses on delivering enterprise software solutions for:\n`;
+      prompt += `- Manufacturing and process industries\n`;
+      prompt += `- Utilities (electric, gas, water)\n`;
+      prompt += `- Construction and engineering\n`;
+      prompt += `- Industrial manufacturing and automation\n\n`;
+      prompt += `Oracle values:\n`;
+      prompt += `- Innovation and technical excellence\n`;
+      prompt += `- Customer-first mindset\n`;
+      prompt += `- Collaboration and teamwork\n`;
+      prompt += `- Continuous learning and growth\n`;
+      prompt += `- Ownership and accountability\n\n`;
+      prompt += `For this PRE-SCREENING interview, focus on:\n`;
+      prompt += `- Understanding the candidate's background and how it aligns with Global Industries\n`;
+      prompt += `- Assessing cultural fit and soft skills (communication, teamwork, problem-solving)\n`;
+      prompt += `- Exploring their interest in Oracle and the Global Industries division\n`;
+      prompt += `- Understanding their motivation for the software engineering intern role\n`;
+      prompt += `- Discussing their academic projects, internships, or relevant experiences\n\n`;
+    }
+
     // Add instructions based on interview type
     prompt += `## Instructions\n`;
     prompt += `- Start by greeting the candidate\n`;
@@ -138,6 +160,15 @@ export class VapiInterviewer {
       prompt += `- This is a BEHAVIORAL interview. You can reference their background and experiences\n`;
       prompt += `- Ask about specific projects, roles, and situations from their resume\n`;
       prompt += `- Use the STAR method (Situation, Task, Action, Result) to probe deeper\n`;
+      if (ctx.company?.toLowerCase().includes('oracle')) {
+        prompt += `- For Oracle Global Industries pre-screening, ask about:\n`;
+        prompt += `  * Why they're interested in Oracle and specifically Global Industries\n`;
+        prompt += `  * How their background relates to enterprise software or industrial solutions\n`;
+        prompt += `  * Examples of teamwork, problem-solving, and handling challenges\n`;
+        prompt += `  * What they know about Oracle's products or the industries served (manufacturing, utilities, construction)\n`;
+        prompt += `  * Their career goals and how this internship fits into them\n`;
+        prompt += `  * Relevant coursework or projects related to databases, cloud, or enterprise systems\n`;
+      }
     } else {
       prompt += `- This is a MIXED interview with both technical and behavioral questions\n`;
       prompt += `- For technical questions, focus only on technical concepts\n`;
