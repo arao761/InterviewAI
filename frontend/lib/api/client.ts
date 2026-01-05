@@ -395,7 +395,12 @@ class PrepWiseAPIClient {
             detail: response.statusText,
           }));
           console.error('❌ Login error:', error);
-          throw new Error(error.detail || 'Login failed');
+          const errorMessage = error.detail || 'Login failed';
+          // Don't retry on authentication errors (401) or email verification errors (403)
+          if (response.status === 401 || response.status === 403) {
+            throw new Error(errorMessage);
+          }
+          throw new Error(errorMessage);
         }
 
         const data: TokenResponse = await response.json();
@@ -420,8 +425,13 @@ class PrepWiseAPIClient {
           continue;
         }
         
-        // If it's an authentication error, don't retry
-        if (error.message && (error.message.includes('password') || error.message.includes('email') || error.message.includes('Login failed'))) {
+        // If it's an authentication error or email verification error, don't retry
+        if (error.message && (
+          error.message.includes('password') || 
+          error.message.includes('email') || 
+          error.message.includes('verify') ||
+          error.message.includes('Login failed')
+        )) {
           throw error;
         }
       }
