@@ -31,7 +31,10 @@ export default function PricingPage() {
     
     // Enterprise plan - contact sales
     if (planKey === 'enterprise') {
-      // You can add a contact form or email link here
+      // Open email client to contact sales
+      const subject = encodeURIComponent('Enterprise Plan Inquiry');
+      const body = encodeURIComponent('Hello,\n\nI am interested in learning more about the Enterprise plan for InterviewAI.\n\nPlease contact me with more information.\n\nThank you!');
+      window.location.href = `mailto:sales@interviewai.com?subject=${subject}&body=${body}`;
       return;
     }
     

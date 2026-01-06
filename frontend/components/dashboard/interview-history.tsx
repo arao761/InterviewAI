@@ -93,13 +93,52 @@ export default function InterviewHistory({
                     )}
                 </td>
                 <td className="px-6 py-4 flex justify-end gap-2">
-                  <Button variant="ghost" size="sm" className="hover:bg-muted">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="hover:bg-muted"
+                    onClick={() => {
+                      // Navigate to results page with interview ID
+                      window.location.href = `/results?id=${interview.id}`;
+                    }}
+                    title="View Details"
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" className="hover:bg-muted">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="hover:bg-muted"
+                    onClick={() => {
+                      // Download interview report
+                      const report = `Interview Report\n\nType: ${interview.type}\nCompany: ${interview.company}\nDate: ${interview.date}\nDuration: ${interview.duration}\nScore: ${interview.score}%\nStatus: ${interview.status}`;
+                      const blob = new Blob([report], { type: 'text/plain' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `interview-${interview.id}-${interview.date}.txt`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                    }}
+                    title="Download Report"
+                  >
                     <Download className="w-4 h-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" className="hover:bg-destructive/10 hover:text-destructive">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => {
+                      if (confirm(`Are you sure you want to delete this interview record?`)) {
+                        // TODO: Implement API call to delete interview
+                        console.log('Delete interview:', interview.id);
+                        alert('Delete functionality will be implemented with backend API');
+                      }
+                    }}
+                    title="Delete Interview"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </td>

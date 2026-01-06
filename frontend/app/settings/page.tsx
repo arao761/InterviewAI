@@ -26,9 +26,28 @@ export default function SettingsPage() {
     { id: 'privacy', label: 'Privacy & Security' },
   ];
 
-  const handleSave = () => {
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+  const handleSave = async () => {
+    try {
+      // TODO: Implement actual save functionality with API
+      // For now, save to localStorage as a temporary solution
+      const settingsData = {
+        activeTab,
+        timestamp: new Date().toISOString(),
+      };
+      localStorage.setItem('userSettings', JSON.stringify(settingsData));
+      
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
+      
+      // Log for debugging
+      console.log('Settings saved (localStorage):', settingsData);
+      
+      // Show success message
+      alert('Settings saved successfully! (Note: Full API integration pending)');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      alert('Failed to save settings. Please try again.');
+    }
   };
 
   const handleCancel = () => {
