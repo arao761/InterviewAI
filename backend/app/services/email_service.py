@@ -118,21 +118,38 @@ class EmailService:
             msg.attach(MIMEText(html_body, 'html'))
             
             # Send email with explicit envelope to ensure it goes to the user, not the sender
-            with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
+            logger.info(f"Attempting to send verification email to {email} via {self.smtp_host}:{self.smtp_port}")
+            logger.info(f"Using SMTP user: {self.smtp_user}, From: {self.from_email}")
+            
+            with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=30) as server:
+                logger.info(f"Connected to SMTP server {self.smtp_host}:{self.smtp_port}")
                 server.starttls()
+                logger.info("TLS started successfully")
                 server.login(self.smtp_user, self.smtp_password)
+                logger.info(f"SMTP login successful for {self.smtp_user}")
                 # Use sendmail with explicit envelope to ensure recipient is correct
                 server.sendmail(
                     from_addr=self.from_email,  # Envelope sender (Interview AI)
                     to_addrs=[email],  # Envelope recipient (user who registered)
                     msg=msg.as_string()
                 )
+                logger.info(f"Email message sent via SMTP to {email}")
             
-            logger.info(f"Verification email sent to {email}")
+            logger.info(f"✅ Verification email sent successfully to {email}")
             return True
             
+        except smtplib.SMTPAuthenticationError as e:
+            logger.error(f"SMTP Authentication failed for {email}: {e}")
+            logger.error(f"Check SMTP_USER and SMTP_PASSWORD. Error code: {e.smtp_code}, Error message: {e.smtp_error}")
+            return False
+        except smtplib.SMTPException as e:
+            logger.error(f"SMTP error sending email to {email}: {e}")
+            logger.error(f"SMTP error code: {getattr(e, 'smtp_code', 'N/A')}, Error: {getattr(e, 'smtp_error', str(e))}")
+            return False
         except Exception as e:
-            logger.error(f"Failed to send verification email to {email}: {e}")
+            logger.error(f"Failed to send verification email to {email}: {type(e).__name__}: {e}")
+            import traceback
+            logger.error(f"Full traceback: {traceback.format_exc()}")
             return False
     
     def send_password_reset_email(self, email: str, name: str, token: str) -> bool:

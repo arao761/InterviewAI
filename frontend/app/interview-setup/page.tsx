@@ -29,6 +29,7 @@ export default function InterviewSetup() {
     yearsOfExperience: '',
     difficulty: '',
     duration: '30',
+    numberOfQuestions: '5',
     focusAreas: [] as string[],
   });
 

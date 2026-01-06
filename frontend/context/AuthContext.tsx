@@ -59,8 +59,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (email: string, name: string, password: string, statusCallback?: (status: string) => void) => {
     await apiClient.register(email, name, password, statusCallback);
-    // Auto-login after registration (login will also wake up backend if needed)
-    await login(email, password, statusCallback);
+    // Don't auto-login after registration - user must verify email first
+    // The register page will redirect to verify-email-pending
   };
 
   const logout = () => {

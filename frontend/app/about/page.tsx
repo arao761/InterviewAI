@@ -27,9 +27,9 @@ export default function AboutPage() {
       name: 'Pranav Vaddepalli',
       role: 'Co-founder',
       title: 'Backend Developer',
-      bio: 'AI researcher focusing on language models in the healthcare sector',
+      bio: "AI researcher at UVA's OPUS Lab applying image analysis to healthcare",
       education: 'BSCS and DS Minor @UVA',
-      image: 'https://avatars.dicebear.com/api/avataaars/pranav.svg?scale=80',
+      image: '/team/PranavVaddepalli.jpg',
       gradient: 'from-accent to-secondary',
     },
     {
