@@ -15,7 +15,9 @@ function ResetPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const token = searchParams.get('token');
+  // Decode the token from URL (Next.js searchParams.get already decodes, but be explicit)
+  const rawToken = searchParams.get('token');
+  const token = rawToken ? decodeURIComponent(rawToken) : null;
 
   useEffect(() => {
     if (!token) {
@@ -79,17 +81,21 @@ function ResetPasswordForm() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <Card className="w-full max-w-md p-8">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center px-4 py-12">
+        <Card className="w-full max-w-md p-8 shadow-xl border-2 hover-lift animate-in">
           <div className="text-center">
-            <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-green-500" />
-            <h1 className="text-2xl font-bold mb-2 text-green-500">Password Reset Successful!</h1>
-            <p className="text-muted-foreground mb-6">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg animate-in" style={{ animationDelay: '0.1s' }}>
+              <CheckCircle2 className="w-12 h-12 text-primary-foreground" />
+            </div>
+            <h1 className="text-2xl font-bold mb-2 gradient-text animate-in" style={{ animationDelay: '0.2s' }}>Password Reset Successful!</h1>
+            <p className="text-muted-foreground mb-6 animate-in" style={{ animationDelay: '0.3s' }}>
               Your password has been reset successfully. You can now log in with your new password.
             </p>
-            <p className="text-sm text-muted-foreground mb-6">Redirecting to login page...</p>
-            <Link href="/login">
-              <Button className="w-full">Go to Login</Button>
+            <p className="text-sm text-muted-foreground mb-6 animate-in" style={{ animationDelay: '0.4s' }}>Redirecting to login page...</p>
+            <Link href="/login" className="animate-in" style={{ animationDelay: '0.5s' }}>
+              <Button className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold py-6 shadow-lg hover:shadow-xl transition-all duration-300">
+                Go to Login
+              </Button>
             </Link>
           </div>
         </Card>
@@ -98,31 +104,43 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      <Card className="w-full max-w-md p-8">
-        <div className="mb-8 text-center">
-          <Lock className="w-12 h-12 mx-auto mb-4 text-primary" />
-          <h1 className="text-3xl font-bold mb-2">Reset Password</h1>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center px-4 py-12">
+      <Card className="w-full max-w-md p-8 shadow-xl border-2 hover-lift animate-in">
+        <div className="mb-8 text-center animate-in" style={{ animationDelay: '0.1s' }}>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
+            <Lock className="w-8 h-8 text-primary-foreground" />
+          </div>
+          <h1 className="text-3xl font-bold mb-2 gradient-text">Reset Password</h1>
           <p className="text-muted-foreground">
             Enter your new password below.
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded mb-6">
-            {error}
+          <div className="bg-destructive/10 border border-destructive/30 text-destructive px-4 py-3 rounded-lg mb-6 animate-in shadow-sm" style={{ animationDelay: '0.2s' }}>
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <span>{error}</span>
+            </div>
           </div>
         )}
 
         {!token && (
-          <div className="bg-yellow-500/10 border border-yellow-500 text-yellow-500 px-4 py-3 rounded mb-6">
-            No reset token found. Please use the link from your email.
+          <div className="bg-accent/10 border border-accent/30 text-accent px-4 py-3 rounded-lg mb-6 animate-in shadow-sm" style={{ animationDelay: '0.2s' }}>
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <span>No reset token found. Please use the link from your email.</span>
+            </div>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium mb-1">
+        <form onSubmit={handleSubmit} className="space-y-6 stagger-children">
+          <div className="animate-in" style={{ animationDelay: '0.3s' }}>
+            <label htmlFor="password" className="block text-sm font-semibold mb-1">
               New Password
             </label>
             <input
@@ -134,15 +152,15 @@ function ResetPasswordForm() {
               maxLength={72}
               placeholder="Enter your new password"
               autoComplete="new-password"
-              className="w-full px-3 py-2 border rounded-md bg-background"
+              className="w-full px-3 py-2.5 border rounded-lg bg-background transition-all focus:ring-2 focus:ring-primary/50 focus:border-primary"
             />
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-1.5">
               Must be at least 8 characters long
             </p>
           </div>
 
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">
+          <div className="animate-in" style={{ animationDelay: '0.4s' }}>
+            <label htmlFor="confirmPassword" className="block text-sm font-semibold mb-1">
               Confirm Password
             </label>
             <input
@@ -154,14 +172,15 @@ function ResetPasswordForm() {
               maxLength={72}
               placeholder="Confirm your new password"
               autoComplete="new-password"
-              className="w-full px-3 py-2 border rounded-md bg-background"
+              className="w-full px-3 py-2.5 border rounded-lg bg-background transition-all focus:ring-2 focus:ring-primary/50 focus:border-primary"
             />
           </div>
 
           <Button
             type="submit"
             disabled={loading || !token}
-            className="w-full"
+            className="w-full mt-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold py-6 shadow-lg hover:shadow-xl transition-all duration-300 animate-in disabled:opacity-50"
+            style={{ animationDelay: '0.5s' }}
           >
             {loading ? (
               <>
@@ -174,9 +193,9 @@ function ResetPasswordForm() {
           </Button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-muted-foreground">
+        <div className="mt-6 text-center text-sm text-muted-foreground animate-in" style={{ animationDelay: '0.6s' }}>
           Remember your password?{' '}
-          <Link href="/login" className="text-primary hover:underline">
+          <Link href="/login" className="text-primary hover:text-accent font-semibold transition-colors">
             Sign in
           </Link>
         </div>
@@ -188,8 +207,10 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
+          <Loader2 className="h-8 w-8 animate-spin text-primary-foreground" />
+        </div>
       </div>
     }>
       <ResetPasswordForm />
