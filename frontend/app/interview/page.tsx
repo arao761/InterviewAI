@@ -297,8 +297,10 @@ export default function InterviewSession() {
           }
         },
         onError: (err) => {
-          console.error('VAPI error:', err);
-          setError(`Voice AI error: ${err.message}`);
+          console.error('VAPI error in page:', err);
+          console.error('Error message:', err.message);
+          console.error('Error stack:', err.stack);
+          setError(`Voice AI error: ${err.message || 'Unknown error - check console'}`);
           setIsCallActive(false);
           setIsConnecting(false);
         },
