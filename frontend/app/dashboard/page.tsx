@@ -190,16 +190,16 @@ export default function Dashboard() {
           {/* Header with Action */}
           <div className="flex justify-between items-center mb-12">
             <div>
-              <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
+              <h1 className="text-4xl font-bold mb-2 gradient-text">Dashboard</h1>
               <p className="text-muted-foreground">Track your interview preparation progress</p>
             </div>
 
-            <Link href="/interview-setup">
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                <Plus className="w-4 h-4 mr-2" />
-                New Interview
-              </Button>
-            </Link>
+          <Link href="/interview-setup">
+            <Button className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <Plus className="w-4 h-4 mr-2" />
+              New Interview
+            </Button>
+          </Link>
           </div>
 
           {/* Authentication Required Message */}
@@ -210,12 +210,12 @@ export default function Dashboard() {
             </p>
             <div className="flex gap-3">
               <Link href="/login">
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                <Button className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
                   Log In
                 </Button>
               </Link>
               <Link href="/register">
-                <Button variant="outline" className="border-border hover:bg-card">
+                <Button variant="outline" className="border-2 border-primary/30 hover:border-primary/50 hover:bg-primary/10 transition-all">
                   Sign Up
                 </Button>
               </Link>
@@ -245,16 +245,16 @@ export default function Dashboard() {
           {/* Header with Action */}
           <div className="flex justify-between items-center mb-12">
             <div>
-              <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
+              <h1 className="text-4xl font-bold mb-2 gradient-text">Dashboard</h1>
               <p className="text-muted-foreground">Track your interview preparation progress</p>
             </div>
 
-            <Link href="/interview-setup">
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                <Plus className="w-4 h-4 mr-2" />
-                New Interview
-              </Button>
-            </Link>
+          <Link href="/interview-setup">
+            <Button className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <Plus className="w-4 h-4 mr-2" />
+              New Interview
+            </Button>
+          </Link>
           </div>
 
           {/* Error Message */}
@@ -296,19 +296,19 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 text-foreground">
       <DashboardHeader />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header with Action */}
-        <div className="flex justify-between items-center mb-12">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-12 animate-in" style={{ animationDelay: '0.1s' }}>
           <div>
-            <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
+            <h1 className="text-4xl font-bold mb-2 gradient-text">Dashboard</h1>
             <p className="text-muted-foreground">Track your interview preparation progress</p>
           </div>
 
           <Link href="/interview-setup">
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
               <Plus className="w-4 h-4 mr-2" />
               New Interview
             </Button>
@@ -316,22 +316,22 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Stats */}
-        <div className="mb-12">
+        <div className="mb-12 animate-in" style={{ animationDelay: '0.2s' }}>
           <QuickStats stats={stats} />
         </div>
 
         {/* Charts Section */}
-        <div className="grid lg:grid-cols-3 gap-8 mb-12">
-          <div className="lg:col-span-2">
+        <div className="grid lg:grid-cols-3 gap-8 mb-12 stagger-children">
+          <div className="lg:col-span-2 animate-in" style={{ animationDelay: '0.3s' }}>
             <ProgressChart interviews={interviews} />
           </div>
-          <div>
+          <div className="animate-in" style={{ animationDelay: '0.4s' }}>
             <SkillAnalysis interviews={interviews} />
           </div>
         </div>
 
         {/* Interview History */}
-        <div>
+        <div className="animate-in" style={{ animationDelay: '0.5s' }}>
           <InterviewHistory interviews={interviews} />
         </div>
       </div>
