@@ -30,21 +30,10 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
 
         # Normalize email to lowercase for consistency
         email_lower = user_data.email.lower().strip()
-        
-        logger.info(f"Registration attempt for email: {email_lower}")
-        
-        # Check if user already exists (case-insensitive)
-        existing_user = db.query(User).filter(User.email.ilike(email_lower)).first()
-        if existing_user:
-            logger.warning(f"Registration failed - Email already exists: {existing_user.email} (ID: {existing_user.id})")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered"
-            )
-        
-        logger.info(f"No existing user found for: {email_lower}, proceeding with registration")
 
-        # Validate password length in bytes
+        logger.info(f"Registration attempt for email: {email_lower}")
+
+        # Validate password length in bytes (do this early for both new and re-registration)
         password_bytes = len(user_data.password.encode('utf-8'))
         if password_bytes > 72:
             logger.error(f"Password too long: {password_bytes} bytes")
@@ -52,6 +41,52 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Password is too long ({password_bytes} bytes). Maximum is 72 bytes."
             )
+
+        # Check if user already exists (case-insensitive)
+        existing_user = db.query(User).filter(User.email.ilike(email_lower)).first()
+        if existing_user:
+            # If email is already verified, reject the registration
+            if existing_user.email_verified:
+                logger.warning(f"Registration failed - Email already registered and verified: {existing_user.email} (ID: {existing_user.id})")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email already registered"
+                )
+            # If email is not verified, allow re-registration by updating the existing user
+            else:
+                logger.info(f"Re-registration for unverified email: {email_lower} - Updating existing user")
+                # Update existing user with new information
+                existing_user.name = user_data.name
+                existing_user.hashed_password = get_password_hash(user_data.password)
+
+                # Generate new verification token
+                email_service = get_email_service()
+                verification_token = email_service.generate_verification_token()
+                verification_token_expires = datetime.now(timezone.utc) + timedelta(hours=24)
+
+                existing_user.verification_token = verification_token
+                existing_user.verification_token_expires = verification_token_expires
+
+                db.commit()
+                db.refresh(existing_user)
+
+                # Send verification email
+                email_sent = email_service.send_verification_email(
+                    email=email_lower,
+                    name=user_data.name,
+                    token=verification_token
+                )
+
+                if email_sent:
+                    logger.info(f"Updated unverified user: {existing_user.email} - Verification email sent")
+                else:
+                    logger.warning(f"Updated unverified user: {existing_user.email} - Verification email NOT sent (SMTP not configured)")
+                    logger.info(f"Verification token for {email_lower}: {verification_token}")
+                    logger.info(f"Verification URL: {email_service.frontend_url}/verify-email?token={verification_token}")
+
+                return existing_user
+
+        logger.info(f"No existing user found for: {email_lower}, proceeding with registration")
 
         # Create new user with hashed password (store email in lowercase)
         hashed_password = get_password_hash(user_data.password)
@@ -351,43 +386,53 @@ async def resend_verification_email(request: ForgotPasswordRequest, db: Session 
 @router.post("/forgot-password")
 async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
     """
-    Generate password reset token for user (no email sent).
-    
+    Send password reset email to user.
+
     Args:
         request: Request body containing email
-        
+
     Returns:
-        Reset token (for development/testing purposes)
+        Success message
     """
     try:
         email_lower = request.email.lower().strip()
-        
+
         # Find user by email
         user = db.query(User).filter(User.email.ilike(email_lower)).first()
-        
+
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
-        
+            # Don't reveal if email exists or not (security best practice)
+            logger.info(f"Password reset requested for non-existent email: {email_lower}")
+            return {"message": "If an account exists with this email, a password reset email has been sent."}
+
         # Generate reset token
         email_service = get_email_service()
         reset_token = email_service.generate_verification_token()
         token_expires = datetime.now(timezone.utc) + timedelta(hours=1)  # 1 hour expiry
-        
+
         # Update user with reset token
         user.reset_token = reset_token
         user.reset_token_expires = token_expires
         db.commit()
-        
+
         logger.info(f"Password reset token generated for {user.email}")
-        # Return token directly (no email sent)
-        return {
-            "message": "Password reset token generated",
-            "token": reset_token
-        }
-        
+
+        # Send password reset email
+        email_sent = email_service.send_password_reset_email(
+            email=email_lower,
+            name=user.name,
+            token=reset_token
+        )
+
+        if email_sent:
+            logger.info(f"Password reset email sent to {email_lower}")
+            return {"message": "Password reset email sent. Please check your inbox."}
+        else:
+            logger.warning(f"Failed to send password reset email to {email_lower} (SMTP not configured)")
+            logger.info(f"Password reset token for {email_lower}: {reset_token}")
+            logger.info(f"Reset URL: {email_service.frontend_url}/reset-password?token={reset_token}")
+            return {"message": "Password reset email could not be sent. Please contact support."}
+
     except HTTPException:
         raise
     except Exception as e:
@@ -395,7 +440,7 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to generate reset token"
+            detail="Failed to send password reset email"
         )
 
 
@@ -430,11 +475,18 @@ async def reset_password(request: ResetPasswordRequest, db: Session = Depends(ge
             )
         
         # Check if token is expired
-        if user.reset_token_expires and user.reset_token_expires < datetime.now(timezone.utc):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Reset token has expired. Please request a new one."
-            )
+        if user.reset_token_expires:
+            # Ensure both datetimes are timezone-aware for comparison
+            expires = user.reset_token_expires
+            if expires.tzinfo is None:
+                # If database returned naive datetime, assume UTC
+                expires = expires.replace(tzinfo=timezone.utc)
+            now = datetime.now(timezone.utc)
+            if expires < now:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Reset token has expired. Please request a new one."
+                )
         
         # Validate password length
         password_bytes = len(new_password.encode('utf-8'))
