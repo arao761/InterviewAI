@@ -30,21 +30,10 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
 
         # Normalize email to lowercase for consistency
         email_lower = user_data.email.lower().strip()
-        
-        logger.info(f"Registration attempt for email: {email_lower}")
-        
-        # Check if user already exists (case-insensitive)
-        existing_user = db.query(User).filter(User.email.ilike(email_lower)).first()
-        if existing_user:
-            logger.warning(f"Registration failed - Email already exists: {existing_user.email} (ID: {existing_user.id})")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered"
-            )
-        
-        logger.info(f"No existing user found for: {email_lower}, proceeding with registration")
 
-        # Validate password length in bytes
+        logger.info(f"Registration attempt for email: {email_lower}")
+
+        # Validate password length in bytes (do this early for both new and re-registration)
         password_bytes = len(user_data.password.encode('utf-8'))
         if password_bytes > 72:
             logger.error(f"Password too long: {password_bytes} bytes")
@@ -52,6 +41,52 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Password is too long ({password_bytes} bytes). Maximum is 72 bytes."
             )
+
+        # Check if user already exists (case-insensitive)
+        existing_user = db.query(User).filter(User.email.ilike(email_lower)).first()
+        if existing_user:
+            # If email is already verified, reject the registration
+            if existing_user.email_verified:
+                logger.warning(f"Registration failed - Email already registered and verified: {existing_user.email} (ID: {existing_user.id})")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email already registered"
+                )
+            # If email is not verified, allow re-registration by updating the existing user
+            else:
+                logger.info(f"Re-registration for unverified email: {email_lower} - Updating existing user")
+                # Update existing user with new information
+                existing_user.name = user_data.name
+                existing_user.hashed_password = get_password_hash(user_data.password)
+
+                # Generate new verification token
+                email_service = get_email_service()
+                verification_token = email_service.generate_verification_token()
+                verification_token_expires = datetime.now(timezone.utc) + timedelta(hours=24)
+
+                existing_user.verification_token = verification_token
+                existing_user.verification_token_expires = verification_token_expires
+
+                db.commit()
+                db.refresh(existing_user)
+
+                # Send verification email
+                email_sent = email_service.send_verification_email(
+                    email=email_lower,
+                    name=user_data.name,
+                    token=verification_token
+                )
+
+                if email_sent:
+                    logger.info(f"Updated unverified user: {existing_user.email} - Verification email sent")
+                else:
+                    logger.warning(f"Updated unverified user: {existing_user.email} - Verification email NOT sent (SMTP not configured)")
+                    logger.info(f"Verification token for {email_lower}: {verification_token}")
+                    logger.info(f"Verification URL: {email_service.frontend_url}/verify-email?token={verification_token}")
+
+                return existing_user
+
+        logger.info(f"No existing user found for: {email_lower}, proceeding with registration")
 
         # Create new user with hashed password (store email in lowercase)
         hashed_password = get_password_hash(user_data.password)
@@ -352,18 +387,27 @@ async def resend_verification_email(request: ForgotPasswordRequest, db: Session 
 async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
     """
     Send password reset email to user.
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 1eab3f0f4c21c5d4f8500a7b26c8fad33b72ac73
     Args:
         request: Request body containing email
-        
+
     Returns:
+<<<<<<< HEAD
         Success message (always returns success for security - doesn't reveal if email exists)
+=======
+        Success message
+>>>>>>> 1eab3f0f4c21c5d4f8500a7b26c8fad33b72ac73
     """
     try:
         email_lower = request.email.lower().strip()
-        
+
         # Find user by email
         user = db.query(User).filter(User.email.ilike(email_lower)).first()
+<<<<<<< HEAD
         
         # Security: Always return success message, don't reveal if user exists
         # This prevents email enumeration attacks
@@ -373,22 +417,37 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
                 "message": "If an account with that email exists, a password reset link has been sent."
             }
         
+=======
+
+        if not user:
+            # Don't reveal if email exists or not (security best practice)
+            logger.info(f"Password reset requested for non-existent email: {email_lower}")
+            return {"message": "If an account exists with this email, a password reset email has been sent."}
+
+>>>>>>> 1eab3f0f4c21c5d4f8500a7b26c8fad33b72ac73
         # Generate reset token
         email_service = get_email_service()
         reset_token = email_service.generate_verification_token()
         token_expires = datetime.now(timezone.utc) + timedelta(hours=1)  # 1 hour expiry
-        
+
         # Update user with reset token
         user.reset_token = reset_token
         user.reset_token_expires = token_expires
         db.commit()
+<<<<<<< HEAD
         
+=======
+
+        logger.info(f"Password reset token generated for {user.email}")
+
+>>>>>>> 1eab3f0f4c21c5d4f8500a7b26c8fad33b72ac73
         # Send password reset email
         email_sent = email_service.send_password_reset_email(
             email=email_lower,
             name=user.name,
             token=reset_token
         )
+<<<<<<< HEAD
         
         if email_sent:
             logger.info(f"Password reset email sent to {email_lower}")
@@ -402,15 +461,34 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
             "message": "If an account with that email exists, a password reset link has been sent."
         }
         
+=======
+
+        if email_sent:
+            logger.info(f"Password reset email sent to {email_lower}")
+            return {"message": "Password reset email sent. Please check your inbox."}
+        else:
+            logger.warning(f"Failed to send password reset email to {email_lower} (SMTP not configured)")
+            logger.info(f"Password reset token for {email_lower}: {reset_token}")
+            logger.info(f"Reset URL: {email_service.frontend_url}/reset-password?token={reset_token}")
+            return {"message": "Password reset email could not be sent. Please contact support."}
+
+>>>>>>> 1eab3f0f4c21c5d4f8500a7b26c8fad33b72ac73
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Forgot password error: {e}")
         db.rollback()
+<<<<<<< HEAD
         # Still return success to prevent email enumeration
         return {
             "message": "If an account with that email exists, a password reset link has been sent."
         }
+=======
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send password reset email"
+        )
+>>>>>>> 1eab3f0f4c21c5d4f8500a7b26c8fad33b72ac73
 
 
 @router.post("/reset-password")

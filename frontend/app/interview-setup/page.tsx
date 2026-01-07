@@ -39,14 +39,6 @@ export default function InterviewSetup() {
 
   const handleResumeUploaded = (data: ParsedResume) => {
     setResumeData(data);
-    // Auto-fill job details from resume if available
-    if (data.experience && data.experience.length > 0) {
-      setFormData(prev => ({
-        ...prev,
-        jobTitle: data.experience?.[0]?.title || prev.jobTitle,
-        company: data.experience?.[0]?.company || prev.company,
-      }));
-    }
   };
 
   // Helper function to prepare resume data for backend API
@@ -148,7 +140,7 @@ export default function InterviewSetup() {
       case 'interview-type':
         return formData.interviewType !== '';
       case 'job-details':
-        return formData.jobTitle !== '';
+        return true; // All job details are optional
       case 'difficulty':
         return formData.difficulty !== '';
       case 'settings':

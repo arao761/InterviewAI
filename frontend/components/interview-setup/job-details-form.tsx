@@ -19,10 +19,10 @@ export default function JobDetailsForm({
 
       <div className="space-y-6">
         {[
-          { label: 'Job Title', value: 'jobTitle', placeholder: 'e.g., Senior Software Engineer' },
-          { label: 'Company', value: 'company', placeholder: 'e.g., Google' },
-          { label: 'Industry', value: 'industry', placeholder: 'e.g., Technology' },
-          { label: 'Years of Experience', value: 'yearsOfExperience', placeholder: 'e.g., 5' },
+          { label: 'Job Title (optional)', value: 'jobTitle', placeholder: 'e.g., Senior Software Engineer' },
+          { label: 'Company (optional)', value: 'company', placeholder: 'e.g., Google' },
+          { label: 'Industry (optional)', value: 'industry', placeholder: 'e.g., Technology' },
+          { label: 'Years of Experience (optional)', value: 'yearsOfExperience', placeholder: 'e.g., 5' },
         ].map((field) => (
           <div key={field.value}>
             <label className="block text-sm font-semibold mb-2 text-foreground">{field.label}</label>
