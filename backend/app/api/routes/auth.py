@@ -351,13 +351,13 @@ async def resend_verification_email(request: ForgotPasswordRequest, db: Session 
 @router.post("/forgot-password")
 async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
     """
-    Generate password reset token for user (no email sent).
+    Send password reset email to user.
     
     Args:
         request: Request body containing email
         
     Returns:
-        Reset token (for development/testing purposes)
+        Success message (always returns success for security - doesn't reveal if email exists)
     """
     try:
         email_lower = request.email.lower().strip()
@@ -365,11 +365,13 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
         # Find user by email
         user = db.query(User).filter(User.email.ilike(email_lower)).first()
         
+        # Security: Always return success message, don't reveal if user exists
+        # This prevents email enumeration attacks
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
+            logger.info(f"Password reset requested for non-existent email: {email_lower}")
+            return {
+                "message": "If an account with that email exists, a password reset link has been sent."
+            }
         
         # Generate reset token
         email_service = get_email_service()
@@ -381,11 +383,23 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
         user.reset_token_expires = token_expires
         db.commit()
         
-        logger.info(f"Password reset token generated for {user.email}")
-        # Return token directly (no email sent)
+        # Send password reset email
+        email_sent = email_service.send_password_reset_email(
+            email=email_lower,
+            name=user.name,
+            token=reset_token
+        )
+        
+        if email_sent:
+            logger.info(f"Password reset email sent to {email_lower}")
+        else:
+            logger.warning(f"Password reset email NOT sent to {email_lower} (SMTP not configured)")
+            logger.info(f"Password reset token for {email_lower}: {reset_token}")
+            logger.info(f"Reset URL: {email_service.frontend_url}/reset-password?token={reset_token}")
+        
+        # Always return success message (security best practice)
         return {
-            "message": "Password reset token generated",
-            "token": reset_token
+            "message": "If an account with that email exists, a password reset link has been sent."
         }
         
     except HTTPException:
@@ -393,10 +407,10 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
     except Exception as e:
         logger.error(f"Forgot password error: {e}")
         db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to generate reset token"
-        )
+        # Still return success to prevent email enumeration
+        return {
+            "message": "If an account with that email exists, a password reset link has been sent."
+        }
 
 
 @router.post("/reset-password")
@@ -420,21 +434,45 @@ async def reset_password(request: ResetPasswordRequest, db: Session = Depends(ge
                 detail="Reset token is required"
             )
         
-        # Find user by reset token
+        # URL decode the token in case it was URL-encoded
+        from urllib.parse import unquote
+        token = unquote(token.strip())
+        
+        logger.info(f"Password reset attempt with token: {token[:20]}... (length: {len(token)})")
+        
+        # Find user by reset token - try both the decoded token and the original
         user = db.query(User).filter(User.reset_token == token).first()
         
+        # If not found, try without URL decoding (in case it wasn't encoded)
         if not user:
+            original_token = request.token.strip()
+            if original_token != token:
+                logger.info(f"Trying original token (not URL-decoded): {original_token[:20]}...")
+                user = db.query(User).filter(User.reset_token == original_token).first()
+        
+        if not user:
+            logger.warning(f"Password reset failed - token not found: {token[:20]}...")
+            # Check if any reset tokens exist (for debugging)
+            token_count = db.query(User).filter(User.reset_token.isnot(None)).count()
+            logger.info(f"Total users with reset tokens in database: {token_count}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid or expired reset token"
             )
         
         # Check if token is expired
-        if user.reset_token_expires and user.reset_token_expires < datetime.now(timezone.utc):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Reset token has expired. Please request a new one."
-            )
+        if user.reset_token_expires:
+            # Ensure both datetimes are timezone-aware for comparison
+            expires = user.reset_token_expires
+            if expires.tzinfo is None:
+                # If database returned naive datetime, assume UTC
+                expires = expires.replace(tzinfo=timezone.utc)
+            now = datetime.now(timezone.utc)
+            if expires < now:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Reset token has expired. Please request a new one."
+                )
         
         # Validate password length
         password_bytes = len(new_password.encode('utf-8'))
