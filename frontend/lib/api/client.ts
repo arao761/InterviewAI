@@ -223,8 +223,8 @@ class PrepWiseAPIClient {
       }
       
       const controller = new AbortController();
-      // 30 second timeout per attempt (backend should be awake now)
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      // 90 second timeout per attempt (backend can be slow sending emails on Render)
+      const timeoutId = setTimeout(() => controller.abort(), 1000000);
       
       try {
         const response = await fetch(url, {
@@ -374,8 +374,8 @@ class PrepWiseAPIClient {
       }
       
       const controller = new AbortController();
-      // 30 second timeout per attempt (backend should be awake now)
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      // 90 second timeout per attempt (backend can be slow sending emails on Render)
+      const timeoutId = setTimeout(() => controller.abort(), 90000);
       
       try {
         const response = await fetch(url, {
