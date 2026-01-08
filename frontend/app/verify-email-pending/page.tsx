@@ -17,37 +17,38 @@ function VerifyEmailPendingContent() {
   const [resendMessage, setResendMessage] = useState('');
 
   const handleResend = async () => {
+    if (!email) {
+      setResendStatus('error');
+      setResendMessage('Email address is required');
+      return;
+    }
+
     setResending(true);
     setResendStatus('idle');
     setResendMessage('');
 
     try {
-      const token = apiClient.getToken();
-      if (!token) {
-        throw new Error('Please log in first to resend verification email');
-      }
-
       const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
       const response = await fetch(`${baseURL}/auth/resend-verification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
+        body: JSON.stringify({ email }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
         setResendStatus('success');
-        setResendMessage('Verification email sent successfully!');
+        setResendMessage(data.message || 'Verification email sent successfully! Please check your inbox.');
       } else {
         setResendStatus('error');
-        setResendMessage(data.detail || 'Failed to resend verification email');
+        setResendMessage(data.detail || data.message || 'Failed to resend verification email');
       }
     } catch (error: any) {
       setResendStatus('error');
-      setResendMessage(error.message || 'Failed to resend verification email');
+      setResendMessage(error.message || 'Failed to resend verification email. Please try again.');
     } finally {
       setResending(false);
     }

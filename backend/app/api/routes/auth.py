@@ -84,7 +84,17 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
                     logger.info(f"Verification token for {email_lower}: {verification_token}")
                     logger.info(f"Verification URL: {email_service.frontend_url}/verify-email?token={verification_token}")
 
-                return existing_user
+                # Add email_sent status to response
+                response_user = UserResponse(
+                    id=existing_user.id,
+                    email=existing_user.email,
+                    name=existing_user.name,
+                    email_verified=existing_user.email_verified,
+                    created_at=existing_user.created_at,
+                    updated_at=existing_user.updated_at,
+                    email_sent=email_sent
+                )
+                return response_user
 
         logger.info(f"No existing user found for: {email_lower}, proceeding with registration")
 
@@ -121,10 +131,21 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
             logger.info(f"New user registered: {new_user.email} - Verification email sent")
         else:
             logger.warning(f"New user registered: {new_user.email} - Verification email NOT sent (SMTP not configured)")
+            logger.warning(f"⚠️  ACTION REQUIRED: Email verification is disabled. User cannot verify email automatically.")
             logger.info(f"Verification token for {email_lower}: {verification_token}")
             logger.info(f"Verification URL: {email_service.frontend_url}/verify-email?token={verification_token}")
 
-        return new_user
+        # Add email_sent status to response
+        response_user = UserResponse(
+            id=new_user.id,
+            email=new_user.email,
+            name=new_user.name,
+            email_verified=new_user.email_verified,
+            created_at=new_user.created_at,
+            updated_at=new_user.updated_at,
+            email_sent=email_sent
+        )
+        return response_user
 
     except HTTPException:
         raise
