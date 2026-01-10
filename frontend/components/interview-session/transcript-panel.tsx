@@ -54,8 +54,10 @@ export default function TranscriptPanel({
               key={index}
               className={`flex gap-2 ${msg.role === 'assistant' ? 'flex-row' : 'flex-row-reverse'}`}
             >
-              <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
-                msg.role === 'assistant' ? 'bg-blue-500/20' : 'bg-green-500/20'
+              <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ${
+                msg.role === 'assistant'
+                  ? 'bg-gradient-to-br from-blue-500/30 via-purple-500/30 to-pink-500/30 shadow-sm'
+                  : 'bg-green-500/20'
               }`}>
                 {msg.role === 'assistant' ? (
                   <Bot className="w-3 h-3 text-blue-500" />

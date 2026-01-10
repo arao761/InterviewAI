@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ResultsHeader from '@/components/results/results-header';
 import OverallScore from '@/components/results/overall-score';
-import PerformanceMetrics from '@/components/results/performance-metrics';
+import EnhancedPerformanceMetrics from '@/components/results/enhanced-performance-metrics';
+import ScoreBreakdown from '@/components/results/score-breakdown';
+import QuestionPerformanceCard from '@/components/results/question-performance-card';
+import PerformanceSummary from '@/components/results/performance-summary';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { DownloadCloud, Share2, ArrowLeft } from 'lucide-react';
+import { DownloadCloud, Share2, ArrowLeft, FileText } from 'lucide-react';
 import { useScrollFadeIn } from '@/hooks/use-scroll-fade-in';
 import { calculatePerformanceMetrics, calculateSimpleMetrics } from '@/lib/utils/metrics-calculator';
 import type { InterviewEvaluationReport, ResponseEvaluation } from '@/lib/api/types';
@@ -172,13 +175,19 @@ Areas to Improve: ${evalItem.weaknesses?.join(', ') || 'N/A'}
     <div className="min-h-screen bg-background text-foreground">
       <ResultsHeader />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Top Section */}
-        <div className="flex justify-between items-start mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
             <h1 className="text-4xl font-bold mb-2">Interview Results</h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground flex items-center gap-2">
+              <FileText className="w-4 h-4" />
               AI-Powered Interview • {new Date().toLocaleDateString()}
+              {individualEvals.length > 0 && (
+                <span className="ml-2 text-primary font-semibold">
+                  • {individualEvals.length} Questions
+                </span>
+              )}
             </p>
           </div>
 
@@ -199,10 +208,20 @@ Areas to Improve: ${evalItem.weaknesses?.join(', ') || 'N/A'}
           <OverallScore score={overallScore} />
         </div>
 
-        {/* Performance Metrics */}
+        {/* Performance Summary */}
+        <div className="mb-8 fade-in-animation">
+          <PerformanceSummary evaluation={evaluation} />
+        </div>
+
+        {/* Score Breakdown */}
+        <div className="mb-8 fade-in-animation">
+          <ScoreBreakdown evaluation={evaluation} />
+        </div>
+
+        {/* Enhanced Performance Metrics */}
         {Object.keys(metrics).length > 0 && (
           <div ref={metricsRef} className="mb-8 fade-in-animation">
-            <PerformanceMetrics metrics={metrics} />
+            <EnhancedPerformanceMetrics metrics={metrics} />
           </div>
         )}
 
@@ -266,59 +285,29 @@ Areas to Improve: ${evalItem.weaknesses?.join(', ') || 'N/A'}
         {/* Individual Question Results */}
         {individualEvals.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-6">Individual Question Results</h2>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold">Question-by-Question Analysis</h2>
+                <p className="text-muted-foreground text-sm mt-1">
+                  Detailed breakdown of your performance on each question
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-sm text-muted-foreground">
+                  Showing {individualEvals.length} {individualEvals.length === 1 ? 'question' : 'questions'}
+                </div>
+              </div>
+            </div>
             <div ref={questionsRef} className="space-y-6 fade-in-animation">
               {individualEvals.map((evalItem, index) => {
                 const question = questions[index];
                 return (
-                  <Card key={index} className="bg-card border-border p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg mb-2">
-                          Q{index + 1}: {question?.question || question?.text || `Question ${index + 1}`}
-                        </h3>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-3xl font-bold text-primary">{Math.round(evalItem.score)}</div>
-                        <div className="text-xs text-muted-foreground">out of 100</div>
-                      </div>
-                    </div>
-
-                    {evalItem.feedback && (
-                      <div className="bg-muted/50 rounded-lg p-4 mb-4">
-                        <p className="text-sm text-foreground">{evalItem.feedback}</p>
-                      </div>
-                    )}
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      {evalItem.strengths && evalItem.strengths.length > 0 && (
-                        <div>
-                          <h4 className="font-semibold text-sm mb-3 text-green-500">Strengths</h4>
-                          <ul className="space-y-2">
-                            {evalItem.strengths.map((strength, i) => (
-                              <li key={i} className="flex items-start gap-2 text-sm">
-                                <span className="text-green-500 mt-1">✓</span>
-                                <span>{strength}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      {evalItem.weaknesses && evalItem.weaknesses.length > 0 && (
-                        <div>
-                          <h4 className="font-semibold text-sm mb-3 text-yellow-500">Areas to Improve</h4>
-                          <ul className="space-y-2">
-                            {evalItem.weaknesses.map((weakness, i) => (
-                              <li key={i} className="flex items-start gap-2 text-sm">
-                                <span className="text-yellow-500 mt-1">→</span>
-                                <span>{weakness}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
+                  <QuestionPerformanceCard
+                    key={index}
+                    question={question}
+                    evaluation={evalItem}
+                    index={index}
+                  />
                 );
               })}
             </div>

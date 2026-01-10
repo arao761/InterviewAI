@@ -8,6 +8,7 @@ import { Loader2, Volume2, Wifi, WifiOff, Phone, PhoneOff } from 'lucide-react';
 import TranscriptPanel from '@/components/interview-session/transcript-panel';
 import TimerDisplay from '@/components/interview-session/timer-display';
 import DSAProblemDisplay from '@/components/interview-session/dsa-problem-display';
+import AnimatedFaceAvatar from '@/components/interview-session/animated-face-avatar';
 import { VapiInterviewer } from '@/lib/vapi/vapi-interviewer';
 
 // Dynamic import for CodeEditor to avoid SSR issues with Monaco
@@ -461,6 +462,24 @@ export default function InterviewSession() {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Mini Avatar Indicator when DSA problem is shown and call is active */}
+          {isTechnicalInterview && dsaProblem && isCallActive && (
+            <div className="flex items-center gap-2">
+              <div className={`
+                w-10 h-10 rounded-full
+                bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500
+                flex items-center justify-center
+                ${aiSpeaking ? 'animate-pulse shadow-lg shadow-blue-500/50' : ''}
+                transition-all duration-300
+              `}>
+                <Volume2 className={`w-5 h-5 text-white ${aiSpeaking ? 'animate-bounce' : ''}`} />
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {aiSpeaking ? 'Speaking...' : 'Listening'}
+              </span>
+            </div>
+          )}
+
           {/* Interview Control Button - Shrunk and moved to header when DSA problem is shown */}
           {isTechnicalInterview && dsaProblem && (
             <div className="flex items-center gap-2">
@@ -486,7 +505,7 @@ export default function InterviewSession() {
                 <Button
                   onClick={handleEndCall}
                   size="sm"
-                  className="rounded-full w-12 h-12 flex items-center justify-center bg-red-600 hover:bg-red-700 text-white animate-pulse"
+                  className="rounded-full w-12 h-12 flex items-center justify-center bg-red-600 hover:bg-red-700 text-white"
                   title="End Call"
                 >
                   <PhoneOff className="w-5 h-5" />
@@ -534,76 +553,82 @@ export default function InterviewSession() {
               </div>
             </div>
           ) : (
-            /* Call Controls - Center of screen when no DSA problem */
-            <div className="flex-1 flex items-center justify-center">
-            <div className="text-center space-y-8">
-              {/* AI Speaking Indicator */}
-              {aiSpeaking && (
-                <div className="flex items-center justify-center gap-2 text-blue-500">
-                  <Volume2 className="w-5 h-5 animate-pulse" />
-                  <span className="font-medium">AI is speaking...</span>
+            /* Interview Avatar & Controls - Center of screen when no DSA problem */
+            <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20">
+            <div className="text-center space-y-8 max-w-2xl px-8">
+              {/* Animated Avatar - shown when call is active or connecting */}
+              {(isCallActive || isConnecting) && (
+                <div className="mb-8">
+                  <AnimatedFaceAvatar
+                    isSpeaking={aiSpeaking}
+                    name="AI Interviewer"
+                  />
                 </div>
               )}
 
-              {/* Main Call Button */}
-              <div className="flex justify-center">
-                {!isCallActive && !isConnecting ? (
+              {/* Main Call Button - only shown when not active */}
+              {!isCallActive && !isConnecting && (
+                <div className="flex flex-col items-center gap-6">
+                  <div className="text-center space-y-2 mb-4">
+                    <h2 className="text-2xl font-bold text-foreground">Ready to Start?</h2>
+                    <p className="text-muted-foreground">Click below to begin your voice interview with the AI interviewer</p>
+                  </div>
                   <Button
                     onClick={handleStartCall}
                     size="lg"
-                    className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-green-600 hover:bg-green-700 text-white"
+                    className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-green-600 hover:bg-green-700 text-white shadow-2xl hover:shadow-green-500/50 transition-all"
                   >
                     <Phone className="w-10 h-10 mb-2" />
                     Start Interview
                   </Button>
-                ) : isConnecting ? (
-                  <Button
-                    disabled
-                    size="lg"
-                    className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-blue-600 text-white"
-                  >
-                    <Loader2 className="w-10 h-10 mb-2 animate-spin" />
-                    Connecting...
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleEndCall}
-                    size="lg"
-                    className="rounded-full w-40 h-40 flex flex-col items-center justify-center text-lg font-semibold bg-red-600 hover:bg-red-700 text-white animate-pulse"
-                  >
-                    <PhoneOff className="w-10 h-10 mb-2" />
-                    End Call
-                  </Button>
-                )}
-              </div>
-
-              {/* Instructions */}
-              <div className="text-sm text-muted-foreground max-w-md mx-auto">
-                {!isCallActive && !isConnecting ? (
-                  <p>Click the button above to start your voice interview with the AI interviewer. Make sure your microphone is enabled.</p>
-                ) : isConnecting ? (
-                  <p>Connecting to AI interviewer... Please allow microphone access if prompted.</p>
-                ) : (
-                  <p>Your interview is in progress. Speak naturally and the AI will guide you through the interview questions.</p>
-                )}
-              </div>
-
-              {/* Error Display */}
-              {error && (
-                <div className="text-red-500 text-sm bg-red-500/10 p-4 rounded-lg max-w-md mx-auto">
-                  {error}
+                  <p className="text-sm text-muted-foreground max-w-md">
+                    Make sure your microphone is enabled and you're in a quiet environment
+                  </p>
                 </div>
               )}
 
-              {/* Complete Interview Button */}
+              {/* Connecting State */}
+              {isConnecting && (
+                <div className="flex flex-col items-center gap-4">
+                  <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
+                  <p className="text-lg font-medium text-blue-500">Connecting to AI interviewer...</p>
+                  <p className="text-sm text-muted-foreground">Please allow microphone access if prompted</p>
+                </div>
+              )}
+
+              {/* Active Call Controls */}
               {isCallActive && (
-                <Button
-                  onClick={handleCompleteInterview}
-                  variant="outline"
-                  className="mt-4"
-                >
-                  Complete Interview
-                </Button>
+                <div className="flex flex-col items-center gap-6">
+                  <div className="flex gap-4">
+                    <Button
+                      onClick={handleEndCall}
+                      size="lg"
+                      className="rounded-full px-8 py-6 flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white shadow-lg"
+                    >
+                      <PhoneOff className="w-5 h-5" />
+                      End Call
+                    </Button>
+                    <Button
+                      onClick={handleCompleteInterview}
+                      size="lg"
+                      variant="outline"
+                      className="rounded-full px-8 py-6"
+                    >
+                      Complete Interview
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground max-w-md">
+                    Speak naturally and the AI will guide you through the interview questions
+                  </p>
+                </div>
+              )}
+
+              {/* Error Display */}
+              {error && (
+                <div className="text-red-500 text-sm bg-red-500/10 border border-red-500/20 p-4 rounded-lg max-w-md mx-auto">
+                  <p className="font-medium mb-1">Connection Error</p>
+                  <p>{error}</p>
+                </div>
               )}
             </div>
           </div>

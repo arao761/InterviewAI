@@ -28,10 +28,10 @@ export default function PricingPage() {
 
   const handlePlanClick = async (planName: string, planKey: string) => {
     setError('');
-    
+
     // Enterprise plan - contact sales
     if (planKey === 'enterprise') {
-      // You can add a contact form or email link here
+      window.location.href = 'mailto:contact@interviewai.com?subject=Enterprise Plan Inquiry&body=Hi, I would like to learn more about the Enterprise plan for my organization.';
       return;
     }
     
