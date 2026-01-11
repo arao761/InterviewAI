@@ -20,7 +20,7 @@ export default function AboutPage() {
       title: 'AI and NLP Integrator',
       bio: 'Computer Vision Researcher at Johns Hopkins Applied Physics Laboratory',
       education: 'BACS and DS Minor @UVA',
-      image: 'https://media.licdn.com/dms/image/v2/D4E03AQHcmUArD8p0YA/profile-displayphoto-shrink_400_400/B4EZce_HtgHkAs-/0/1748571553507?e=1764806400&v=beta&t=GD9XmnTud0Two5ZXMhU22PnL2JDRIrlC5C1XN2Vrwnw',
+      image: '/team/AnkitRao.jpg',
       gradient: 'from-primary to-accent',
     },
     {

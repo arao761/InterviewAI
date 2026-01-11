@@ -10,12 +10,26 @@ from typing import Optional
 from app.core.config import settings
 from app.core.logging import logger
 
+# AWS SES support
+try:
+    import boto3
+    from botocore.exceptions import ClientError
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
+
 
 class EmailService:
     """Service for sending emails."""
-    
+
     def __init__(self):
-        # Email configuration from environment variables
+        # AWS SES configuration (preferred for production)
+        self.aws_access_key = getattr(settings, 'AWS_ACCESS_KEY_ID', '').strip()
+        self.aws_secret_key = getattr(settings, 'AWS_SECRET_ACCESS_KEY', '').strip()
+        self.aws_region = getattr(settings, 'AWS_REGION', 'us-east-1').strip()
+        self.aws_ses_from_email = getattr(settings, 'AWS_SES_FROM_EMAIL', '').strip()
+
+        # SMTP configuration (fallback for local development)
         self.smtp_host = getattr(settings, 'SMTP_HOST', 'smtp.gmail.com')
         self.smtp_port = getattr(settings, 'SMTP_PORT', 587)
         self.smtp_user = getattr(settings, 'SMTP_USER', '').strip()
@@ -24,11 +38,48 @@ class EmailService:
         self.smtp_password = smtp_password_raw.strip().replace(' ', '') if smtp_password_raw else ''
         self.from_email = getattr(settings, 'FROM_EMAIL', self.smtp_user).strip()
         self.frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+
+        # Determine which email method to use
+        self.use_ses = HAS_BOTO3 and bool(self.aws_access_key and self.aws_secret_key)
+
+        if self.use_ses:
+            logger.info("Email service initialized with AWS SES")
+            self.ses_client = boto3.client(
+                'ses',
+                aws_access_key_id=self.aws_access_key,
+                aws_secret_access_key=self.aws_secret_key,
+                region_name=self.aws_region
+            )
+        else:
+            logger.info("Email service initialized with SMTP")
         
     def generate_verification_token(self) -> str:
         """Generate a secure random token for email verification."""
         return secrets.token_urlsafe(32)
-    
+
+    def _send_via_ses(self, to_email: str, subject: str, html_body: str, text_body: str) -> bool:
+        """Send email via AWS SES."""
+        try:
+            response = self.ses_client.send_email(
+                Source=self.aws_ses_from_email,
+                Destination={'ToAddresses': [to_email]},
+                Message={
+                    'Subject': {'Data': subject, 'Charset': 'UTF-8'},
+                    'Body': {
+                        'Text': {'Data': text_body, 'Charset': 'UTF-8'},
+                        'Html': {'Data': html_body, 'Charset': 'UTF-8'}
+                    }
+                }
+            )
+            logger.info(f"✅ Email sent via SES to {to_email}. MessageId: {response['MessageId']}")
+            return True
+        except ClientError as e:
+            logger.error(f"SES error sending email to {to_email}: {e.response['Error']['Message']}")
+            return False
+        except Exception as e:
+            logger.error(f"Failed to send email via SES to {to_email}: {e}")
+            return False
+
     def send_verification_email(self, email: str, name: str, token: str) -> bool:
         """
         Send email verification email.
@@ -42,22 +93,16 @@ class EmailService:
             True if email sent successfully, False otherwise
         """
         try:
-            # If SMTP is not configured, log and return False
-            if not self.smtp_user or not self.smtp_password:
-                logger.warning("SMTP not configured - email verification disabled. Set SMTP_USER and SMTP_PASSWORD in .env")
+            # Check if any email method is configured
+            if not self.use_ses and (not self.smtp_user or not self.smtp_password):
+                logger.warning("No email service configured - email verification disabled.")
                 logger.info(f"Verification token for {email}: {token}")
                 logger.info(f"Verification URL: {self.frontend_url}/verify-email?token={token}")
                 return False
-            
+
             # Create verification URL
             verification_url = f"{self.frontend_url}/verify-email?token={token}"
-            
-            # Create email message
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = 'Verify Your Email - InterviewAI'
-            msg['From'] = self.from_email
-            msg['To'] = email
-            
+
             # Create HTML email body
             html_body = f"""
             <!DOCTYPE html>
@@ -112,13 +157,29 @@ class EmailService:
             
             © 2024 InterviewAI. All rights reserved.
             """
-            
+
+            # Send via AWS SES or SMTP
+            if self.use_ses:
+                return self._send_via_ses(
+                    to_email=email,
+                    subject='Verify Your Email - InterviewAI',
+                    html_body=html_body,
+                    text_body=text_body
+                )
+
+            # Fall back to SMTP
+            # Create email message
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = 'Verify Your Email - InterviewAI'
+            msg['From'] = self.from_email
+            msg['To'] = email
+
             # Attach both versions
             msg.attach(MIMEText(text_body, 'plain'))
             msg.attach(MIMEText(html_body, 'html'))
-            
+
             # Send email with explicit envelope to ensure it goes to the user, not the sender
-            logger.info(f"Attempting to send verification email to {email} via {self.smtp_host}:{self.smtp_port}")
+            logger.info(f"Attempting to send verification email to {email} via SMTP {self.smtp_host}:{self.smtp_port}")
             logger.info(f"Using SMTP user: {self.smtp_user}, From: {self.from_email}")
             
             with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=30) as server:
@@ -165,18 +226,14 @@ class EmailService:
             True if email sent successfully, False otherwise
         """
         try:
-            if not self.smtp_user or not self.smtp_password:
-                logger.warning("SMTP not configured - password reset email disabled")
+            # Check if any email method is configured
+            if not self.use_ses and (not self.smtp_user or not self.smtp_password):
+                logger.warning("No email service configured - password reset email disabled.")
                 logger.info(f"Password reset token for {email}: {token}")
                 return False
-            
+
             reset_url = f"{self.frontend_url}/reset-password?token={token}"
-            
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = 'Reset Your Password - InterviewAI'
-            msg['From'] = self.from_email
-            msg['To'] = email
-            
+
             html_body = f"""
             <!DOCTYPE html>
             <html>
@@ -193,9 +250,41 @@ class EmailService:
             </body>
             </html>
             """
-            
+
+            text_body = f"""
+            Password Reset Request
+
+            Hi {name},
+
+            You requested to reset your password. Visit this link to reset it:
+
+            {reset_url}
+
+            This link will expire in 1 hour.
+
+            If you didn't request this, please ignore this email.
+
+            © 2024 InterviewAI. All rights reserved.
+            """
+
+            # Send via AWS SES or SMTP
+            if self.use_ses:
+                return self._send_via_ses(
+                    to_email=email,
+                    subject='Reset Your Password - InterviewAI',
+                    html_body=html_body,
+                    text_body=text_body
+                )
+
+            # Fall back to SMTP
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = 'Reset Your Password - InterviewAI'
+            msg['From'] = self.from_email
+            msg['To'] = email
+
+            msg.attach(MIMEText(text_body, 'plain'))
             msg.attach(MIMEText(html_body, 'html'))
-            
+
             # Send email with explicit envelope to ensure it goes to the user, not the sender
             with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
                 server.starttls()

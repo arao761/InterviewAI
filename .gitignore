@@ -36,11 +36,23 @@ frontend.log
 .idea/
 *.iml
 
-# Environment
+# ============================================================================
+# CRITICAL SECURITY: Environment Files
+# ============================================================================
+# NEVER commit .env files - they contain sensitive API keys and secrets
+# ONLY commit .env.example files with placeholder values
+# ============================================================================
 .env
 .env.local
 .env.*.local
 .env.bak
+.env.production
+.env.staging
+.env.development
+*/.env
+*/.env.local
+backend/.env
+frontend/.env.local
 
 # Temp
 *.tmp
