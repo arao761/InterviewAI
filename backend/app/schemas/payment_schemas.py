@@ -7,11 +7,10 @@ SECURITY FEATURES:
 - No unexpected fields allowed (extra='forbid')
 - Length limits on all string fields
 """
-from pydantic import BaseModel, Field, field_validator, HttpUrl
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import datetime
 from enum import Enum
-import re
 
 
 class SubscriptionPlan(str, Enum):

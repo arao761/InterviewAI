@@ -8,7 +8,7 @@ SECURITY FEATURES:
 - No unexpected fields allowed (extra='forbid')
 - Input sanitization via Pydantic validators
 """
-from pydantic import BaseModel, EmailStr, Field, validator, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional
 from datetime import datetime
 import re

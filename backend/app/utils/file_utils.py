@@ -11,7 +11,6 @@ SECURITY FEATURES:
 """
 import os
 import uuid
-import mimetypes
 from pathlib import Path
 from typing import Optional, Tuple
 from fastapi import UploadFile, HTTPException
@@ -272,7 +271,8 @@ async def save_upload_file(
         if file_path.exists():
             try:
                 file_path.unlink()
-            except:
+            except Exception:
+                # Ignore errors during cleanup, file may already be deleted
                 pass
         raise HTTPException(status_code=500, detail="Error saving file")
 

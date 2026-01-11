@@ -11,7 +11,6 @@ Usage:
 SECURITY NOTE: This is a basic check. It does not replace proper security
 audits, penetration testing, or code review.
 """
-import os
 import sys
 from pathlib import Path
 from typing import List, Tuple

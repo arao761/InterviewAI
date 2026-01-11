@@ -11,7 +11,6 @@ export default function ScoreBreakdown({ evaluation }: ScoreBreakdownProps) {
   const overallScore = Math.round(evaluation.overall_score || 0);
   const technicalScore = evaluation.technical_score ? Math.round(evaluation.technical_score) : null;
   const behavioralScore = evaluation.behavioral_score ? Math.round(evaluation.behavioral_score) : null;
-  const questionScores = evaluation.question_scores || [];
   const individualEvals = evaluation.individual_evaluations || [];
 
   // Calculate score distribution

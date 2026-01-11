@@ -14,14 +14,13 @@ Rate Limits:
 - File uploads: 20 requests/hour per IP
 - Password reset: 3 requests/hour per IP
 """
-from fastapi import Request, HTTPException, status
+from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from typing import Optional, Callable
 import time
 import hashlib
 from collections import defaultdict
-from datetime import datetime, timedelta
 import asyncio
 
 from app.core.logging import logger

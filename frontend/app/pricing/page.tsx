@@ -31,7 +31,8 @@ export default function PricingPage() {
 
     // Enterprise plan - contact sales
     if (planKey === 'enterprise') {
-      window.location.href = 'mailto:contact@interviewai.com?subject=Enterprise Plan Inquiry&body=Hi, I would like to learn more about the Enterprise plan for my organization.';
+      const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'theofficialinterviewai@gmail.com';
+      window.location.href = `mailto:${contactEmail}?subject=Enterprise Plan Inquiry&body=Hi, I would like to learn more about the Enterprise plan for my organization.`;
       return;
     }
     

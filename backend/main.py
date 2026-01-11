@@ -152,7 +152,9 @@ async def add_security_headers(request, call_next):
     # Enable XSS filtering (legacy browsers)
     response.headers["X-XSS-Protection"] = "1; mode=block"
 
-    # Content Security Policy - strict policy to prevent XSS
+    # Content Security Policy - for API responses only
+    # NOTE: This CSP applies to backend API responses (JSON). Your Next.js frontend
+    # has its own CSP configuration in next.config.mjs for browser security.
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
         "script-src 'self'; "
