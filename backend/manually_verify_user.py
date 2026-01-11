@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Reset a user's password in the database.
+Manually verify a user's email in the database.
 
-Usage: python3 reset_user_password.py <email> <new_password>
+Usage: python3 manually_verify_user.py <email>
 """
 
 import sys
@@ -13,10 +13,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app.core.database import SessionLocal
 from app.models.models import User
-from app.utils.auth import get_password_hash
 
-def reset_password(email: str, new_password: str):
-    """Reset a user's password."""
+def verify_user(email: str):
+    """Verify a user's email."""
     db = SessionLocal()
     try:
         # Find user by email (case-insensitive)
@@ -27,23 +26,23 @@ def reset_password(email: str, new_password: str):
             print("\nAvailable users:")
             users = db.query(User).all()
             for u in users:
-                print(f"  - {u.email} (ID: {u.id})")
+                print(f"  - {u.email} (ID: {u.id}, Verified: {u.email_verified})")
             return False
         
-        # Hash new password
-        hashed_password = get_password_hash(new_password)
-        
-        # Update user
-        user.hashed_password = hashed_password
+        # Update user verification status
+        user.email_verified = True
+        user.verification_token = None
+        user.verification_token_expires = None
         db.commit()
         
-        print(f"✅ Password reset successfully for user: {user.email}")
+        print(f"✅ Email verified successfully for user: {user.email}")
         print(f"   User ID: {user.id}")
         print(f"   Name: {user.name}")
+        print(f"   Verified: {user.email_verified}")
         return True
         
     except Exception as e:
-        print(f"❌ Error resetting password: {e}")
+        print(f"❌ Error verifying user: {e}")
         import traceback
         traceback.print_exc()
         db.rollback()
@@ -53,18 +52,11 @@ def reset_password(email: str, new_password: str):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python3 reset_user_password.py <email> <new_password>")
+    if len(sys.argv) != 2:
+        print("Usage: python3 manually_verify_user.py <email>")
         print("\nExample:")
-        print("  python3 reset_user_password.py user@example.com MyNewPassword123")
+        print("  python3 manually_verify_user.py ankrao26@gmail.com")
         sys.exit(1)
     
     email = sys.argv[1]
-    new_password = sys.argv[2]
-    
-    if len(new_password) < 8:
-        print("❌ Password must be at least 8 characters long.")
-        sys.exit(1)
-    
-    reset_password(email, new_password)
-
+    verify_user(email)

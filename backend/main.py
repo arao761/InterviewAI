@@ -1,14 +1,23 @@
 """
 Main FastAPI application entry point for PrepWise Backend.
+
+SECURITY FEATURES:
+- Rate limiting on all endpoints (OWASP API4:2023)
+- CORS protection with whitelist
+- Input validation via Pydantic schemas
+- JWT authentication with secure token handling
+- Security headers for XSS/clickjacking prevention
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from app.core.config import settings
 from app.core.logging import logger
 from app.utils.exceptions import PrepWiseException
 from app.utils.error_handlers import prepwise_exception_handler, general_exception_handler
 from app.api import api_router
 from app.core.cache import cache_manager
+from app.middleware.rate_limit import RateLimitMiddleware
 from contextlib import asynccontextmanager
 
 
@@ -59,17 +68,37 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Configure CORS
-# In production, allow all origins if CORS_ORIGINS is not set or is empty
-# Otherwise use the configured origins
+# ============================================================================
+# SECURITY MIDDLEWARE CONFIGURATION (OWASP Best Practices)
+# ============================================================================
+
+# 1. Rate Limiting Middleware - MUST be first to prevent abuse
+# Implements OWASP API4:2023 - Unrestricted Resource Consumption
+app.add_middleware(RateLimitMiddleware)
+
+# 2. CORS Configuration - Restrict origins in production
+# SECURITY NOTE: "*" allows all origins - only use in development
+# In production, explicitly list allowed origins in CORS_ORIGINS env variable
 cors_origins = settings.cors_origins_list if settings.cors_origins_list else ["*"]
+if "*" in cors_origins and settings.ENVIRONMENT == "production":
+    logger.warning("⚠️  CORS is set to allow all origins in PRODUCTION. This is a security risk!")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],  # Explicit methods only
     allow_headers=["*"],
+    expose_headers=["X-RateLimit-Limit", "X-RateLimit-Window"],
 )
+
+# 3. Trusted Host Middleware - Prevent Host Header attacks
+# Only in production to avoid localhost issues in development
+if settings.ENVIRONMENT == "production" and settings.TRUSTED_HOSTS:
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=settings.TRUSTED_HOSTS.split(",")
+    )
 
 # Add exception handlers
 app.add_exception_handler(PrepWiseException, prepwise_exception_handler)
@@ -96,12 +125,68 @@ async def health_check():
     }
 
 
+# ============================================================================
+# SECURITY HEADERS (OWASP Best Practices)
+# ============================================================================
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    """
+    Add security headers to all responses.
+
+    OWASP Security Headers:
+    - X-Content-Type-Options: Prevent MIME sniffing
+    - X-Frame-Options: Prevent clickjacking
+    - X-XSS-Protection: Enable XSS filter
+    - Strict-Transport-Security: Enforce HTTPS (production only)
+    - Content-Security-Policy: Prevent XSS attacks
+    - Referrer-Policy: Control referrer information
+    """
+    response = await call_next(request)
+
+    # Prevent MIME type sniffing
+    response.headers["X-Content-Type-Options"] = "nosniff"
+
+    # Prevent clickjacking attacks
+    response.headers["X-Frame-Options"] = "DENY"
+
+    # Enable XSS filtering (legacy browsers)
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+
+    # Content Security Policy - strict policy to prevent XSS
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: https:; "
+        "font-src 'self'; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none';"
+    )
+
+    # Control referrer information
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
+    # Permissions policy (formerly Feature-Policy)
+    response.headers["Permissions-Policy"] = (
+        "geolocation=(), microphone=(), camera=(), payment=()"
+    )
+
+    # HSTS - Force HTTPS in production
+    # SECURITY NOTE: Only enable in production with valid SSL certificate
+    if settings.ENVIRONMENT == "production":
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=31536000; includeSubDomains; preload"
+        )
+
+    return response
+
+
 # Root endpoint
 @app.get("/", tags=["Root"])
 async def root():
     """
     Root endpoint with API information.
-    
+
     Returns:
         dict: Welcome message and documentation links
     """

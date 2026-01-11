@@ -1,9 +1,17 @@
 """
 Pydantic schemas for AI/NLP API endpoints.
+
+SECURITY FEATURES:
+- Strict input validation to prevent injection attacks
+- Field size limits to prevent memory exhaustion
+- Type checking on all inputs
+- No unexpected fields allowed (extra='forbid')
+- Sanitization of user-provided text
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Dict, List, Any, Optional
 from enum import Enum
+import re
 
 
 class InterviewType(str, Enum):
@@ -63,7 +71,14 @@ class ResumeParseResponse(BaseModel):
 
 
 class QuestionGenerationRequest(BaseModel):
-    """Request schema for question generation."""
+    """
+    Request schema for question generation.
+
+    SECURITY:
+    - Limited to 20 questions to prevent resource exhaustion
+    - Company name sanitized to prevent injection
+    - Resume data structure validated
+    """
     resume_data: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Parsed resume data (flexible structure)"
@@ -80,15 +95,38 @@ class QuestionGenerationRequest(BaseModel):
         default=5,
         ge=1,
         le=20,
-        description="Number of questions to generate"
+        description="Number of questions to generate (max 20)"
     )
     company: Optional[str] = Field(
         default=None,
+        max_length=255,
         description="Target company for company-specific questions"
     )
 
+    @field_validator('company')
+    @classmethod
+    def validate_company(cls, v: Optional[str]) -> Optional[str]:
+        """
+        Sanitize company name.
+
+        SECURITY: Prevent injection via company name field
+        """
+        if v is None:
+            return v
+
+        v = v.strip()
+        if not v:
+            return None
+
+        # Allow only letters, numbers, spaces, hyphens, ampersands, periods
+        if not re.match(r'^[\w\s\-&.]+$', v, re.UNICODE):
+            raise ValueError("Company name contains invalid characters")
+
+        return v
+
     class Config:
-        extra = "allow"
+        # SECURITY: Forbid extra fields to prevent parameter pollution
+        extra = "forbid"
         json_schema_extra = {
             "example": {
                 "resume_data": {
@@ -131,15 +169,62 @@ class QuestionGenerationResponse(BaseModel):
 
 
 class ResponseEvaluationRequest(BaseModel):
-    """Request schema for response evaluation."""
-    question: Dict[str, Any] = Field(..., description="The interview question")
-    transcript: str = Field(..., description="Candidate's response transcript")
+    """
+    Request schema for response evaluation.
+
+    SECURITY:
+    - Transcript length limited to prevent memory exhaustion
+    - Question type validated against enum
+    """
+    question: Dict[str, Any] = Field(
+        ...,
+        description="The interview question"
+    )
+    transcript: str = Field(
+        ...,
+        min_length=1,
+        max_length=50000,  # ~10,000 words max
+        description="Candidate's response transcript"
+    )
     question_type: Optional[str] = Field(
         default=None,
+        max_length=50,
         description="Type of question (behavioral/technical)"
     )
 
+    @field_validator('transcript')
+    @classmethod
+    def validate_transcript(cls, v: str) -> str:
+        """
+        Validate and sanitize transcript.
+
+        SECURITY: Prevent excessively long inputs that could cause DoS
+        """
+        v = v.strip()
+        if not v:
+            raise ValueError("Transcript cannot be empty")
+
+        # Check length in characters
+        if len(v) > 50000:
+            raise ValueError("Transcript is too long (max 50,000 characters)")
+
+        return v
+
+    @field_validator('question_type')
+    @classmethod
+    def validate_question_type(cls, v: Optional[str]) -> Optional[str]:
+        """Validate question type against allowed values."""
+        if v is None:
+            return v
+
+        allowed_types = ['behavioral', 'technical', 'mixed']
+        if v.lower() not in allowed_types:
+            raise ValueError(f"Question type must be one of: {', '.join(allowed_types)}")
+
+        return v.lower()
+
     class Config:
+        extra = 'forbid'
         json_schema_extra = {
             "example": {
                 "question": {

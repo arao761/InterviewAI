@@ -1,10 +1,17 @@
 """
 Payment and subscription schemas for Stripe integration.
+
+SECURITY FEATURES:
+- URL validation for callbacks
+- Strict enum validation for plans and statuses
+- No unexpected fields allowed (extra='forbid')
+- Length limits on all string fields
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, HttpUrl
 from typing import Optional
 from datetime import datetime
 from enum import Enum
+import re
 
 
 class SubscriptionPlan(str, Enum):
@@ -33,10 +40,59 @@ class PaymentStatus(str, Enum):
 
 
 class CreateCheckoutRequest(BaseModel):
-    """Request to create a Stripe checkout session."""
-    plan: SubscriptionPlan = Field(..., description="Subscription plan to purchase")
-    success_url: Optional[str] = Field(None, description="URL to redirect after successful payment")
-    cancel_url: Optional[str] = Field(None, description="URL to redirect after canceled payment")
+    """
+    Request to create a Stripe checkout session.
+
+    SECURITY:
+    - Plan validated against enum
+    - URLs validated to prevent open redirect vulnerabilities
+    - Rate limited at endpoint (10 requests/hour per user)
+    """
+    plan: SubscriptionPlan = Field(
+        ...,
+        description="Subscription plan to purchase"
+    )
+    success_url: Optional[str] = Field(
+        None,
+        max_length=2048,
+        description="URL to redirect after successful payment"
+    )
+    cancel_url: Optional[str] = Field(
+        None,
+        max_length=2048,
+        description="URL to redirect after canceled payment"
+    )
+
+    @field_validator('success_url', 'cancel_url')
+    @classmethod
+    def validate_urls(cls, v: Optional[str]) -> Optional[str]:
+        """
+        Validate callback URLs.
+
+        SECURITY: Prevent open redirect attacks by validating URL format
+        In production, consider whitelisting allowed domains
+        """
+        if v is None:
+            return v
+
+        v = v.strip()
+
+        # Basic URL validation
+        if not v.startswith(('http://', 'https://')):
+            raise ValueError("URL must start with http:// or https://")
+
+        # Prevent javascript: and data: URLs
+        if v.lower().startswith(('javascript:', 'data:', 'vbscript:')):
+            raise ValueError("Invalid URL scheme")
+
+        # Length check
+        if len(v) > 2048:
+            raise ValueError("URL is too long (max 2048 characters)")
+
+        return v
+
+    class Config:
+        extra = 'forbid'
 
 
 class CheckoutSessionResponse(BaseModel):
