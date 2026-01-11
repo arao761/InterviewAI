@@ -206,12 +206,13 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
             )
 
         # Check if email is verified
-        if not user.email_verified:
-            logger.warning(f"Login attempt failed - Email not verified for user: {user.email}")
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Please verify your email address before logging in. Check your inbox for the verification email.",
-            )
+        # TEMPORARILY DISABLED - Uncomment to re-enable email verification
+        # if not user.email_verified:
+        #     logger.warning(f"Login attempt failed - Email not verified for user: {user.email}")
+        #     raise HTTPException(
+        #         status_code=status.HTTP_403_FORBIDDEN,
+        #         detail="Please verify your email address before logging in. Check your inbox for the verification email.",
+        #     )
 
         # Create access token
         access_token = create_access_token(

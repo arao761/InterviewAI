@@ -41,8 +41,8 @@ export default function RegisterPage() {
 
     try {
       await register(email, name, password);
-      // Show success message and redirect to verification notice
-      router.push('/verify-email-pending?email=' + encodeURIComponent(email));
+      // TEMPORARILY DISABLED - Redirect to login instead of email verification
+      router.push('/login');
     } catch (err: any) {
       setError(err.message || 'Registration failed');
       setLoading(false);
