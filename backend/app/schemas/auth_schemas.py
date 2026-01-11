@@ -169,6 +169,7 @@ class UserResponse(BaseModel):
     email_verified: bool = False
     created_at: datetime
     updated_at: Optional[datetime] = None
+    email_sent: Optional[bool] = None  # Whether verification email was sent successfully
 
     class Config:
         from_attributes = True
