@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+*.next
+
+# Logs
+*.log
+frontend.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Process files
+*.pid
+
+# Build artifacts
+dist/
+build/
+
+# Test files
+coverage/
+.nyc_output/
+
+# Misc
+*.tsbuildinfo

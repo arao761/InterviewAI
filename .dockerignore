@@ -1,0 +1,46 @@
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+!README.md
+!DOCKER.md
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Docker files (don't copy into containers)
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Process files
+*.pid
+
+# Test files
+test_*.py
+*_test.py
+tests/
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/

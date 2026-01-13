@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: interviewai-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: prepwise_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - interviewai-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: interviewai-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - interviewai-network
+
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: interviewai-backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Database
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/prepwise_db
+      # Redis
+      REDIS_URL: redis://redis:6379/0
+      # App Configuration
+      ENVIRONMENT: development
+      DEBUG: "true"
+      HOST: 0.0.0.0
+      PORT: 8000
+      # Security (override in .env for production)
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
+      # CORS
+      CORS_ORIGINS: http://localhost:3000,http://localhost:8080
+      # Frontend URL
+      FRONTEND_URL: http://localhost:3000
+      # API Keys (set in .env file)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Stripe (set in .env file)
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      # Email Configuration (set in .env file)
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      FROM_EMAIL: ${FROM_EMAIL:-}
+      # AWS SES (optional, set in .env file)
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_SES_FROM_EMAIL: ${AWS_SES_FROM_EMAIL:-}
+    volumes:
+      # Mount uploads directory for persistence
+      - ./backend/uploads:/app/uploads
+      - ./backend/data:/app/data
+      - ./backend/logs:/app/logs
+      # For development: mount code for hot reload (comment out for production)
+      # - ./backend:/app/backend
+      # - ./ai-engine:/app/ai-engine
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - interviewai-network
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    container_name: interviewai-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    depends_on:
+      - backend
+    networks:
+      - interviewai-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  interviewai-network:
+    driver: bridge

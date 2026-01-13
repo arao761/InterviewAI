@@ -194,12 +194,12 @@ export default function Dashboard() {
               <p className="text-muted-foreground">Track your interview preparation progress</p>
             </div>
 
-          <Link href="/interview-setup">
+            <Link href="/interview-setup">
             <Button className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <Plus className="w-4 h-4 mr-2" />
-              New Interview
-            </Button>
-          </Link>
+                <Plus className="w-4 h-4 mr-2" />
+                New Interview
+              </Button>
+            </Link>
           </div>
 
           {/* Authentication Required Message */}
@@ -249,12 +249,12 @@ export default function Dashboard() {
               <p className="text-muted-foreground">Track your interview preparation progress</p>
             </div>
 
-          <Link href="/interview-setup">
+            <Link href="/interview-setup">
             <Button className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <Plus className="w-4 h-4 mr-2" />
-              New Interview
-            </Button>
-          </Link>
+                <Plus className="w-4 h-4 mr-2" />
+                New Interview
+              </Button>
+            </Link>
           </div>
 
           {/* Error Message */}

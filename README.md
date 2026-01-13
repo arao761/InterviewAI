@@ -40,6 +40,32 @@ InterviewAI is a comprehensive interview preparation tool that uses artificial i
 
 ## Quick Start
 
+### Option 1: Docker (Recommended)
+
+```bash
+# 1. Create .env file with your API keys
+cp .env.example .env
+# Edit .env and add your OPENAI_API_KEY
+
+# 2. Start all services with Docker
+docker-compose up -d
+
+# 3. Open the application
+# Frontend: http://localhost:3000
+# Backend API: http://localhost:8000
+# API Docs: http://localhost:8000/api/v1/docs
+
+# 4. View logs
+docker-compose logs -f
+
+# 5. Stop services
+docker-compose down
+```
+
+See [DOCKER.md](DOCKER.md) for detailed Docker instructions.
+
+### Option 2: Manual Setup
+
 ```bash
 # 1. Start all services
 ./START_HACKATHON.sh
@@ -60,7 +86,9 @@ To stop all services:
 ```
 ├── backend/                    # FastAPI REST API
 ├── ai-engine/                 # AI/NLP processing engine
-├── frontend/ # Next.js frontend
+├── frontend/                  # Next.js frontend
+├── docker-compose.yml         # Docker orchestration
+├── DOCKER.md                  # Docker setup guide
 └── SETUP_PROJECT.sh           # Initial setup script
 ```
 

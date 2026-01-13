@@ -38,7 +38,7 @@ export default function AboutPage() {
       title: 'Voice API Setup',
       bio: 'Client developer for Candlefish, focusing on 3D scene reconstruction',
       education: 'BSCS and DS Minor @UVA',
-      image: 'https://media.licdn.com/dms/image/v2/D4E03AQHVcpywd9gjIA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1721784103161?e=1764806400&v=beta&t=hBsvqFOete2VbeJfynOiPSGCBouYHM7rb4-VUcm0M-4',
+      image: '/team/VaibhavMahajan.jpg',
       gradient: 'from-secondary to-primary',
     },
     {
