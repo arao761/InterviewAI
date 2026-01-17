@@ -248,8 +248,16 @@ export class FoundryInterviewer {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Foundry API error: ${response.status} - ${errorText}`);
+        let errorText = '';
+        try {
+          const errorData = await response.json();
+          errorText = errorData.error?.message || errorData.message || JSON.stringify(errorData);
+        } catch {
+          errorText = await response.text();
+        }
+        const errorMessage = `Foundry API error (${response.status}): ${errorText}`;
+        console.error('FoundryInterviewer API Error:', errorMessage);
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -261,8 +269,9 @@ export class FoundryInterviewer {
 
       return assistantMessage;
     } catch (error) {
-      console.error('Error calling Foundry API:', error);
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('Error calling Foundry API:', errorMessage, error);
+      throw new Error(`Failed to get AI response: ${errorMessage}`);
     }
   }
 
@@ -291,8 +300,10 @@ export class FoundryInterviewer {
         await this.speakText(aiResponse.trim());
       }
     } catch (error) {
-      console.error('Error handling recognized speech:', error);
-      this.callbacks.onError?.(error instanceof Error ? error : new Error(String(error)));
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('Error handling recognized speech:', errorMessage, error);
+      const errorObj = error instanceof Error ? error : new Error(`Speech processing error: ${errorMessage}`);
+      this.callbacks.onError?.(errorObj);
     } finally {
       this.callbacks.onSpeechEnd?.();
     }
@@ -343,19 +354,20 @@ export class FoundryInterviewer {
                                 (this.config.speechKey && this.config.speechEndpoint);
 
       if (!hasSpeechServices) {
-        throw new Error(
-          'Azure Speech Services not configured. Please add either:\n' +
+        const errorMsg = 'Azure Speech Services not configured. Please add either:\n' +
           '- NEXT_PUBLIC_AZURE_SPEECH_KEY and NEXT_PUBLIC_AZURE_SPEECH_REGION, OR\n' +
           '- NEXT_PUBLIC_AZURE_SPEECH_KEY and NEXT_PUBLIC_AZURE_SPEECH_ENDPOINT\n' +
-          'to your .env file. You can get these from Azure Portal: https://portal.azure.com'
-        );
+          'to your .env file. You can get these from Azure Portal: https://portal.azure.com';
+        console.error('FoundryInterviewer:', errorMsg);
+        throw new Error(errorMsg);
       }
 
       // Initialize Azure Speech Services
       // Support both endpoint-based and region-based configuration
       if (this.config.speechEndpoint && this.config.speechKey) {
         // Use custom endpoint if provided (for STT, use the speech endpoint)
-        const endpointUrl = this.config.speechEndpoint;
+        // Speech SDK requires URL object, not string
+        const endpointUrl = new URL(this.config.speechEndpoint);
         this.speechConfig = SpeechSDK.SpeechConfig.fromEndpoint(
           endpointUrl,
           this.config.speechKey
@@ -367,7 +379,7 @@ export class FoundryInterviewer {
             this.config.speechRegion
           );
         } else {
-          // Extract region from endpoint if possible, or use endpoint
+          // Use the same endpoint for TTS
           this.synthesizerConfig = SpeechSDK.SpeechConfig.fromEndpoint(
             endpointUrl,
             this.config.speechKey
@@ -415,9 +427,11 @@ export class FoundryInterviewer {
       };
 
       this.recognizer.canceled = (_s: any, e: any) => {
-        console.error('Speech recognition canceled:', e.errorDetails);
+        const errorDetails = e.errorDetails || e.reason || 'Unknown error';
+        console.error('Speech recognition canceled:', errorDetails, e);
         if (e.reason === SpeechSDK.CancellationReason.Error) {
-          this.callbacks.onError?.(new Error(`Speech recognition error: ${e.errorDetails}`));
+          const errorMsg = typeof errorDetails === 'string' ? errorDetails : JSON.stringify(errorDetails);
+          this.callbacks.onError?.(new Error(`Speech recognition error: ${errorMsg}`));
         }
       };
 
@@ -448,15 +462,39 @@ export class FoundryInterviewer {
           });
         },
         (error: any) => {
-          console.error('Error starting recognition:', error);
-          this.callbacks.onError?.(error instanceof Error ? error : new Error(String(error)));
-          throw error;
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.error('Error starting recognition:', errorMessage, error);
+          const errorObj = error instanceof Error ? error : new Error(`Speech recognition failed: ${errorMessage}`);
+          this.callbacks.onError?.(errorObj);
+          throw errorObj;
         }
       );
     } catch (error) {
-      console.error('Error starting Microsoft Foundry interview:', error);
-      this.callbacks.onError?.(error instanceof Error ? error : new Error(String(error)));
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('Error starting Microsoft Foundry interview:', errorMessage, error);
+      
+      // Provide more specific error messages
+      let userFriendlyError = errorMessage;
+      if (errorMessage.includes('Speech Services not configured')) {
+        userFriendlyError = errorMessage; // Already user-friendly
+      } else if (errorMessage.includes('microphone') || errorMessage.includes('Audio')) {
+        userFriendlyError = 'Microphone access denied or unavailable. Please grant microphone permissions and try again.';
+      } else if (errorMessage.includes('Speech recognition') || errorMessage.includes('Speech SDK')) {
+        userFriendlyError = `Speech recognition error: ${errorMessage}`;
+      } else if (errorMessage.includes('Invalid URL') || errorMessage.includes('URL')) {
+        userFriendlyError = `Invalid endpoint configuration: ${errorMessage}. Check your NEXT_PUBLIC_AZURE_SPEECH_ENDPOINT.`;
+      } else {
+        userFriendlyError = `Failed to start voice interview: ${errorMessage}`;
+      }
+      
+      const errorObj = error instanceof Error ? error : new Error(userFriendlyError);
+      if (!(error instanceof Error)) {
+        errorObj.message = userFriendlyError;
+      } else if (errorObj.message !== userFriendlyError) {
+        errorObj.message = userFriendlyError;
+      }
+      this.callbacks.onError?.(errorObj);
+      throw errorObj;
     }
   }
 

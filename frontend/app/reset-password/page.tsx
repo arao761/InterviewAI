@@ -15,9 +15,10 @@ function ResetPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  // Decode the token from URL (Next.js searchParams.get already decodes, but be explicit)
-  const rawToken = searchParams.get('token');
-  const token = rawToken ? decodeURIComponent(rawToken) : null;
+  // Get token from URL - token_urlsafe tokens are already URL-safe, no decoding needed
+  // They contain only: A-Z, a-z, 0-9, -, _ which are all safe in URLs
+  // Just use the token as-is from the URL parameter
+  const token = searchParams.get('token');
 
   useEffect(() => {
     if (!token) {

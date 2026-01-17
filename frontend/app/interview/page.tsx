@@ -9,7 +9,7 @@ import TranscriptPanel from '@/components/interview-session/transcript-panel';
 import TimerDisplay from '@/components/interview-session/timer-display';
 import DSAProblemDisplay from '@/components/interview-session/dsa-problem-display';
 import AnimatedFaceAvatar from '@/components/interview-session/animated-face-avatar';
-import { VapiInterviewer } from '@/lib/vapi/vapi-interviewer';
+import { FoundryInterviewer } from '@/lib/microsoft-foundry/foundry-interviewer';
 
 // Dynamic import for CodeEditor to avoid SSR issues with Monaco
 const CodeEditor = dynamic(
@@ -39,7 +39,7 @@ export default function InterviewSession() {
   const [codeLanguage, setCodeLanguage] = useState('javascript');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
-  // VAPI state
+  // Microsoft Foundry state
   const [isCallActive, setIsCallActive] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [conversationMessages, setConversationMessages] = useState<ConversationMessage[]>([]);
@@ -47,7 +47,7 @@ export default function InterviewSession() {
   const [error, setError] = useState<string | null>(null);
   const [transcript, setTranscript] = useState('');
 
-  const vapiInterviewerRef = useRef<VapiInterviewer | null>(null);
+  const foundryInterviewerRef = useRef<FoundryInterviewer | null>(null);
   const finalTranscriptRef = useRef<string>('');
 
   // Check if this is a technical interview
@@ -227,13 +227,30 @@ export default function InterviewSession() {
     return '';
   };
 
-  // Initialize VAPI interviewer
-  const initializeVapi = useCallback(() => {
-    const apiKey = process.env.NEXT_PUBLIC_VAPI_API_KEY;
-    const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
+  // Initialize Microsoft Foundry interviewer
+  const initializeFoundry = useCallback(() => {
+    const foundryEndpoint = process.env.NEXT_PUBLIC_FOUNDRY_ENDPOINT;
+    const foundryApiKey = process.env.NEXT_PUBLIC_FOUNDRY_API_KEY;
+    const deploymentName = process.env.NEXT_PUBLIC_AZURE_OPENAI_DEPLOYMENT_NAME;
+    const speechKey = process.env.NEXT_PUBLIC_AZURE_SPEECH_KEY;
+    const speechRegion = process.env.NEXT_PUBLIC_AZURE_SPEECH_REGION;
+    const speechEndpoint = process.env.NEXT_PUBLIC_AZURE_SPEECH_ENDPOINT;
 
-    if (!apiKey || !assistantId) {
-      setError('VAPI configuration missing. Please check your environment variables.');
+    if (!foundryEndpoint || !foundryApiKey) {
+      setError('Microsoft Foundry/Azure OpenAI configuration missing. Please check your environment variables (NEXT_PUBLIC_FOUNDRY_ENDPOINT and NEXT_PUBLIC_FOUNDRY_API_KEY).');
+      return null;
+    }
+
+    // Speech Services can use either region+key OR endpoint+key
+    const hasSpeechServices = (speechKey && speechRegion) || (speechKey && speechEndpoint);
+    if (!hasSpeechServices) {
+      setError(
+        'Azure Speech Services not configured. Voice interviews require Azure Speech Services. ' +
+        'Please add either:\n' +
+        '- NEXT_PUBLIC_AZURE_SPEECH_KEY and NEXT_PUBLIC_AZURE_SPEECH_REGION, OR\n' +
+        '- NEXT_PUBLIC_AZURE_SPEECH_KEY and NEXT_PUBLIC_AZURE_SPEECH_ENDPOINT\n' +
+        'to your .env file. You can get these from Azure Portal: https://portal.azure.com'
+      );
       return null;
     }
 
@@ -249,10 +266,14 @@ export default function InterviewSession() {
       timeRemainingMinutes: Math.floor(timeRemaining / 60),
     } : undefined;
 
-    const interviewer = new VapiInterviewer(
+    const interviewer = new FoundryInterviewer(
       {
-        vapiApiKey: apiKey,
-        assistantId: assistantId,
+        foundryEndpoint: foundryEndpoint,
+        foundryApiKey: foundryApiKey,
+        deploymentName: deploymentName,
+        speechKey: speechKey,
+        speechRegion: speechRegion,
+        speechEndpoint: speechEndpoint,
         context: context,
       },
       {
@@ -298,21 +319,40 @@ export default function InterviewSession() {
           }
         },
         onError: (err) => {
-          console.error('VAPI error in page:', err);
-          console.error('Error message:', err.message);
-          console.error('Error stack:', err.stack);
-          setError(`Voice AI error: ${err.message || 'Unknown error - check console'}`);
+          // Extract error message more robustly
+          let errorMessage = 'Unknown error';
+          if (err instanceof Error) {
+            errorMessage = err.message || err.toString();
+          } else if (typeof err === 'string') {
+            errorMessage = err;
+          } else if (err && typeof err === 'object') {
+            // Handle error objects that might have nested properties
+            errorMessage = (err as any).message || (err as any).error?.message || JSON.stringify(err);
+          } else {
+            errorMessage = String(err);
+          }
+          
+          console.error('Microsoft Foundry error in page:', errorMessage, err);
+          console.error('Error details:', {
+            message: errorMessage,
+            type: typeof err,
+            isError: err instanceof Error,
+            stack: err instanceof Error ? err.stack : undefined,
+            fullError: err
+          });
+          
+          setError(`Voice AI error: ${errorMessage}`);
           setIsCallActive(false);
           setIsConnecting(false);
         },
         onCallStart: () => {
-          console.log('VAPI call started');
+          console.log('Microsoft Foundry call started');
           setIsCallActive(true);
           setIsConnecting(false);
           setError(null);
         },
         onCallEnd: () => {
-          console.log('VAPI call ended');
+          console.log('Microsoft Foundry call ended');
           setIsCallActive(false);
           setIsConnecting(false);
         },
@@ -331,8 +371,8 @@ export default function InterviewSession() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (vapiInterviewerRef.current) {
-        vapiInterviewerRef.current.stopInterview();
+      if (foundryInterviewerRef.current) {
+        foundryInterviewerRef.current.stopInterview();
       }
     };
   }, []);
@@ -342,26 +382,26 @@ export default function InterviewSession() {
     setIsConnecting(true);
 
     try {
-      const interviewer = initializeVapi();
+      const interviewer = initializeFoundry();
       if (!interviewer) {
         setIsConnecting(false);
         return;
       }
 
-      vapiInterviewerRef.current = interviewer;
+      foundryInterviewerRef.current = interviewer;
       await interviewer.startInterview();
       // State updates handled by callbacks
     } catch (e) {
-      console.error('Error starting VAPI interview:', e);
+      console.error('Error starting Microsoft Foundry interview:', e);
       setError('Failed to start voice interview. Please check your microphone permissions and try again.');
       setIsConnecting(false);
     }
   };
 
   const handleEndCall = async () => {
-    if (vapiInterviewerRef.current) {
-      await vapiInterviewerRef.current.stopInterview();
-      vapiInterviewerRef.current = null;
+    if (foundryInterviewerRef.current) {
+      await foundryInterviewerRef.current.stopInterview();
+      foundryInterviewerRef.current = null;
     }
     setIsCallActive(false);
   };
@@ -393,9 +433,9 @@ export default function InterviewSession() {
       setTimeRemaining((prev) => {
         const newTime = Math.max(0, prev - 1);
 
-        // Update VAPI with time remaining at key thresholds
-        if (vapiInterviewerRef.current) {
-          vapiInterviewerRef.current.updateTimeRemaining(newTime);
+        // Update Microsoft Foundry with time remaining at key thresholds
+        if (foundryInterviewerRef.current) {
+          foundryInterviewerRef.current.updateTimeRemaining(newTime);
         }
 
         return newTime;

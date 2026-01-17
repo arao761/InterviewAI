@@ -26,7 +26,7 @@ const nextConfig = {
               "img-src 'self' data: https: blob:",
               // Allow fonts from self, data URIs, and Google Fonts
               "font-src 'self' data: https://fonts.gstatic.com",
-              // Allow connections to self and external APIs (backend, VAPI, etc.)
+              // Allow connections to self and external APIs (backend, Microsoft Foundry, Azure Speech Services, etc.)
               "connect-src 'self' http://localhost:8000 https://*",
               // Prevent framing (clickjacking protection)
               "frame-ancestors 'none'",

@@ -417,6 +417,21 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
         Success message
     """
     try:
+        # Cleanup old expired reset tokens (older than 24 hours)
+        # This prevents database bloat and removes stale tokens
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=24)
+        expired_tokens = db.query(User).filter(
+            User.reset_token.isnot(None),
+            User.reset_token_expires < cutoff_time
+        ).all()
+
+        if expired_tokens:
+            logger.info(f"Cleaning up {len(expired_tokens)} expired reset tokens")
+            for user in expired_tokens:
+                user.reset_token = None
+                user.reset_token_expires = None
+            db.commit()
+
         email_lower = request.email.lower().strip()
 
         # Find user by email
@@ -437,7 +452,10 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
         user.reset_token_expires = token_expires
         db.commit()
 
-        logger.info(f"Password reset token generated for {user.email}")
+        logger.info(f"✅ Password reset token generated for {user.email}")
+        logger.info(f"   Token length: {len(reset_token)}")
+        logger.info(f"   Token expires at: {token_expires} (UTC)")
+        logger.info(f"   Token first 20 chars: {reset_token[:20]}...")
 
         # Send password reset email
         email_sent = email_service.send_password_reset_email(
@@ -447,12 +465,13 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
         )
 
         if email_sent:
-            logger.info(f"Password reset email sent to {email_lower}")
+            logger.info(f"✅ Password reset email sent to {email_lower}")
             return {"message": "Password reset email sent. Please check your inbox."}
         else:
-            logger.warning(f"Failed to send password reset email to {email_lower} (SMTP not configured)")
-            logger.info(f"Password reset token for {email_lower}: {reset_token}")
-            logger.info(f"Reset URL: {email_service.frontend_url}/reset-password?token={reset_token}")
+            logger.warning(f"⚠️  Failed to send password reset email to {email_lower} (SMTP/SES not configured)")
+            logger.warning(f"   PASSWORD RESET TOKEN (save this): {reset_token}")
+            logger.warning(f"   Reset URL: {email_service.frontend_url}/reset-password?token={reset_token}")
+            logger.warning(f"   This token expires in 1 hour at: {token_expires} UTC")
             return {"message": "Password reset email could not be sent. Please contact support."}
 
     except HTTPException:
@@ -480,17 +499,41 @@ async def reset_password(request: ResetPasswordRequest, db: Session = Depends(ge
     try:
         token = request.token
         new_password = request.new_password
-        
+
         if not token:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Reset token is required"
             )
-        
-        # Find user by reset token
-        user = db.query(User).filter(User.reset_token == token).first()
-        
+
+        # tokens from secrets.token_urlsafe() are URL-safe and don't need encoding/decoding
+        # They contain only: A-Z, a-z, 0-9, -, _ which are all safe in URLs
+        # Just strip whitespace and use the token as-is
+        token_stripped = token.strip()
+
+        logger.info(f"Password reset attempt - Received token length: {len(token_stripped)}, First 20 chars: {token_stripped[:20]}...")
+
+        # Look up user by reset token (exact match only - no URL decoding needed)
+        user = db.query(User).filter(User.reset_token == token_stripped).first()
+
         if not user:
+            # Enhanced logging for debugging
+            users_with_tokens = db.query(User).filter(User.reset_token.isnot(None)).all()
+            logger.warning(f"❌ Password reset failed - Token not found in database")
+            logger.warning(f"   Received token: {token_stripped}")
+            logger.warning(f"   Token length: {len(token_stripped)}")
+            logger.warning(f"   Users with reset tokens in DB: {len(users_with_tokens)}")
+
+            # Log first few tokens for comparison (first 20 chars only for security)
+            for i, u in enumerate(users_with_tokens[:3]):
+                if u.reset_token:
+                    logger.warning(f"   DB token {i+1} ({u.email}): {u.reset_token[:20]}... (length: {len(u.reset_token)})")
+                    # Check if tokens match at different positions
+                    if token_stripped == u.reset_token:
+                        logger.warning(f"   ⚠️  EXACT MATCH FOUND but query failed - DB issue!")
+                    elif token_stripped[:20] == u.reset_token[:20]:
+                        logger.warning(f"   ⚠️  PARTIAL MATCH - first 20 chars match!")
+
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid or expired reset token"
@@ -501,14 +544,30 @@ async def reset_password(request: ResetPasswordRequest, db: Session = Depends(ge
             # Ensure both datetimes are timezone-aware for comparison
             expires = user.reset_token_expires
             if expires.tzinfo is None:
-                # If database returned naive datetime, assume UTC
+                # If database returned naive datetime, assume UTC (SQLite stores as naive)
                 expires = expires.replace(tzinfo=timezone.utc)
             now = datetime.now(timezone.utc)
+
+            # Enhanced logging for timezone debugging
+            logger.info(f"✅ Token found for user: {user.email}")
+            logger.info(f"   Token expires at: {expires} (UTC)")
+            logger.info(f"   Current time: {now} (UTC)")
+            logger.info(f"   Time remaining: {(expires - now).total_seconds():.0f} seconds")
+
             if expires < now:
+                logger.warning(f"❌ Password reset failed - Token expired for {user.email}")
+                logger.warning(f"   Expired {(now - expires).total_seconds():.0f} seconds ago")
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Reset token has expired. Please request a new one."
                 )
+        else:
+            # Token has no expiry set (shouldn't happen, but handle gracefully)
+            logger.warning(f"⚠️  Reset token for {user.email} has no expiry set!")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid reset token configuration. Please request a new one."
+            )
         
         # Validate password length
         password_bytes = len(new_password.encode('utf-8'))
@@ -523,8 +582,9 @@ async def reset_password(request: ResetPasswordRequest, db: Session = Depends(ge
         user.reset_token = None
         user.reset_token_expires = None
         db.commit()
-        
-        logger.info(f"Password reset successful for user: {user.email}")
+
+        logger.info(f"✅ Password reset successful for user: {user.email}")
+        logger.info(f"   Reset token cleared from database")
         return {"message": "Password reset successfully"}
         
     except HTTPException:

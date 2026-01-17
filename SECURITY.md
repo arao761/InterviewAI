@@ -235,8 +235,10 @@ Strict-Transport-Security: max-age=31536000  # Force HTTPS (production only)
 - `SECRET_KEY` - JWT signing
 
 **Frontend API Keys** (Client-exposed, restricted):
-- `NEXT_PUBLIC_VAPI_API_KEY` - VAPI voice (with domain restrictions)
-- `NEXT_PUBLIC_VAPI_ASSISTANT_ID` - VAPI assistant
+- `NEXT_PUBLIC_FOUNDRY_ENDPOINT` - Microsoft Foundry project endpoint URL
+- `NEXT_PUBLIC_FOUNDRY_API_KEY` - Microsoft Foundry API key (with domain restrictions)
+- `NEXT_PUBLIC_AZURE_SPEECH_KEY` - Azure Speech Services key (with domain restrictions)
+- `NEXT_PUBLIC_AZURE_SPEECH_REGION` - Azure Speech Services region
 
 **Security Measures**:
 - Enable API key restrictions (IP whitelist, domain restrictions)

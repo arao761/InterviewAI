@@ -1,6 +1,6 @@
 /**
  * Conversation Transformer Utility
- * Converts VAPI conversation messages into structured question-answer pairs
+ * Converts conversation messages into structured question-answer pairs
  * for interview evaluation API
  */
 
@@ -18,9 +18,9 @@ export interface QuestionAnswerPair {
 }
 
 /**
- * Extracts question-answer pairs from VAPI conversation messages
+ * Extracts question-answer pairs from conversation messages
  *
- * @param conversationMessages - Array of conversation messages from VAPI
+ * @param conversationMessages - Array of conversation messages from the interview
  * @param originalQuestions - Original questions from interview setup
  * @returns Array of question-answer pairs ready for evaluation
  */

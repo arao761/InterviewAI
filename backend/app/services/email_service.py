@@ -232,7 +232,11 @@ class EmailService:
                 logger.info(f"Password reset token for {email}: {token}")
                 return False
 
+            # tokens from secrets.token_urlsafe() are already URL-safe (base64url encoding)
+            # They contain only: A-Z, a-z, 0-9, -, _ which are all safe in URLs
+            # No need to URL-encode them - use token directly
             reset_url = f"{self.frontend_url}/reset-password?token={token}"
+            logger.info(f"Password reset URL generated for {email} - token length: {len(token)}")
 
             html_body = f"""
             <!DOCTYPE html>
@@ -279,8 +283,10 @@ class EmailService:
             # Fall back to SMTP
             msg = MIMEMultipart('alternative')
             msg['Subject'] = 'Reset Your Password - InterviewAI'
-            msg['From'] = self.from_email
+            # Gmail requires FROM to match authenticated user, so use smtp_user
+            msg['From'] = self.smtp_user
             msg['To'] = email
+            msg['Reply-To'] = self.from_email if self.from_email != self.smtp_user else self.smtp_user
 
             msg.attach(MIMEText(text_body, 'plain'))
             msg.attach(MIMEText(html_body, 'html'))
@@ -289,9 +295,9 @@ class EmailService:
             with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
                 server.starttls()
                 server.login(self.smtp_user, self.smtp_password)
-                # Use sendmail with explicit envelope to ensure recipient is correct
+                # Use sendmail with explicit envelope - FROM must match authenticated user
                 server.sendmail(
-                    from_addr=self.from_email,  # Envelope sender (Interview AI)
+                    from_addr=self.smtp_user,  # Must match authenticated user for Gmail
                     to_addrs=[email],  # Envelope recipient (user who requested reset)
                     msg=msg.as_string()
                 )

@@ -115,8 +115,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Authentication endpoints - strict limits to prevent brute force
         "/api/v1/auth/login": (10, 60, "login attempts per minute per IP"),
         "/api/v1/auth/register": (5, 300, "registrations per 5 minutes per IP"),
-        "/api/v1/auth/forgot-password": (3, 3600, "password reset requests per hour per IP"),
-        "/api/v1/auth/reset-password": (5, 3600, "password resets per hour per IP"),
+        # Password reset endpoints - rate limit removed for development/testing
+        # "/api/v1/auth/forgot-password": (3, 3600, "password reset requests per hour per IP"),
+        # "/api/v1/auth/reset-password": (5, 3600, "password resets per hour per IP"),
         "/api/v1/auth/verify-email": (10, 3600, "email verifications per hour per IP"),
         "/api/v1/auth/resend-verification": (3, 3600, "resend verification per hour per IP"),
 
@@ -170,6 +171,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # Determine rate limit for this endpoint
         rate_limit_config = self.RATE_LIMITS.get(path)
+
+        # Skip rate limiting for password reset endpoints (removed for development)
+        if path in ["/api/v1/auth/forgot-password", "/api/v1/auth/reset-password"]:
+            return await call_next(request)
 
         if rate_limit_config:
             max_requests, window_seconds, description = rate_limit_config
