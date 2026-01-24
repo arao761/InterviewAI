@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
     Lifespan context manager for startup and shutdown events.
     """
     # Startup
-    logger.info(f"Starting {settings.APP_NAME} API v{settings.API_VERSION}")
+    logger.if(f"Starting {settings.APP_NAME} API v{settings.API_VERSION}")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"Debug mode: {settings.DEBUG}")
     logger.info(f"Host: {settings.HOST}:{settings.PORT}")
