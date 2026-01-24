@@ -480,17 +480,28 @@ async def reset_password(request: ResetPasswordRequest, db: Session = Depends(ge
     try:
         token = request.token
         new_password = request.new_password
-        
+
         if not token:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Reset token is required"
             )
-        
+
+        # Debug logging for token troubleshooting
+        logger.info(f"Reset password attempt - Token length: {len(token)}, Token preview: {token[:10]}...{token[-10:]}")
+
         # Find user by reset token
         user = db.query(User).filter(User.reset_token == token).first()
-        
+
         if not user:
+            # Additional debug: check if any user has a similar token (for debugging)
+            all_reset_tokens = db.query(User.email, User.reset_token).filter(User.reset_token.isnot(None)).all()
+            if all_reset_tokens:
+                for email, db_token in all_reset_tokens:
+                    logger.info(f"DB has reset token for {email}: length={len(db_token)}, preview={db_token[:10]}...{db_token[-10:]}")
+            else:
+                logger.info("No users have active reset tokens in DB")
+
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid or expired reset token"
