@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
     Lifespan context manager for startup and shutdown events.
     """
     # Startup
-    logger.if(f"Starting {settings.APP_NAME} API v{settings.API_VERSION}")
+    logger.info(f"Starting {settings.APP_NAME} API v{settings.API_VERSION}")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"Debug mode: {settings.DEBUG}")
     logger.info(f"Host: {settings.HOST}:{settings.PORT}")
@@ -113,7 +113,7 @@ app.include_router(api_router, prefix=f"/api/{settings.API_VERSION}")
 async def health_check():
     """
     Health check endpoint to verify the API is running.
-    
+
     Returns:
         dict: Status and application information
     """
@@ -123,6 +123,16 @@ async def health_check():
         "version": settings.API_VERSION,
         "environment": settings.ENVIRONMENT,
     }
+
+
+# Test endpoint to trigger runtime error (for error monitoring testing)
+@app.get("/trigger-error", tags=["Testing"])
+async def trigger_error():
+    """
+    Test endpoint that raises a runtime error.
+    Used for testing error detection and monitoring systems.
+    """
+    raise Exception("Test runtime error")
 
 
 # ============================================================================

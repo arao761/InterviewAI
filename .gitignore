@@ -53,6 +53,7 @@ frontend.log
 */.env.local
 backend/.env
 frontend/.env.local
+.remediate.yaml
 
 # Temp
 *.tmp
