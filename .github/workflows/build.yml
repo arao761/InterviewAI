@@ -1,7 +1,7 @@
-  name: Build Check                                                                                                                             
-  on: [push, pull_request]                                                                                                                      
+name: Build Check                                                                                                                             
+on: [push, pull_request]                                                                                                                      
                                                                                                                                                 
-  jobs:                                                                                                                                         
+jobs:                                                                                                                                         
     build:                                                                                                                                      
       runs-on: ubuntu-latest                                                                                                                    
       defaults:                                                                                                                                 
@@ -22,8 +22,4 @@
           run: pnpm install                                                                                                                     
                                                                                                                                                 
         - name: Build                                                                                                                           
-          run: pnpm run build                                                                                                                   
-                                                                                                                                                                                                                                                                    
-  defaults:                                                                                                                                     
-    run:                                                                                                                                        
-      working-directory: ./frontend   
+          run: pnpm run build                       
