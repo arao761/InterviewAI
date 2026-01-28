@@ -76,10 +76,10 @@ export default function AboutPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         {/* Hero Section */}
         <div className="text-center mb-20">
-          <div className="inline-block mb-4"
+          <div className="inline-block mb-4">
             <span className="text-sm font-semibold tracking-wider uppercase bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               About Us
-            </span>
+            </span
           </div>
           <h1 className="text-5xl sm:text-6xl font-bold mb-6 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
             Meet the Team Behind InterviewAI
