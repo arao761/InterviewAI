@@ -1,9 +1,12 @@
-name: Build Check                                                                                                                             
-on: [push, pull_request]                                                                                                                                                                                                                                                                   
-
-jobs:                                                                                                                                         
+  name: Build Check                                                                                                                             
+  on: [push, pull_request]                                                                                                                      
+                                                                                                                                                
+  jobs:                                                                                                                                         
     build:                                                                                                                                      
       runs-on: ubuntu-latest                                                                                                                    
+      defaults:                                                                                                                                 
+        run:                                                                                                                                    
+          working-directory: ./frontend                                                                                                         
       steps:                                                                                                                                    
         - uses: actions/checkout@v4                                                                                                             
                                                                                                                                                 
@@ -19,4 +22,8 @@ jobs:
           run: pnpm install                                                                                                                     
                                                                                                                                                 
         - name: Build                                                                                                                           
-          run: pnpm run build
+          run: pnpm run build                                                                                                                   
+                                                                                                                                                                                                                                                                    
+  defaults:                                                                                                                                     
+    run:                                                                                                                                        
+      working-directory: ./frontend   
