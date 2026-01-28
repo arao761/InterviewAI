@@ -71,11 +71,11 @@ export default function AboutPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground"
+    <div className="min-h-screen bg-background text-foreground">
       <Navigation />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         {/* Hero Section */}
-        <div className="text-center mb-20">
+        <div className="text-center mb-20"
           <div className="inline-block mb-4">
             <span className="text-sm font-semibold tracking-wider uppercase bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               About Us
