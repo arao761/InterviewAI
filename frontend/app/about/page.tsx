@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { Card } from '@/components/ui/card';
 import Navigation from '@/components/navigation';
@@ -89,22 +89,18 @@ export default function AboutPage() {
           </p>
         </div>
 
-        {/* Team Section */}
+        {/* Team Section - Now at the top */}
         <div className="mb-24">
           <div className="grid md:grid-cols-2 gap-8">
             {team.map((member, index) => (
               <div key={index} className="group relative">
                 {/* Glow effect */}
-                <div
-                  className={`absolute -inset-0.5 bg-gradient-to-r ${member.gradient} rounded-3xl blur opacity-0 group-hover:opacity-30 transition duration-500`}
-                ></div>
+                <div className={`absolute -inset-0.5 bg-gradient-to-r ${member.gradient} rounded-3xl blur opacity-0 group-hover:opacity-30 transition duration-500`}></div>
 
                 {/* Card */}
                 <Card className="relative bg-card/50 backdrop-blur-sm border border-border rounded-3xl p-8 hover:border-primary/30 transition-all duration-300 overflow-hidden h-full">
                   {/* Background decoration */}
-                  <div
-                    className={`absolute top-0 right-0 w-48 h-48 bg-gradient-to-br ${member.gradient} opacity-5 rounded-full blur-3xl group-hover:opacity-10 transition-opacity`}
-                  ></div>
+                  <div className={`absolute top-0 right-0 w-48 h-48 bg-gradient-to-br ${member.gradient} opacity-5 rounded-full blur-3xl group-hover:opacity-10 transition-opacity`}></div>
 
                   {/* Content */}
                   <div className="relative z-10 flex flex-col sm:flex-row gap-6 items-start">
@@ -113,16 +109,14 @@ export default function AboutPage() {
                       <div className={`p-1 rounded-2xl bg-gradient-to-br ${member.gradient}`}>
                         {member.image ? (
                           <Image
-                            src={member.image || '/placeholder.svg'}
+                            src={member.image || "/placeholder.svg"}
                             alt={member.name}
                             width={120}
                             height={120}
                             className="w-28 h-28 rounded-2xl object-cover bg-background"
                           />
                         ) : (
-                          <div
-                            className={`w-28 h-28 rounded-2xl bg-gradient-to-br ${member.gradient}`}
-                          />
+                          <div className={`w-28 h-28 rounded-2xl bg-gradient-to-br ${member.gradient}`} />
                         )}
                       </div>
                     </div>
@@ -151,9 +145,7 @@ export default function AboutPage() {
         <div className="relative mb-24">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 rounded-3xl blur-3xl"></div>
           <Card className="relative p-8 md:p-12 bg-card/50 backdrop-blur-sm border border-border/50 rounded-3xl">
-            <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Our Story
-            </h2>
+            <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Our Story</h2>
             <div className="space-y-4 text-muted-foreground text-lg leading-relaxed">
               <p>
                 InterviewAI was founded in 2025 by Ankit Rao, Pranav Vaddepalli, Vaibhav Mahajan, and Kedaar Chennam. As CS students at the University of Virginia, we know that the CS field is getting increasingly more difficult, especially when it comes to getting a job. This puts stress and forces people in the CS field to work extra hard to land even an entry level job.
@@ -171,9 +163,7 @@ export default function AboutPage() {
             <div key={index} className="relative group">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-accent rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
               <Card className="relative p-8 text-center bg-card/50 backdrop-blur-sm border border-border rounded-2xl hover:border-primary/30 transition-all">
-                <div className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">
-                  {stat.value}
-                </div>
+                <div className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">{stat.value}</div>
                 <p className="text-muted-foreground font-medium">{stat.label}</p>
               </Card>
             </div>
@@ -182,9 +172,7 @@ export default function AboutPage() {
 
         {/* Values Section */}
         <div>
-          <h2 className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Our Values
-          </h2>
+          <h2 className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Our Values</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {values.map((value, index) => {
               const IconComponent = value.icon;
