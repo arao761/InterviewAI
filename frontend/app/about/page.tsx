@@ -76,11 +76,11 @@ export default function AboutPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         {/* Hero Section */}
         <div className="text-center mb-20">
-          <div className="inline-block mb-4">
+          <div className="inline-block mb-4">>
             <span className="text-sm font-semibold tracking-wider uppercase bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               About Us
-            </span
-          </div>
+            </span>
+          </div
           <h1 className="text-5xl sm:text-6xl font-bold mb-6 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
             Meet the Team Behind InterviewAI
           </h1>
@@ -118,8 +118,8 @@ export default function AboutPage() {
                         ) : (
                           <div className={`w-28 h-28 rounded-2xl bg-gradient-to-br ${member.gradient}`} />
                         )}
-                      </div>
-                    </div>
+          
+        
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
@@ -132,11 +132,11 @@ export default function AboutPage() {
                       <div className="space-y-2 mb-4">
                         <p className="text-sm text-foreground leading-relaxed">{member.bio}</p>
                         <p className="text-sm text-muted-foreground">{member.education}</p>
-                      </div>
-                    </div>
-                  </div>
+          
+        
+      
                 </Card>
-              </div>
+  
             ))}
           </div>
         </div>
@@ -153,7 +153,7 @@ export default function AboutPage() {
               <p>
                 However, we decided to help you. By combining AI expertise with real interview experience, we built a platform that gives candidates the personalized coaching they need to succeed. Every interview is unique, and our AI learns from each one to provide better, more actionable feedback.
               </p>
-            </div>
+
           </Card>
         </div>
 
@@ -166,7 +166,7 @@ export default function AboutPage() {
                 <div className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">{stat.value}</div>
                 <p className="text-muted-foreground font-medium">{stat.label}</p>
               </Card>
-            </div>
+
           ))}
         </div>
 
@@ -183,12 +183,12 @@ export default function AboutPage() {
                     <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-accent p-0.5 mb-6 group-hover:scale-110 transition-transform">
                       <div className="w-full h-full rounded-xl bg-background flex items-center justify-center">
                         <IconComponent className="w-7 h-7 text-primary" />
-                      </div>
-                    </div>
+          
+        
                     <h3 className="text-xl font-bold mb-3">{value.title}</h3>
                     <p className="text-muted-foreground leading-relaxed">{value.description}</p>
                   </Card>
-                </div>
+    
               );
             })}
           </div>
