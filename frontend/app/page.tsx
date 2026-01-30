@@ -10,7 +10,7 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground">
       <Navigation />
       <main>
-        <HeroSection />
+        <HeroSection /
         <SocialProofSection />
       </main>
       <Footer />
