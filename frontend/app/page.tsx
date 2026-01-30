@@ -12,7 +12,7 @@ export default function Home() {
       <main>
         <HeroSection /> 
         <SocialProofSection />
-      </main
+      </ma
       <Footer />
     </div>
   );
