@@ -42,7 +42,7 @@ export default function AboutPage() {
       gradient: 'from-secondary to-primary',
     },
     {
-      name: 'Kedaar Chennam,
+      name: 'Kedaar Chennam',
       role: 'Co-founder',
       title: 'Frontend Developer',
       bio: 'Machine Learning researcher focusing on LLMs in education',
