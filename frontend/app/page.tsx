@@ -11,7 +11,7 @@ export default function Home() {
       <Navigation />
       <main>
         <HeroSection /> 
-        <SocialProofSection /
+        <SocialProofSection /> 
       </main> 
       <Footer />
     </div>
