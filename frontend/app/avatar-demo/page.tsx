@@ -45,7 +45,7 @@ export default function AvatarDemoPage() {
           <div className="bg-card border border-border rounded-lg p-8">
             <div className="mb-6 pb-4 border-b border-border">
               <h2 className="text-xl font-semibold mb-2">Animated Face Avatar</h2>
-              <p className="text-sm text-muted-foreground"
+              <p className="text-sm text-muted-foreground">
                 Friendly, cartoon-style with realistic facial animations
               </p>
               <div className="mt-2 text-xs text-muted-foreground">
@@ -64,7 +64,7 @@ export default function AvatarDemoPage() {
           <div className="bg-card border border-border rounded-lg p-8">
             <div className="mb-6 pb-4 border-b border-border">
               <h2 className="text-xl font-semibold mb-2">Talking Avatar</h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground">>
                 Modern gradient design with waveform visualization
               </p>
               <div className="mt-2 text-xs text-muted-foreground">
@@ -85,7 +85,7 @@ export default function AvatarDemoPage() {
           <div className="bg-card border border-border rounded-lg p-8">
             <div className="mb-6 pb-4 border-b border-border">
               <h2 className="text-xl font-semibold mb-2">Professional Avatar</h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground">>
                 Clean, business-like design with audio visualization
               </p>
               <div className="mt-2 text-xs text-muted-foreground">
