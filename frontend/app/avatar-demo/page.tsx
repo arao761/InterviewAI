@@ -35,8 +35,8 @@ export default function AvatarDemoPage() {
               className={isSpeaking ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
             >
               {isSpeaking ? 'Stop Speaking' : 'Start Speaking'}
-            </Button>
-          </div
+            </Button
+          </div>
         </div>
 
         {/* Avatar Grid */}
