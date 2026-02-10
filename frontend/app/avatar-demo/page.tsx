@@ -35,7 +35,7 @@ export default function AvatarDemoPage() {
               className={isSpeaking ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
             >
               {isSpeaking ? 'Stop Speaking' : 'Start Speaking'}
-            </Button
+            </Button>
           </div>
         </div>
 
@@ -45,7 +45,7 @@ export default function AvatarDemoPage() {
           <div className="bg-card border border-border rounded-lg p-8">
             <div className="mb-6 pb-4 border-b border-border">
               <h2 className="text-xl font-semibold mb-2">Animated Face Avatar</h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground"
                 Friendly, cartoon-style with realistic facial animations
               </p>
               <div className="mt-2 text-xs text-muted-foreground">
