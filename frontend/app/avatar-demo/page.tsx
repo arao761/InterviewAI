@@ -34,7 +34,7 @@ export default function AvatarDemoPage() {
               size="lg"
               className={isSpeaking ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
             >
-              {isSpeaking ? 'Stop Speaking' : 'Start Speaking'
+              {isSpeaking ? 'Stop Speaking' : 'Start Speaking'}
             </Button>
           </div>
         </div>
