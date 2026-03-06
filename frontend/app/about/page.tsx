@@ -8,9 +8,9 @@ import Image from 'next/image';
 
 export default function AboutPage() {
   const stats = [
-    { label: 'Users Trained', value: '10K+' },
-    { label: 'Interviews Conducted', value: '50K+' },
-    { label: 'Success Rate', value: '95%' },
+    { label: 'Users Trained', value: '1K+' },
+    { label: 'Interviews Conducted', value: '1K+' },
+    { label: 'Success Rate', value: '90%' },
   ];
 
   const team = [
